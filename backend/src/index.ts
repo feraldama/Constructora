@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./config/db.js";
@@ -8,6 +9,7 @@ import paymentRoutes from "./routes/payments.routes.js";
 import contractorRoutes from "./routes/contractors.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import notificationRoutes from "./routes/notifications.routes.js";
+import attachmentRoutes from "./routes/attachments.routes.js";
 
 dotenv.config();
 
@@ -16,6 +18,9 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir archivos subidos (local storage)
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 // Routes
 app.get("/api/health", (_req, res) => {
@@ -27,6 +32,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/contractors", contractorRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/attachments", attachmentRoutes);
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
@@ -38,6 +44,5 @@ app.listen(PORT, async () => {
     console.error("✗ Error al conectar a PostgreSQL:", error);
   }
 
-  // Iniciar cron jobs
   startCronJobs();
 });
