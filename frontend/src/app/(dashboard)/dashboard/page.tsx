@@ -127,17 +127,17 @@ function BudgetBar({ data }: { data: ProjectDashboard["budget"] }) {
           title={`Pendiente/Vencido: ${fmt(data.committed - data.executed)}`}
         />
       </div>
-      <div className="flex justify-between text-xs mt-2 text-gray-500">
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2 text-xs text-gray-500">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" />
           Ejecutado {fmt(data.executed)}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0" />
           Comprometido {fmt(data.committed - data.executed)}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+          <span className="w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0" />
           Restante {fmt(data.remaining)}
         </div>
       </div>
@@ -154,12 +154,12 @@ export default function DashboardPage() {
     return (
       <div className="space-y-4">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
           <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
         </div>
@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
       {/* Alertas */}
       {(dash.payments.countOverdue > 0 || dash.payments.countUpcoming7d > 0) && (
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
           {dash.payments.countOverdue > 0 && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               <AlertTriangle size={16} />

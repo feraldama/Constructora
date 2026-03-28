@@ -37,6 +37,23 @@
 - Montos decimales: `@db.Decimal(14, 2)`
 - Usar enums de Prisma para estados
 
+## Responsive (obligatorio)
+- **Todos los componentes y páginas deben ser responsive** desde el primer commit
+- Sidebar: oculto en mobile (`hidden md:flex`), drawer overlay con backdrop en `< md`
+- Layout: top bar mobile con hamburger (`md:hidden`), padding `p-4 sm:p-6`
+- Grids: nunca columnas fijas sin breakpoint — usar `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- Headers de página: `flex flex-wrap items-start justify-between gap-3` con `shrink-0` en el botón primario
+- Tablas: siempre envueltas en `<div className="overflow-x-auto">`, nunca tabla directa sin wrapper
+- Alertas/badges en fila: `flex flex-col sm:flex-row flex-wrap gap-3`
+- Selectores/inputs de filtro: `w-full sm:w-auto` en mobile
+- Breakpoints estándar: `sm` = 640px, `md` = 768px, `lg` = 1024px
+
+## Interactividad
+- **Todo elemento clickeable debe tener `cursor-pointer`** (botones, selects, links custom, divs con onClick)
+- `button`, `select` y `[role="button"]` ya lo tienen vía `globals.css`
+- Para `<div>` / `<span>` con `onClick`: agregar `cursor-pointer` en className
+- Elementos deshabilitados: usar `cursor-not-allowed` (ya global para `button:disabled` y `select:disabled`)
+
 ## Convenciones
 - Nombres de modelos y código en inglés
 - Nombres de tablas en snake_case (vía `@@map`)

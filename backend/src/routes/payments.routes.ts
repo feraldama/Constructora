@@ -13,18 +13,28 @@ import {
   deletePayment,
   paymentSummary,
   contractorDebts,
+  assignmentContext,
   triggerMarkOverdue,
+  projectedCashFlow,
+  paymentPredictions,
+  debtAlerts,
 } from "../controllers/payments/payments.controller.js";
 
 const router = Router();
 
 router.use(authMiddleware);
 
-// Endpoints de consulta (sin :id) van primero
-router.get("/", listPayments);
-router.get("/summary", paymentSummary);
-router.get("/debts", contractorDebts);
-router.post("/mark-overdue", triggerMarkOverdue);
+// Endpoints de consulta (sin :id) — TODOS antes de /:id
+router.get("/",                  listPayments);
+router.get("/summary",           paymentSummary);
+router.get("/debts",             contractorDebts);
+router.get("/cash-flow",         projectedCashFlow);
+router.get("/predictions",       paymentPredictions);
+router.get("/debt-alerts",       debtAlerts);
+// Contexto financiero de una asignación antes de crear un pago
+// GET /api/payments/assignment-context?contractorId=X&budgetItemId=Y
+router.get("/assignment-context", assignmentContext);
+router.post("/mark-overdue",      triggerMarkOverdue);
 
 // Endpoints con :id
 router.get("/:id", getPayment);

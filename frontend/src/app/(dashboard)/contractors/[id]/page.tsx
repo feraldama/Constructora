@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useMemo, useCallback, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -20,13 +20,24 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   useContractor,
   useUpdateContractor,
   useContractorPaymentsGrouped,
 } from "@/hooks/useContractors";
+import {
+  useCreateAssignment,
+  useUpdateAssignment,
+  useDeleteAssignment,
+  useAssignmentsByContractor,
+} from "@/hooks/useAssignments";
+import { useProjects } from "@/hooks/useProjects";
+import { useProjectBudget } from "@/hooks/useProjectBudget";
 import type { ContractorPayload, PaymentsByProject, AssignmentWithProgress } from "@/lib/api/contractors";
+import type { CreateAssignmentPayload, UpdateAssignmentPayload } from "@/lib/api/assignments";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 import ContractorForm from "@/components/forms/ContractorForm";
@@ -87,7 +98,15 @@ function Card({ icon: Icon, label, value, sub, color, bg }: {
   );
 }
 
-function AssignmentsTable({ assignments }: { assignments: AssignmentWithProgress[] }) {
+function AssignmentsTable({
+  assignments,
+  onEdit,
+  onDelete,
+}: {
+  assignments: AssignmentWithProgress[];
+  onEdit: (a: AssignmentWithProgress) => void;
+  onDelete: (a: AssignmentWithProgress) => void;
+}) {
   if (assignments.length === 0) {
     return <p className="text-sm text-gray-400 text-center py-8">Sin partidas asignadas</p>;
   }
@@ -104,6 +123,7 @@ function AssignmentsTable({ assignments }: { assignments: AssignmentWithProgress
             <th className="text-right py-2.5 px-4 font-medium text-gray-500">Pagado</th>
             <th className="text-right py-2.5 px-4 font-medium text-gray-500">Restante</th>
             <th className="py-2.5 px-4 font-medium text-gray-500 w-28">Avance</th>
+            <th className="py-2.5 px-4 w-20" />
           </tr>
         </thead>
         <tbody>
@@ -126,11 +146,281 @@ function AssignmentsTable({ assignments }: { assignments: AssignmentWithProgress
                   <span className="text-xs text-gray-400 w-8 text-right">{a.paidPercent}%</span>
                 </div>
               </td>
+              <td className="py-2.5 px-4">
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => onEdit(a)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                    title="Editar asignación"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(a)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                    title="Eliminar asignación"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+// ─── Formulario de asignación ────────────────────────────────────────
+
+function inputCls(extra = "") {
+  return `w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${extra}`;
+}
+
+function AssignmentFormModal({
+  contractorId,
+  editingAssignment,
+  onClose,
+}: {
+  contractorId: string;
+  editingAssignment?: AssignmentWithProgress | null;
+  onClose: () => void;
+}) {
+  const isEdit = !!editingAssignment;
+  const { data: projectsRes } = useProjects({ page: 1, limit: 100 });
+  const projects = projectsRes?.data ?? [];
+
+  const [projectId, setProjectId] = useState(editingAssignment?.projectId ?? "");
+  const [budgetItemId, setBudgetItemId] = useState(editingAssignment?.budgetItemId ?? "");
+  const [assignedQuantity, setAssignedQuantity] = useState(
+    editingAssignment ? String(editingAssignment.assignedQuantity) : ""
+  );
+  const [unitPrice, setUnitPrice] = useState(
+    editingAssignment && editingAssignment.assignedQuantity > 0
+      ? String(Math.round((editingAssignment.agreedPrice / editingAssignment.assignedQuantity) * 100) / 100)
+      : ""
+  );
+  const [notes, setNotes] = useState("");
+
+  const agreedPrice = (Number(assignedQuantity) || 0) * (Number(unitPrice) || 0);
+  const [formError, setFormError] = useState("");
+
+  const { data: budgetData } = useProjectBudget(projectId || undefined);
+  const { data: existingAssignments } = useAssignmentsByContractor(
+    isEdit ? undefined : contractorId,
+    projectId || undefined
+  );
+
+  const budgetItems = useMemo(() => {
+    if (!budgetData?.categories) return [];
+    const allItems = budgetData.categories.flatMap((cat) =>
+      cat.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        categoryName: cat.name,
+        quantity: item.quantity,
+      }))
+    );
+
+    if (!isEdit && existingAssignments && existingAssignments.length > 0) {
+      const fullyPaidIds = new Set(
+        existingAssignments
+          .filter((a) => a.financials.remaining <= 0)
+          .map((a) => a.budgetItemId)
+      );
+      return allItems.filter((item) => !fullyPaidIds.has(item.id));
+    }
+
+    return allItems;
+  }, [budgetData, isEdit, existingAssignments]);
+
+  const selectedItem = budgetItems.find((b) => b.id === budgetItemId);
+
+  const createMutation = useCreateAssignment();
+  const updateMutation = useUpdateAssignment();
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setFormError("");
+
+      try {
+        if (isEdit && editingAssignment) {
+          const data: UpdateAssignmentPayload = {};
+          const qty = Number(assignedQuantity);
+          const price = Number(agreedPrice);
+          if (qty !== editingAssignment.assignedQuantity) data.assignedQuantity = qty;
+          if (price !== editingAssignment.agreedPrice) data.agreedPrice = price;
+          if (notes) data.notes = notes;
+
+          await updateMutation.mutateAsync({
+            id: editingAssignment.id,
+            data,
+            budgetItemId: editingAssignment.budgetItemId,
+            contractorId,
+          });
+        } else {
+          const payload: CreateAssignmentPayload = {
+            contractorId,
+            budgetItemId,
+            assignedQuantity: Number(assignedQuantity),
+            agreedPrice: Number(agreedPrice),
+            ...(notes ? { notes } : {}),
+          };
+          await createMutation.mutateAsync(payload);
+        }
+        onClose();
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { error?: string } } };
+        setFormError(error.response?.data?.error ?? "Error al guardar la asignación");
+      }
+    },
+    [isEdit, editingAssignment, contractorId, budgetItemId, assignedQuantity, agreedPrice, notes, createMutation, updateMutation, onClose]
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {formError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {formError}
+        </div>
+      )}
+
+      {/* Proyecto */}
+      {!isEdit && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Proyecto <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={projectId}
+            onChange={(e) => { setProjectId(e.target.value); setBudgetItemId(""); }}
+            required
+            className={inputCls()}
+          >
+            <option value="">Seleccionar proyecto...</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Partida */}
+      {!isEdit && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Partida <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={budgetItemId}
+            onChange={(e) => setBudgetItemId(e.target.value)}
+            required
+            disabled={!projectId}
+            className={inputCls(projectId ? "" : "bg-gray-50 text-gray-400")}
+          >
+            <option value="">
+              {projectId ? "Seleccionar partida..." : "Elegí un proyecto primero"}
+            </option>
+            {budgetItems.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.categoryName} — {b.name}
+              </option>
+            ))}
+          </select>
+          {selectedItem && (
+            <p className="mt-1 text-xs text-gray-500">
+              Cantidad presupuestada: {selectedItem.quantity}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isEdit && (
+        <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
+          <p><span className="font-medium">Partida:</span> {editingAssignment!.budgetItemName}</p>
+          <p><span className="font-medium">Proyecto:</span> {editingAssignment!.projectName}</p>
+        </div>
+      )}
+
+      {/* Cantidad + Precio unitario */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cantidad asignada <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            value={assignedQuantity}
+            onChange={(e) => setAssignedQuantity(e.target.value)}
+            required
+            min="0.0001"
+            step="any"
+            placeholder="0"
+            className={inputCls()}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Precio unitario <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <input
+              type="number"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              required
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              className={inputCls("pl-7")}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Precio acordado (total) — calculado */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">Precio acordado (total)</span>
+        <span className="text-lg font-bold text-gray-900 tabular-nums">
+          ${agreedPrice.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+      </div>
+
+      {/* Notas */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+        <input
+          type="text"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Observaciones opcionales..."
+          maxLength={1000}
+          className={inputCls()}
+        />
+      </div>
+
+      {/* Botones */}
+      <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Asignar partida"}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -161,7 +451,7 @@ function PaymentsGrouped({ groups }: { groups: PaymentsByProject[] }) {
                 <span className="font-medium text-gray-900">{group.projectName}</span>
                 <span className="text-xs text-gray-400">({group.totals.count} pagos)</span>
               </div>
-              <div className="flex items-center gap-4 text-xs">
+              <div className="hidden sm:flex items-center gap-4 text-xs">
                 <span className="text-green-600">Pagado: {fmt(group.totals.paid)}</span>
                 <span className="text-yellow-600">Pendiente: {fmt(group.totals.pending)}</span>
                 {group.totals.overdue > 0 && (
@@ -172,6 +462,7 @@ function PaymentsGrouped({ groups }: { groups: PaymentsByProject[] }) {
 
             {/* Payments table */}
             {isOpen && (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-t border-gray-200 bg-gray-50/30">
@@ -201,6 +492,7 @@ function PaymentsGrouped({ groups }: { groups: PaymentsByProject[] }) {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         );
@@ -217,11 +509,30 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
   const { data: contractor, isLoading } = useContractor(id);
   const { data: paymentsGrouped } = useContractorPaymentsGrouped(id);
   const updateMutation = useUpdateContractor();
+  const deleteMutation = useDeleteAssignment();
   const [editOpen, setEditOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<AssignmentWithProgress | null>(null);
+  const [deletingAssignment, setDeletingAssignment] = useState<AssignmentWithProgress | null>(null);
 
   async function handleEdit(payload: ContractorPayload) {
     await updateMutation.mutateAsync({ id, data: payload });
     setEditOpen(false);
+  }
+
+  async function handleDeleteAssignment() {
+    if (!deletingAssignment) return;
+    try {
+      await deleteMutation.mutateAsync({
+        id: deletingAssignment.id,
+        budgetItemId: deletingAssignment.budgetItemId,
+        contractorId: id,
+      });
+      setDeletingAssignment(null);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      alert(error.response?.data?.error ?? "Error al eliminar la asignación");
+    }
   }
 
   if (isLoading) {
@@ -229,7 +540,7 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
       <div className="space-y-4">
         <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
         <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[...Array(5)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />)}
         </div>
       </div>
@@ -263,7 +574,7 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
       </button>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-700">
             <HardHat size={24} />
@@ -355,16 +666,27 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Partidas asignadas */}
-      {contractor.assignments && (
-        <div className="bg-white rounded-xl border border-gray-200">
-          <div className="px-5 py-4 border-b border-gray-200 flex items-center gap-2">
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <FolderKanban size={18} className="text-gray-400" />
             <h2 className="font-semibold text-gray-900">Partidas asignadas</h2>
-            <span className="text-xs text-gray-400">({contractor.assignments.length})</span>
+            <span className="text-xs text-gray-400">({contractor.assignments?.length ?? 0})</span>
           </div>
-          <AssignmentsTable assignments={contractor.assignments} />
+          <button
+            onClick={() => { setEditingAssignment(null); setAssignModalOpen(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <Plus size={16} />
+            Asignar partida
+          </button>
         </div>
-      )}
+        <AssignmentsTable
+          assignments={contractor.assignments ?? []}
+          onEdit={(a) => { setEditingAssignment(a); setAssignModalOpen(true); }}
+          onDelete={(a) => setDeletingAssignment(a)}
+        />
+      </div>
 
       {/* Historial de pagos agrupado */}
       <div className="bg-white rounded-xl border border-gray-200">
@@ -377,7 +699,7 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Contractor Modal */}
       <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Editar Contratista" className="max-w-2xl">
         <ContractorForm
           initialData={contractor}
@@ -385,6 +707,58 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
           onCancel={() => setEditOpen(false)}
           isLoading={updateMutation.isPending}
         />
+      </Modal>
+
+      {/* Create/Edit Assignment Modal */}
+      <Modal
+        isOpen={assignModalOpen}
+        onClose={() => { setAssignModalOpen(false); setEditingAssignment(null); }}
+        title={editingAssignment ? "Editar asignación" : "Asignar partida"}
+        className="max-w-lg"
+      >
+        <AssignmentFormModal
+          contractorId={id}
+          editingAssignment={editingAssignment}
+          onClose={() => { setAssignModalOpen(false); setEditingAssignment(null); }}
+        />
+      </Modal>
+
+      {/* Delete Assignment Modal */}
+      <Modal
+        isOpen={!!deletingAssignment}
+        onClose={() => setDeletingAssignment(null)}
+        title="Eliminar asignación"
+      >
+        {deletingAssignment && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              ¿Eliminar la asignación de{" "}
+              <strong className="text-gray-900">{deletingAssignment.budgetItemName}</strong>{" "}
+              en <strong className="text-gray-900">{deletingAssignment.projectName}</strong>?
+            </p>
+            {deletingAssignment.totalPaid > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                Esta asignación tiene pagos registrados por {fmt(deletingAssignment.totalPaid)}.
+                Solo se puede eliminar si no hay pagos pendientes o pagados.
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeletingAssignment(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAssignment}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

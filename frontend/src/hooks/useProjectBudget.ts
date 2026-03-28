@@ -55,7 +55,8 @@ export function useCreateBudgetItem(projectId: string | undefined) {
         description?: string;
         unit?: MeasurementUnit;
         quantity?: number;
-        unitPrice?: number;
+        costUnitPrice?: number;
+        saleUnitPrice?: number;
         sortOrder?: number;
       };
     }) => createBudgetItem(categoryId, payload),
@@ -78,7 +79,8 @@ export function useUpdateBudgetItem(projectId: string | undefined) {
         description: string | null;
         unit: MeasurementUnit;
         quantity: number;
-        unitPrice: number;
+        costUnitPrice: number;
+        saleUnitPrice: number;
         sortOrder: number;
       }>;
     }) => updateBudgetItem(itemId, payload),

@@ -50,6 +50,24 @@ export async function createProject(
   return data;
 }
 
+export interface UpdateProjectPayload {
+  name?: string;
+  description?: string | null;
+  address?: string | null;
+  initialBudget?: number;
+  status?: string;
+  startDate?: string | null;
+  estimatedEnd?: string | null;
+}
+
+export async function updateProject(
+  projectId: string,
+  payload: UpdateProjectPayload
+): Promise<ProjectListItem> {
+  const { data } = await api.patch<ProjectListItem>(`/projects/${projectId}`, payload);
+  return data;
+}
+
 export async function deleteProject(projectId: string): Promise<void> {
   await api.delete(`/projects/${projectId}`);
 }

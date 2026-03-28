@@ -13,24 +13,30 @@ export interface PaymentFilters {
   limit?: number;
 }
 
+export type PaymentMethod = "CASH" | "BANK_TRANSFER" | "CHECK" | "OTHER";
+
 export interface CreatePaymentPayload {
-  projectId: string;
-  contractorId: string;
-  budgetItemId?: string;
-  amount: number;
-  description?: string;
+  projectId:     string;
+  contractorId:  string;
+  budgetItemId:  string;           // requerido — valida contra ContractorAssignment
+  amount:        number;
+  paymentType:   "PARTIAL" | "TOTAL";
+  paymentMethod?: PaymentMethod;
+  /** ISO 8601 — si se provee, el pago se crea como PAID */
+  paymentDate?:  string;
+  dueDate?:      string;
+  description?:  string;
   invoiceNumber?: string;
-  dueDate?: string;
-  paymentType: "PARTIAL" | "TOTAL";
 }
 
 export interface UpdatePaymentPayload {
-  amount?: number;
-  status?: "PENDING" | "PAID" | "OVERDUE" | "CANCELLED";
-  description?: string;
+  amount?:        number;
+  status?:        "PENDING" | "PAID" | "OVERDUE" | "CANCELLED";
+  paymentMethod?: PaymentMethod;
+  description?:   string;
   invoiceNumber?: string;
-  dueDate?: string;
-  paidAt?: string;
+  dueDate?:       string;
+  paidAt?:        string;
 }
 
 export interface PaymentDetail extends Payment {
@@ -117,5 +123,48 @@ export async function getContractorDebts(
 
 export async function triggerMarkOverdue(): Promise<{ updated: number }> {
   const { data } = await api.post<{ updated: number }>("/payments/mark-overdue");
+  return data;
+}
+
+// ─── Contexto financiero de una asignación ───────────────────────────────────
+
+export interface AssignmentFinancialContext {
+  contractorId:     string;
+  budgetItemId:     string;
+  assignedQuantity: number;
+  /** Monto total acordado — campo directo del contrato, no precio unitario */
+  totalAcordado:    number;
+  /** totalAcordado / assignedQuantity — solo informativo */
+  precioUnitario:   number;
+  /** Pagos confirmados (PAID) */
+  totalPagado:      number;
+  /** Pagos programados (PENDING) */
+  totalPendiente:   number;
+  /** Pagos vencidos (OVERDUE) */
+  totalVencido:     number;
+  /** totalPagado + totalPendiente + totalVencido */
+  committed:        number;
+  /** totalAcordado - committed — tope para nuevos pagos */
+  saldoDisponible:  number;
+  /** totalAcordado - totalPagado — deuda real sin contar pendientes */
+  saldoPendiente:   number;
+  porcentajePagado:        number;
+  porcentajeComprometido:  number;
+  estaPagoCompleto:        boolean;
+  estaComprometidoEnExceso: boolean;
+}
+
+/**
+ * Obtiene el contexto financiero de un ContractorAssignment.
+ * Usar para mostrar el cuadro financiero antes de crear un pago.
+ */
+export async function getAssignmentContext(
+  contractorId: string,
+  budgetItemId: string
+): Promise<AssignmentFinancialContext> {
+  const { data } = await api.get<AssignmentFinancialContext>(
+    "/payments/assignment-context",
+    { params: { contractorId, budgetItemId } }
+  );
   return data;
 }

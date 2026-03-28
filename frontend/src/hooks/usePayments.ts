@@ -9,6 +9,7 @@ import {
   deletePayment,
   getPaymentSummary,
   getContractorDebts,
+  getAssignmentContext,
   type PaymentFilters,
   type CreatePaymentPayload,
   type UpdatePaymentPayload,
@@ -70,6 +71,28 @@ export function useUpdatePayment() {
       qc.invalidateQueries({ queryKey: PAYMENTS_KEY });
       qc.invalidateQueries({ queryKey: SUMMARY_KEY });
       qc.invalidateQueries({ queryKey: DEBTS_KEY });
+    },
+  });
+}
+
+/**
+ * Contexto financiero de un ContractorAssignment.
+ * Se usa en el formulario de pago para mostrar el estado antes de crear.
+ * Se refresca cuando cambian contractorId o budgetItemId.
+ */
+export function useAssignmentContext(
+  contractorId: string | undefined,
+  budgetItemId: string | undefined
+) {
+  return useQuery({
+    queryKey: ["payments", "assignment-context", contractorId, budgetItemId],
+    queryFn:  () => getAssignmentContext(contractorId!, budgetItemId!),
+    enabled:  !!contractorId && !!budgetItemId,
+    staleTime: 0,
+    retry: (count, err) => {
+      // 404 = no existe asignación — no reintentar, es estado esperado
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      return status !== 404 && count < 2;
     },
   });
 }

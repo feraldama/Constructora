@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma.js";
-import type { CreateProjectInput } from "./projects.schema.js";
+import type { CreateProjectInput, UpdateProjectInput } from "./projects.schema.js";
 import { ProjectStatus } from "../../generated/prisma/enums.js";
 
 function queryString(val: unknown): string | undefined {
@@ -210,6 +210,63 @@ export async function createProject(req: Request, res: Response): Promise<void> 
     role: "ADMIN" as const,
     canDelete: true,
   });
+}
+
+// ============================================================================
+// PATCH /api/projects/:projectId — Editar proyecto (ADMIN o EDITOR)
+// ============================================================================
+export async function updateProject(req: Request, res: Response): Promise<void> {
+  const projectId = routeParam(req, "projectId");
+  const userId = req.user!.userId;
+  const body = req.body as UpdateProjectInput;
+
+  const membership = await prisma.projectMember.findFirst({
+    where: { userId, projectId },
+    select: { role: true },
+  });
+
+  if (!membership) {
+    res.status(403).json({ error: "Sin acceso a este proyecto" });
+    return;
+  }
+  if (membership.role === "VIEWER") {
+    res.status(403).json({ error: "No tenés permisos para editar este proyecto" });
+    return;
+  }
+
+  const project = await prisma.$transaction(async (tx) => {
+    const p = await tx.project.update({
+      where: { id: projectId },
+      data: {
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.address !== undefined && { address: body.address }),
+        ...(body.initialBudget !== undefined && { initialBudget: body.initialBudget }),
+        ...(body.status !== undefined && { status: body.status }),
+        ...(body.startDate !== undefined && {
+          startDate: body.startDate ? new Date(body.startDate) : null,
+        }),
+        ...(body.estimatedEnd !== undefined && {
+          estimatedEnd: body.estimatedEnd ? new Date(body.estimatedEnd) : null,
+        }),
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        userId,
+        projectId,
+        action: "UPDATE_PROJECT",
+        entityType: "Project",
+        entityId: projectId,
+        metadata: JSON.parse(JSON.stringify(body)),
+      },
+    });
+
+    return p;
+  });
+
+  res.json(serializeProject(project));
 }
 
 // ============================================================================

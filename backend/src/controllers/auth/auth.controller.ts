@@ -25,7 +25,7 @@ export async function register(req: Request, res: Response): Promise<void> {
       firstName: data.firstName,
       lastName: data.lastName,
     },
-    select: { id: true, email: true, firstName: true, lastName: true },
+    select: { id: true, email: true, firstName: true, lastName: true, globalRole: true },
   });
 
   const token = generateToken({ userId: user.id, email: user.email });
@@ -60,6 +60,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      globalRole: user.globalRole,
     },
     token,
   });
@@ -74,6 +75,7 @@ export async function me(req: Request, res: Response): Promise<void> {
       firstName: true,
       lastName: true,
       avatarUrl: true,
+      globalRole: true,
       createdAt: true,
     },
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -10,10 +10,17 @@ import {
   FolderKanban,
   Calculator,
   LayoutDashboard,
+  FileSpreadsheet,
+  Printer,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useProjects } from "@/hooks/useProjects";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useProjectBudget } from "@/hooks/useProjectBudget";
+import { usePayments } from "@/hooks/usePayments";
+import { useExpenses } from "@/hooks/useExpenses";
+import { useFinancialSummary } from "@/hooks/useFinance";
+import { exportToExcel } from "@/lib/utils/export";
 
 const PIE_COLORS = {
   paid: "#22c55e",
@@ -38,6 +45,106 @@ export default function ReportsPage() {
   }, [projectId, projects]);
 
   const { data: dash, isLoading: loadingDash } = useDashboard(projectId || undefined);
+  const { data: budgetData } = useProjectBudget(projectId || undefined);
+  const { data: paymentsData } = usePayments(projectId ? { projectId } : undefined);
+  const { data: expensesData } = useExpenses(projectId || undefined);
+  const { data: finSummary } = useFinancialSummary(projectId || undefined);
+
+  const selectedProject = projects.find((p) => p.id === projectId);
+
+  const handleExportExcel = useCallback(() => {
+    if (!selectedProject) return;
+    const projectName = selectedProject.name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const sheets = [];
+
+    // Sheet 1: Budget
+    if (budgetData?.categories) {
+      const budgetRows: (string | number)[][] = [];
+      for (const cat of budgetData.categories) {
+        for (const item of cat.items) {
+          budgetRows.push([
+            cat.name,
+            item.name,
+            item.unit,
+            item.quantity,
+            item.costUnitPrice,
+            item.saleUnitPrice,
+            item.costSubtotal,
+            item.saleSubtotal,
+          ]);
+        }
+      }
+      sheets.push({
+        name: "Presupuesto",
+        headers: ["Rubro", "Partida", "Unidad", "Cantidad", "P.U. Costo", "P.U. Venta", "Subtotal Costo", "Subtotal Venta"],
+        rows: budgetRows,
+      });
+    }
+
+    // Sheet 2: Payments
+    if (paymentsData && Array.isArray(paymentsData)) {
+      const paymentRows = paymentsData.map((p) => [
+        p.contractor?.name ?? "",
+        p.description ?? "",
+        p.amount,
+        p.status,
+        p.dueDate ? new Date(p.dueDate).toLocaleDateString("es-AR") : "",
+        p.paidAt ? new Date(p.paidAt).toLocaleDateString("es-AR") : "",
+        p.invoiceNumber ?? "",
+      ]);
+      sheets.push({
+        name: "Pagos",
+        headers: ["Contratista", "Descripción", "Monto", "Estado", "Vencimiento", "Pagado", "Factura"],
+        rows: paymentRows,
+      });
+    }
+
+    // Sheet 3: Expenses
+    if (expensesData && expensesData.length > 0) {
+      const expenseRows = expensesData.map((e) => [
+        new Date(e.expenseDate).toLocaleDateString("es-AR"),
+        e.description,
+        e.expenseType,
+        e.amount,
+        e.invoiceRef ?? "",
+        e.notes ?? "",
+      ]);
+      sheets.push({
+        name: "Gastos",
+        headers: ["Fecha", "Descripción", "Tipo", "Monto", "Factura", "Notas"],
+        rows: expenseRows,
+      });
+    }
+
+    // Sheet 4: Financial summary
+    if (finSummary) {
+      sheets.push({
+        name: "Resumen Financiero",
+        headers: ["Concepto", "Valor"],
+        rows: [
+          ["Ingresos estimados", finSummary.totalRevenue],
+          ["Costo partidas", finSummary.totalCostItems],
+          ["Gastos adicionales", finSummary.totalExpenses],
+          ["Costo total", finSummary.totalCost],
+          ["Ganancia bruta", finSummary.grossProfit],
+          ["Margen (%)", finSummary.profitMargin],
+          ["Total pagado", finSummary.totalPaid],
+          ["Pendiente", finSummary.totalPending],
+          ["Ejecutado real", finSummary.totalExecuted],
+          ["Varianza", finSummary.costVariance],
+          ["Varianza (%)", finSummary.costVariancePercent],
+        ],
+      });
+    }
+
+    if (sheets.length > 0) {
+      exportToExcel(`Reporte_${projectName}`, sheets);
+    }
+  }, [selectedProject, budgetData, paymentsData, expensesData, finSummary]);
+
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
 
   const pieData = useMemo(
     () =>
@@ -62,7 +169,7 @@ export default function ReportsPage() {
             Resumen ejecutivo por proyecto (presupuesto, pagos y avance)
           </p>
         </div>
-        <div className="flex flex-col gap-1 min-w-[220px]">
+        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[220px]">
           <label className="text-xs font-medium text-gray-500">Proyecto</label>
           <select
             value={projectId}
@@ -140,6 +247,25 @@ export default function ReportsPage() {
               <FolderKanban size={16} />
               Proyectos
             </Link>
+
+            <div className="w-px bg-gray-200 mx-1 hidden sm:block" />
+
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
+            >
+              <FileSpreadsheet size={16} />
+              Exportar Excel
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Printer size={16} />
+              Imprimir
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

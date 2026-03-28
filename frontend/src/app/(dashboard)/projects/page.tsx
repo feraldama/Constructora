@@ -9,10 +9,11 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Plus, Search, FolderKanban, Calculator, Trash2 } from "lucide-react";
+import { Plus, Search, FolderKanban, Calculator, Trash2, Pencil } from "lucide-react";
 import axios from "axios";
-import { useProjects, useCreateProject, useDeleteProject } from "@/hooks/useProjects";
-import type { ProjectListItem } from "@/lib/api/projects";
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
+import type { ProjectListItem, UpdateProjectPayload } from "@/lib/api/projects";
+import type { ProjectStatus } from "@/types";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 
@@ -53,7 +54,11 @@ export default function ProjectsPage() {
     limit: 50,
   });
   const createMutation = useCreateProject();
+  const updateMutation = useUpdateProject();
   const deleteMutation = useDeleteProject();
+
+  const [editTarget, setEditTarget] = useState<ProjectListItem | null>(null);
+  const [editForm, setEditForm] = useState<UpdateProjectPayload>({});
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectListItem | null>(null);
   const [deleteError, setDeleteError] = useState("");
@@ -75,6 +80,32 @@ export default function ProjectsPage() {
     setFormAddress("");
     setFormBudget("");
   }, [createMutation, formName, formDescription, formAddress, formBudget]);
+
+  const openEdit = useCallback((p: ProjectListItem) => {
+    setEditTarget(p);
+    setEditForm({
+      name: p.name,
+      description: p.description,
+      address: p.address,
+      initialBudget: p.initialBudget,
+      status: p.status,
+      startDate: p.startDate ? p.startDate.slice(0, 10) : null,
+      estimatedEnd: p.estimatedEnd ? p.estimatedEnd.slice(0, 10) : null,
+    });
+  }, []);
+
+  const handleEdit = useCallback(async () => {
+    if (!editTarget || !editForm.name?.trim()) return;
+    await updateMutation.mutateAsync({
+      id: editTarget.id,
+      payload: {
+        ...editForm,
+        startDate: editForm.startDate ? new Date(editForm.startDate + "T12:00:00").toISOString() : null,
+        estimatedEnd: editForm.estimatedEnd ? new Date(editForm.estimatedEnd + "T12:00:00").toISOString() : null,
+      },
+    });
+    setEditTarget(null);
+  }, [editTarget, editForm, updateMutation]);
 
   const confirmDeleteProject = useCallback(async () => {
     if (!deleteTarget) return;
@@ -151,6 +182,17 @@ export default function ProjectsPage() {
               <Calculator size={14} />
               Cómputo
             </Link>
+            <button
+              type="button"
+              title="Editar proyecto"
+              onClick={(e) => {
+                e.stopPropagation();
+                openEdit(info.row.original);
+              }}
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Pencil size={15} />
+            </button>
             {info.row.original.canDelete && (
               <button
                 type="button"
@@ -180,7 +222,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Proyectos</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -190,7 +232,7 @@ export default function ProjectsPage() {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0"
         >
           <Plus size={18} />
           Nuevo proyecto
@@ -386,6 +428,105 @@ export default function ProjectsPage() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Edit project modal */}
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Editar proyecto">
+        {editTarget && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+              <input
+                type="text"
+                value={editForm.name ?? ""}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <textarea
+                value={editForm.description ?? ""}
+                onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value || null }))}
+                rows={2}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+              <input
+                type="text"
+                value={editForm.address ?? ""}
+                onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value || null }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Presupuesto inicial</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editForm.initialBudget ?? ""}
+                  onChange={(e) => setEditForm((f) => ({ ...f, initialBudget: Number(e.target.value) }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <select
+                  value={editForm.status ?? ""}
+                  onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as ProjectStatus }))}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="PLANNING">Planificación</option>
+                  <option value="IN_PROGRESS">En obra</option>
+                  <option value="ON_HOLD">En pausa</option>
+                  <option value="COMPLETED">Finalizado</option>
+                  <option value="CANCELLED">Cancelado</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+                <input
+                  type="date"
+                  value={editForm.startDate ?? ""}
+                  onChange={(e) => setEditForm((f) => ({ ...f, startDate: e.target.value || null }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fin estimado</label>
+                <input
+                  type="date"
+                  value={editForm.estimatedEnd ?? ""}
+                  onChange={(e) => setEditForm((f) => ({ ...f, estimatedEnd: e.target.value || null }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!editForm.name?.trim() || updateMutation.isPending}
+                onClick={() => void handleEdit()}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {updateMutation.isPending ? "Guardando…" : "Guardar cambios"}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

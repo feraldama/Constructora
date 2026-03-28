@@ -26,7 +26,7 @@ const UNITS: { value: MeasurementUnit; label: string }[] = [
 ];
 
 // Columnas navegables (en orden de izquierda a derecha)
-const NAV_COLUMNS = ["name", "unit", "quantity", "unitPrice"] as const;
+const NAV_COLUMNS = ["name", "unit", "quantity", "costUnitPrice"] as const;
 
 function fmtCurrency(value: number): string {
   return "$" + value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -254,8 +254,8 @@ export default function BudgetSpreadsheet({
         ),
       }),
 
-      // Precio unitario
-      columnHelper.accessor("unitPrice", {
+      // Precio unitario (costo)
+      columnHelper.accessor("costUnitPrice", {
         header: "Precio Unit.",
         size: 130,
         cell: (info) => (
@@ -263,9 +263,9 @@ export default function BudgetSpreadsheet({
             value={info.getValue()}
             type="number"
             disabled={readOnly}
-            coord={{ rowIndex: info.row.index, colId: "unitPrice" }}
+            coord={{ rowIndex: info.row.index, colId: "costUnitPrice" }}
             onNavigate={navigateTo}
-            onSave={(v) => handleCellSave(info.row.original.id, "unitPrice", v)}
+            onSave={(v) => handleCellSave(info.row.original.id, "costUnitPrice", v)}
             formatDisplay={(v) => fmtCurrency(Number(v))}
             placeholder="$0.00"
           />
@@ -274,11 +274,11 @@ export default function BudgetSpreadsheet({
 
       // Subtotal (calculado — siempre deshabilitado)
       columnHelper.display({
-        id: "subtotal",
+        id: "costSubtotal",
         header: "Subtotal",
         size: 130,
         cell: (info) => {
-          const sub = info.row.original.quantity * info.row.original.unitPrice;
+          const sub = info.row.original.quantity * info.row.original.costUnitPrice;
           return (
             <div className="px-3 py-2 text-sm font-medium tabular-nums text-gray-700 bg-gray-50/50">
               {fmtCurrency(sub)}
@@ -328,7 +328,7 @@ export default function BudgetSpreadsheet({
 
   // ─── Totales ───
   const categoryTotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
+    () => items.reduce((sum, item) => sum + item.quantity * item.costUnitPrice, 0),
     [items]
   );
 

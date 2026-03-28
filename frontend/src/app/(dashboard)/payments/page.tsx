@@ -33,6 +33,16 @@ import Badge from "@/components/ui/Badge";
 import PaymentForm from "@/components/forms/PaymentForm";
 import PaymentSummaryCards from "@/components/charts/PaymentSummaryCards";
 import DebtTable from "@/components/charts/DebtTable";
+import { useProjects } from "@/hooks/useProjects";
+import { useContractors } from "@/hooks/useContractors";
+
+// ── Etiquetas de método de pago ───────────────────────────────────────────────
+const METHOD_LABEL: Record<string, string> = {
+  CASH:          "Efectivo",
+  BANK_TRANSFER: "Transferencia",
+  CHECK:         "Cheque",
+  OTHER:         "Otro",
+};
 
 const STATUS_BADGE: Record<PaymentStatus, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {
   PAID: { label: "Pagado", variant: "success" },
@@ -60,10 +70,6 @@ function formatDate(dateStr?: string): string {
 
 const columnHelper = createColumnHelper<PaymentDetail>();
 
-// TODO: Reemplazar con datos reales cuando exista el módulo de proyectos
-const MOCK_PROJECTS = [{ id: "demo-project", name: "Proyecto Demo" }];
-const MOCK_CONTRACTORS = [{ id: "demo-contractor", name: "Contratista Demo" }];
-
 export default function PaymentsPage() {
   const router = useRouter();
   const [filters, setFilters] = useState<PaymentFilters>({ page: 1, limit: 20 });
@@ -75,15 +81,22 @@ export default function PaymentsPage() {
   const [deletingPayment, setDeletingPayment] = useState<PaymentDetail | null>(null);
   const [formError, setFormError] = useState("");
   const [activeTab, setActiveTab] = useState<"list" | "debts">("list");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
 
-  // TODO: Usar projectId real del contexto
-  const projectId = MOCK_PROJECTS[0]?.id;
+  // Datos reales de proyectos y contratistas
+  const { data: projectsData } = useProjects({ limit: 100 });
+  const { data: contractorsData } = useContractors({ limit: 200, isActive: true });
+
+  const projects     = projectsData?.data     ?? [];
+  const contractors  = contractorsData?.data  ?? [];
+  const projectId    = selectedProjectId || undefined;
 
   const activeFilters: PaymentFilters = {
     ...filters,
-    status: statusFilter || undefined,
-    dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
-    dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
+    projectId:   projectId,
+    status:      statusFilter || undefined,
+    dateFrom:    dateFrom ? new Date(dateFrom).toISOString() : undefined,
+    dateTo:      dateTo   ? new Date(dateTo).toISOString()   : undefined,
   };
 
   const { data: paymentsData, isLoading } = usePayments(activeFilters);
@@ -150,6 +163,15 @@ export default function PaymentsPage() {
               {formatDate(date)}
             </span>
           );
+        },
+      }),
+      columnHelper.accessor("paymentMethod" as keyof PaymentDetail, {
+        header: "Método",
+        size: 120,
+        cell: (info) => {
+          const m = info.getValue() as string | null | undefined;
+          if (!m) return <span className="text-gray-400">-</span>;
+          return <span className="text-sm text-gray-600">{METHOD_LABEL[m] ?? m}</span>;
         },
       }),
       columnHelper.display({
@@ -256,14 +278,14 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pagos</h1>
           <p className="text-sm text-gray-500 mt-1">Gestion de pagos a contratistas</p>
         </div>
         <button
           onClick={() => { setFormError(""); setShowCreate(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0"
         >
           <Plus size={18} />
           Nuevo Pago
@@ -274,7 +296,7 @@ export default function PaymentsPage() {
       {summary && <PaymentSummaryCards summary={summary} />}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-fit">
         <button
           onClick={() => setActiveTab("list")}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -311,6 +333,18 @@ export default function PaymentsPage() {
               <span className="text-sm font-medium text-gray-700">Filtros</span>
             </div>
             <div className="flex flex-wrap gap-3">
+              {/* Selector de proyecto */}
+              <select
+                value={selectedProjectId}
+                onChange={(e) => { setSelectedProjectId(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+              >
+                <option value="">Todos los proyectos</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
@@ -341,9 +375,14 @@ export default function PaymentsPage() {
                 />
               </div>
 
-              {(statusFilter || dateFrom || dateTo) && (
+              {(selectedProjectId || statusFilter || dateFrom || dateTo) && (
                 <button
-                  onClick={() => { setStatusFilter(""); setDateFrom(""); setDateTo(""); }}
+                  onClick={() => {
+                    setSelectedProjectId("");
+                    setStatusFilter("");
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
                   className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
                 >
                   Limpiar filtros
@@ -373,6 +412,7 @@ export default function PaymentsPage() {
               </div>
             ) : (
               <>
+                <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((hg) => (
@@ -405,6 +445,7 @@ export default function PaymentsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
 
                 {/* Paginación */}
                 {pagination && pagination.totalPages > 1 && (
@@ -443,8 +484,8 @@ export default function PaymentsPage() {
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Nuevo Pago" className="max-w-2xl">
         <PaymentForm
           mode="create"
-          projects={MOCK_PROJECTS}
-          contractors={MOCK_CONTRACTORS}
+          projects={projects}
+          contractors={contractors}
           onSubmit={handleCreate}
           onCancel={() => setShowCreate(false)}
           isLoading={createMutation.isPending}
@@ -463,8 +504,8 @@ export default function PaymentsPage() {
           <PaymentForm
             mode="edit"
             initialData={editingPayment}
-            projects={MOCK_PROJECTS}
-            contractors={MOCK_CONTRACTORS}
+            projects={projects}
+            contractors={contractors}
             onSubmit={handleUpdate}
             onCancel={() => setEditingPayment(null)}
             isLoading={updateMutation.isPending}

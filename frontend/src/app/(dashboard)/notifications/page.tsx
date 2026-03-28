@@ -163,7 +163,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
               : "Todas leidas"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Filtro no leídas */}
           <button
             onClick={() => {

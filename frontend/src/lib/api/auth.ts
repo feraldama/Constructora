@@ -18,6 +18,7 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   avatarUrl?: string;
+  globalRole?: "SUPER_ADMIN" | "ADMIN" | "USER";
 }
 
 export interface AuthResponse {

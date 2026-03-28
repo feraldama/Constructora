@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
+import { markOverduePayments } from "./payment-state.service.js";
 
 // ============================================================================
 // TIPOS
@@ -77,14 +78,8 @@ export async function runAlertChecks(): Promise<AlertResult> {
 // ============================================================================
 
 async function checkOverduePayments(): Promise<number> {
-  // Paso 1: Marcar PENDING → OVERDUE
-  await prisma.payment.updateMany({
-    where: {
-      status: "PENDING",
-      dueDate: { lt: new Date() },
-    },
-    data: { status: "OVERDUE" },
-  });
+  // Paso 1: Marcar PENDING → OVERDUE (fuente de verdad en payment-state.service)
+  await markOverduePayments();
 
   // Paso 2: Buscar pagos OVERDUE sin notificación reciente
   // 1 query SQL con LEFT JOIN para deduplicar

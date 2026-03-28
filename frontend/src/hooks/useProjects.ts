@@ -4,9 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProjects,
   createProject,
+  updateProject,
   deleteProject,
   type ProjectFilters,
   type CreateProjectPayload,
+  type UpdateProjectPayload,
 } from "@/lib/api/projects";
 
 const PROJECTS_KEY = ["projects"];
@@ -24,6 +26,18 @@ export function useCreateProject() {
     mutationFn: (payload: CreateProjectPayload) => createProject(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: PROJECTS_KEY });
+    },
+  });
+}
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateProjectPayload }) =>
+      updateProject(id, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: PROJECTS_KEY });
+      void qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

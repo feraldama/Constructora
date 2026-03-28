@@ -49,14 +49,14 @@ export default function Modal({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-150 cursor-pointer"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150",
+          "relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150 cursor-default",
           className
         )}
       >

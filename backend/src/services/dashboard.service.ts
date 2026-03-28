@@ -97,7 +97,7 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
     SELECT
       -- Presupuesto estimado: suma de subtotales de partidas del proyecto
       (
-        SELECT COALESCE(SUM(bi.subtotal), 0)
+        SELECT COALESCE(SUM(bi.cost_subtotal), 0)
         FROM budget_items bi
         INNER JOIN categories c ON c.id = bi.category_id
         WHERE c.project_id = $1

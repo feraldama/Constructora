@@ -60,8 +60,8 @@ export default function BudgetPage({
           await updateItem.mutateAsync({ itemId, payload: { unit: value as MeasurementUnit } });
         } else if (field === "quantity") {
           await updateItem.mutateAsync({ itemId, payload: { quantity: value as number } });
-        } else if (field === "unitPrice") {
-          await updateItem.mutateAsync({ itemId, payload: { unitPrice: value as number } });
+        } else if (field === "costUnitPrice") {
+          await updateItem.mutateAsync({ itemId, payload: { costUnitPrice: value as number } });
         }
       })();
     },
@@ -87,7 +87,7 @@ export default function BudgetPage({
             name: `${source.name} (copia)`,
             unit: source.unit,
             quantity: source.quantity,
-            unitPrice: source.unitPrice,
+            costUnitPrice: source.costUnitPrice,
           },
         });
       })();
@@ -121,7 +121,7 @@ export default function BudgetPage({
   }, [deleteCat, deleteCatTarget]);
 
   const grandTotal = categories.reduce(
-    (sum, cat) => sum + cat.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0),
+    (sum, cat) => sum + cat.items.reduce((s, i) => s + i.quantity * i.costUnitPrice, 0),
     0
   );
 

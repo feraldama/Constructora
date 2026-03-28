@@ -36,7 +36,8 @@ export async function createBudgetItem(
     description?: string;
     unit?: MeasurementUnit;
     quantity?: number;
-    unitPrice?: number;
+    costUnitPrice?: number;
+    saleUnitPrice?: number;
     sortOrder?: number;
   }
 ): Promise<BudgetItem> {
@@ -51,7 +52,8 @@ export async function updateBudgetItem(
     description: string | null;
     unit: MeasurementUnit;
     quantity: number;
-    unitPrice: number;
+    costUnitPrice: number;
+    saleUnitPrice: number;
     sortOrder: number;
   }>
 ): Promise<BudgetItem> {

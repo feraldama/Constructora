@@ -12,6 +12,11 @@ import notificationRoutes from "./routes/notifications.routes.js";
 import attachmentRoutes from "./routes/attachments.routes.js";
 import projectRoutes from "./routes/projects.routes.js";
 import budgetRoutes from "./routes/budget.routes.js";
+import assignmentRoutes from "./routes/assignments.routes.js";
+import activityRoutes from "./routes/activity.routes.js";
+import memberRoutes from "./routes/members.routes.js";
+import usersRoutes from "./routes/users.routes.js";
+import accountRoutes from "./routes/account.routes.js";
 
 dotenv.config();
 
@@ -44,6 +49,11 @@ app.use("/api/projects", projectRoutes);
 app.use("/api", budgetRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/attachments", attachmentRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/activity", activityRoutes);
+app.use("/api/projects", memberRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/account", accountRoutes);
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);

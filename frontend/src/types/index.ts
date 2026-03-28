@@ -2,6 +2,7 @@
 export type ProjectStatus = "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
 export type PaymentStatus = "PENDING" | "PAID" | "OVERDUE" | "CANCELLED";
 export type MeasurementUnit = "M2" | "M3" | "ML" | "UNIT" | "KG" | "TON" | "GLOBAL";
+export type GlobalRole = "SUPER_ADMIN" | "ADMIN" | "USER";
 export type ProjectRole = "ADMIN" | "EDITOR" | "VIEWER";
 
 // Entities
@@ -32,8 +33,12 @@ export interface BudgetItem {
   description?: string;
   unit: MeasurementUnit;
   quantity: number;
-  unitPrice: number;
-  subtotal: number;
+  costUnitPrice: number;
+  saleUnitPrice: number;
+  costSubtotal: number;
+  saleSubtotal: number;
+  grossProfit: number;
+  marginPercent: number;
   sortOrder: number;
 }
 
@@ -60,6 +65,21 @@ export interface Payment {
   createdAt: string;
   contractor?: Pick<Contractor, "id" | "name">;
   project?: Pick<Project, "id" | "name">;
+}
+
+export type ExpenseType = "MATERIALS" | "EQUIPMENT" | "OVERHEAD" | "PERMITS" | "OTHER";
+export type PaymentMethod = "CASH" | "BANK_TRANSFER" | "CHECK" | "OTHER";
+
+export interface ProjectExpense {
+  id: string;
+  projectId: string;
+  description: string;
+  amount: number;
+  expenseType: ExpenseType;
+  expenseDate: string;
+  invoiceRef?: string;
+  notes?: string;
+  createdAt: string;
 }
 
 // API Response

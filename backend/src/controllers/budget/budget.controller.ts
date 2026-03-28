@@ -5,6 +5,8 @@ import type {
   CreateCategoryInput,
   CreateBudgetItemInput,
   UpdateBudgetItemInput,
+  CreateExpenseInput,
+  UpdateExpenseInput,
 } from "./budget.schema.js";
 
 function routeParam(req: Request, key: string): string {
@@ -32,12 +34,17 @@ function serializeItem(row: {
   description: string | null;
   unit: string;
   quantity: unknown;
-  unitPrice: unknown;
-  subtotal: unknown;
+  costUnitPrice: unknown;
+  saleUnitPrice: unknown;
+  costSubtotal: unknown;
+  saleSubtotal: unknown;
   sortOrder: number;
 }) {
   const quantity = Number(row.quantity);
-  const unitPrice = Number(row.unitPrice);
+  const costUnitPrice = Number(row.costUnitPrice);
+  const saleUnitPrice = Number(row.saleUnitPrice);
+  const costSubtotal = Number(row.costSubtotal);
+  const saleSubtotal = Number(row.saleSubtotal);
   return {
     id: row.id,
     categoryId: row.categoryId,
@@ -45,8 +52,14 @@ function serializeItem(row: {
     description: row.description,
     unit: row.unit,
     quantity,
-    unitPrice,
-    subtotal: Number(row.subtotal),
+    costUnitPrice,
+    saleUnitPrice,
+    costSubtotal,
+    saleSubtotal,
+    grossProfit: saleSubtotal - costSubtotal,
+    marginPercent: saleSubtotal > 0
+      ? Math.round(((saleSubtotal - costSubtotal) / saleSubtotal) * 10000) / 100
+      : 0,
     sortOrder: row.sortOrder,
   };
 }
@@ -170,8 +183,10 @@ export async function createBudgetItem(req: Request, res: Response): Promise<voi
   const name = body.name ?? "";
   const unit = body.unit ?? "M2";
   const quantity = body.quantity ?? 0;
-  const unitPrice = body.unitPrice ?? 0;
-  const subtotal = quantity * unitPrice;
+  const costUnitPrice = body.costUnitPrice ?? 0;
+  const saleUnitPrice = body.saleUnitPrice ?? 0;
+  const costSubtotal = quantity * costUnitPrice;
+  const saleSubtotal = quantity * saleUnitPrice;
 
   let sortOrder = body.sortOrder;
   if (sortOrder === undefined) {
@@ -189,8 +204,10 @@ export async function createBudgetItem(req: Request, res: Response): Promise<voi
       description: body.description,
       unit,
       quantity,
-      unitPrice,
-      subtotal,
+      costUnitPrice,
+      saleUnitPrice,
+      costSubtotal,
+      saleSubtotal,
       sortOrder,
     },
   });
@@ -227,14 +244,17 @@ export async function updateBudgetItem(req: Request, res: Response): Promise<voi
   if (!(await assertMember(req.user!.userId, projectId, res))) return;
 
   const quantity = body.quantity !== undefined ? body.quantity : Number(existing.quantity);
-  const unitPrice = body.unitPrice !== undefined ? body.unitPrice : Number(existing.unitPrice);
-  const subtotal = quantity * unitPrice;
+  const costUnitPrice = body.costUnitPrice !== undefined ? body.costUnitPrice : Number(existing.costUnitPrice);
+  const saleUnitPrice = body.saleUnitPrice !== undefined ? body.saleUnitPrice : Number(existing.saleUnitPrice);
+  const costSubtotal = quantity * costUnitPrice;
+  const saleSubtotal = quantity * saleUnitPrice;
 
   const item = await prisma.budgetItem.update({
     where: { id: itemId },
     data: {
       ...body,
-      subtotal,
+      costSubtotal,
+      saleSubtotal,
     },
   });
 
@@ -282,5 +302,123 @@ export async function deleteBudgetItem(req: Request, res: Response): Promise<voi
   });
 
   await recalcBudgetSummary(projectId);
+  res.status(204).send();
+}
+
+// ============================================================================
+// GASTOS ADICIONALES
+// ============================================================================
+
+// GET /api/projects/:projectId/expenses
+export async function listExpenses(req: Request, res: Response): Promise<void> {
+  const projectId = routeParam(req, "projectId");
+  if (!(await assertMember(req.user!.userId, projectId, res))) return;
+
+  const expenses = await prisma.projectExpense.findMany({
+    where: { projectId },
+    orderBy: { expenseDate: "desc" },
+  });
+
+  res.json(expenses.map((e) => ({ ...e, amount: Number(e.amount) })));
+}
+
+// POST /api/projects/:projectId/expenses
+export async function createExpense(req: Request, res: Response): Promise<void> {
+  const projectId = routeParam(req, "projectId");
+  if (!(await assertMember(req.user!.userId, projectId, res))) return;
+
+  const body = req.body as CreateExpenseInput;
+
+  const expense = await prisma.projectExpense.create({
+    data: {
+      projectId,
+      description: body.description,
+      amount: body.amount,
+      expenseType: body.expenseType,
+      expenseDate: body.expenseDate ? new Date(body.expenseDate) : new Date(),
+      invoiceRef: body.invoiceRef,
+      notes: body.notes,
+    },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      userId: req.user!.userId,
+      projectId,
+      action: "CREATE_EXPENSE",
+      entityType: "ProjectExpense",
+      entityId: expense.id,
+      metadata: { description: body.description, amount: body.amount, expenseType: body.expenseType },
+    },
+  });
+
+  await recalcBudgetSummary(projectId);
+  res.status(201).json({ ...expense, amount: Number(expense.amount) });
+}
+
+// PATCH /api/expenses/:expenseId
+export async function updateExpense(req: Request, res: Response): Promise<void> {
+  const expenseId = routeParam(req, "expenseId");
+  const body = req.body as UpdateExpenseInput;
+
+  const existing = await prisma.projectExpense.findUnique({
+    where: { id: expenseId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: "Gasto no encontrado" });
+    return;
+  }
+  if (!(await assertMember(req.user!.userId, existing.projectId, res))) return;
+
+  const expense = await prisma.projectExpense.update({
+    where: { id: expenseId },
+    data: {
+      ...body,
+      expenseDate: body.expenseDate ? new Date(body.expenseDate) : undefined,
+    },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      userId: req.user!.userId,
+      projectId: existing.projectId,
+      action: "UPDATE_EXPENSE",
+      entityType: "ProjectExpense",
+      entityId: expenseId,
+      metadata: { changes: body },
+    },
+  });
+
+  await recalcBudgetSummary(existing.projectId);
+  res.json({ ...expense, amount: Number(expense.amount) });
+}
+
+// DELETE /api/expenses/:expenseId
+export async function deleteExpense(req: Request, res: Response): Promise<void> {
+  const expenseId = routeParam(req, "expenseId");
+
+  const existing = await prisma.projectExpense.findUnique({
+    where: { id: expenseId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: "Gasto no encontrado" });
+    return;
+  }
+  if (!(await assertMember(req.user!.userId, existing.projectId, res))) return;
+
+  await prisma.projectExpense.delete({ where: { id: expenseId } });
+
+  await prisma.activityLog.create({
+    data: {
+      userId: req.user!.userId,
+      projectId: existing.projectId,
+      action: "DELETE_EXPENSE",
+      entityType: "ProjectExpense",
+      entityId: expenseId,
+      metadata: { description: existing.description },
+    },
+  });
+
+  await recalcBudgetSummary(existing.projectId);
   res.status(204).send();
 }
