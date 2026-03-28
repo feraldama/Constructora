@@ -24,6 +24,11 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE_CONTRACTOR: "Contratista creado",
   UPDATE_CONTRACTOR: "Contratista actualizado",
   DELETE_CONTRACTOR: "Contratista desactivado",
+  CREATE_BUDGET_CATEGORY: "Rubro de presupuesto creado",
+  DELETE_BUDGET_CATEGORY: "Rubro de presupuesto eliminado",
+  CREATE_BUDGET_ITEM: "Partida creada",
+  UPDATE_BUDGET_ITEM: "Partida actualizada",
+  DELETE_BUDGET_ITEM: "Partida eliminada",
 };
 
 const STATUS_BADGE: Record<string, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {

@@ -10,13 +10,22 @@ import contractorRoutes from "./routes/contractors.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import notificationRoutes from "./routes/notifications.routes.js";
 import attachmentRoutes from "./routes/attachments.routes.js";
+import projectRoutes from "./routes/projects.routes.js";
+import budgetRoutes from "./routes/budget.routes.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Servir archivos subidos (local storage)
@@ -31,6 +40,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/contractors", contractorRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api", budgetRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/attachments", attachmentRoutes);
 

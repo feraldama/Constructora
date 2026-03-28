@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,7 +10,6 @@ import {
 } from "@tanstack/react-table";
 import { Plus, Copy, Trash2, GripVertical, Save } from "lucide-react";
 import EditableCell, { type CellCoord } from "./EditableCell";
-import { useDebouncedCallback } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils/cn";
 import type { BudgetItem, MeasurementUnit } from "@/types";
 
@@ -45,6 +44,8 @@ interface BudgetSpreadsheetProps {
   onAddItem: () => void;
   onDuplicateItem: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
+  /** Eliminar rubro completo (opcional) */
+  onDeleteCategory?: () => void;
   /** Indicador de guardando */
   isSaving?: boolean;
   readOnly?: boolean;
@@ -62,28 +63,49 @@ export default function BudgetSpreadsheet({
   onAddItem,
   onDuplicateItem,
   onDeleteItem,
+  onDeleteCategory,
   isSaving = false,
   readOnly = false,
 }: BudgetSpreadsheetProps) {
   const tableRef = useRef<HTMLTableElement>(null);
+  const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const debouncePendingRef = useRef<
+    Map<string, { itemId: string; field: keyof BudgetItem; value: string | number }>
+  >(new Map());
+  const onCellChangeRef = useRef(onCellChange);
+  onCellChangeRef.current = onCellChange;
 
-  // ─── Debounce para auto-save ───
-  const debouncedChange = useDebouncedCallback(
-    (itemId: string, field: keyof BudgetItem, value: string | number) => {
-      onCellChange(itemId, field, value);
-    },
-    debounceMs
-  );
+  useEffect(() => {
+    return () => {
+      debounceTimersRef.current.forEach((t) => clearTimeout(t));
+      debounceTimersRef.current.clear();
+      // Evitar perder el último valor si el timer se cancela al desmontar (p. ej. refetch / Strict Mode)
+      debouncePendingRef.current.forEach((p) => {
+        onCellChangeRef.current(p.itemId, p.field, p.value);
+      });
+      debouncePendingRef.current.clear();
+    };
+  }, []);
 
+  // ─── Debounce por celda (itemId+campo) para no pisar ediciones de otras filas ───
   const handleCellSave = useCallback(
     (itemId: string, field: keyof BudgetItem, value: string | number) => {
-      if (debounceMs > 0) {
-        debouncedChange(itemId, field, value);
-      } else {
+      if (debounceMs <= 0) {
         onCellChange(itemId, field, value);
+        return;
       }
+      const key = `${itemId}:${String(field)}`;
+      const prev = debounceTimersRef.current.get(key);
+      if (prev) clearTimeout(prev);
+      debouncePendingRef.current.set(key, { itemId, field, value });
+      const t = setTimeout(() => {
+        debounceTimersRef.current.delete(key);
+        debouncePendingRef.current.delete(key);
+        onCellChangeRef.current(itemId, field, value);
+      }, debounceMs);
+      debounceTimersRef.current.set(key, t);
     },
-    [debouncedChange, onCellChange, debounceMs]
+    [debounceMs, onCellChange]
   );
 
   // ─── Navegación por teclado ───
@@ -202,9 +224,10 @@ export default function BudgetSpreadsheet({
               }
             }}
             className={cn(
-              "w-full px-2 py-2 bg-transparent rounded-sm text-sm cursor-pointer outline-none",
+              "w-full px-2 py-2 bg-white rounded-sm text-sm cursor-pointer outline-none",
+              "text-gray-900",
               "hover:bg-blue-50 focus:bg-blue-50 focus:ring-2 focus:ring-blue-300",
-              readOnly && "pointer-events-none text-gray-500"
+              readOnly && "pointer-events-none text-gray-500 bg-gray-50"
             )}
           >
             {UNITS.map((u) => (
@@ -327,6 +350,15 @@ export default function BudgetSpreadsheet({
               Guardando...
             </span>
           )}
+          {!readOnly && onDeleteCategory && (
+            <button
+              type="button"
+              onClick={onDeleteCategory}
+              className="text-xs font-medium text-red-600 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
+            >
+              Eliminar rubro
+            </button>
+          )}
           <span className="text-sm font-semibold text-gray-700 tabular-nums">
             Total: {fmtCurrency(categoryTotal)}
           </span>
@@ -418,7 +450,7 @@ export default function BudgetSpreadsheet({
 
       {/* Atajos de teclado */}
       {!readOnly && items.length > 0 && (
-        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex gap-4 text-[11px] text-gray-400">
+        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex gap-4 text-[11px] text-gray-600">
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Tab</kbd> / <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Shift+Tab</kbd> navegar celdas</span>
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Enter</kbd> confirmar y bajar</span>
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Esc</kbd> cancelar edicion</span>

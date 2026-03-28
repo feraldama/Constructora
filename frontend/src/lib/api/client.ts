@@ -1,7 +1,17 @@
 import axios from "axios";
 
+/** Base URL del API: proxy same-origin salvo que definas NEXT_PUBLIC_API_URL (URL absoluta). */
+function apiBaseURL(): string {
+  const env = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (env) return env;
+  // Cliente: va a /api en el mismo host/puerto de Next (rewrite → Express).
+  if (typeof window !== "undefined") return "/api";
+  // SSR / scripts: hablar directo al backend
+  return "http://127.0.0.1:4000/api";
+}
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
+  baseURL: apiBaseURL(),
   headers: { "Content-Type": "application/json" },
 });
 

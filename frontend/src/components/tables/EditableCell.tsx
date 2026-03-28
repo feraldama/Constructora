@@ -146,6 +146,7 @@ export default function EditableCell({
         step={type === "number" ? "any" : undefined}
         className={cn(
           "w-full px-3 py-2 border-2 border-blue-500 rounded-sm outline-none bg-white text-sm tabular-nums",
+          "text-gray-900 placeholder:text-gray-400",
           "ring-2 ring-blue-200",
           className
         )}
@@ -189,9 +190,9 @@ export default function EditableCell({
         }
       }}
       className={cn(
-        "px-3 py-2 cursor-cell rounded-sm text-sm tabular-nums transition-colors",
+        "px-3 py-2 cursor-cell rounded-sm text-sm tabular-nums transition-colors text-gray-900",
         "hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300",
-        isEmpty && "text-gray-400 italic",
+        isEmpty && "text-gray-500 italic",
         className
       )}
     >
