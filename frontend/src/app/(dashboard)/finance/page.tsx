@@ -13,6 +13,12 @@ import {
   ShieldAlert,
   Receipt,
   FileSpreadsheet,
+  GitCompareArrows,
+  CheckCircle2,
+  XCircle,
+  MinusCircle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   AreaChart,
@@ -35,7 +41,9 @@ import {
   useCashFlow,
   usePaymentPredictions,
   useDebtAlerts,
+  useVarianceAnalysis,
 } from "@/hooks/useFinance";
+import type { CategoryVariance } from "@/lib/api/finance";
 import { exportToExcel } from "@/lib/utils/export";
 
 function fmt(n: number): string {
@@ -72,13 +80,14 @@ const CONFIDENCE_STYLES: Record<string, { bg: string; text: string }> = {
 
 export default function FinancePage() {
   const { projectId, project } = useProject();
-  const [tab, setTab] = useState<"overview" | "cashflow" | "predictions" | "alerts">("overview");
+  const [tab, setTab] = useState<"overview" | "cashflow" | "predictions" | "alerts" | "variance">("overview");
 
   const pid = projectId ?? undefined;
   const { data: fin, isLoading: loadingFin } = useFinancialSummary(pid);
   const { data: cashFlow, isLoading: loadingCF } = useCashFlow(tab === "cashflow" ? pid : undefined);
   const { data: predictions, isLoading: loadingPred } = usePaymentPredictions(tab === "predictions" ? pid : undefined);
   const { data: alertsData, isLoading: loadingAlerts } = useDebtAlerts(tab === "alerts" ? pid : undefined);
+  const { data: varianceData, isLoading: loadingVariance } = useVarianceAnalysis(tab === "variance" ? pid : undefined);
 
   const selectedProject = project;
 
@@ -149,8 +158,26 @@ export default function FinancePage() {
       });
     }
 
+    // Variance
+    if (varianceData?.items.length) {
+      sheets.push({
+        name: "Variación",
+        headers: [
+          "Rubro", "Partida", "Unidad", "Cantidad",
+          "Costo presupuestado", "Comprometido", "Pagado", "Pendiente",
+          "Certificado", "Variación ($)", "Variación (%)", "Estado",
+        ],
+        rows: varianceData.items.map((i) => [
+          i.categoryName, i.itemName, i.unit, i.budgetedQty,
+          i.budgetedCost, i.committedPrice, i.paidAmount, i.pendingAmount,
+          i.certifiedAmount, i.costVariance, i.costVariancePercent,
+          i.status === "over" ? "Sobre presupuesto" : i.status === "under" ? "Bajo presupuesto" : "En línea",
+        ]),
+      });
+    }
+
     exportToExcel(`Finanzas_${name}`, sheets);
-  }, [fin, selectedProject, cashFlow, predictions, alertsData]);
+  }, [fin, selectedProject, cashFlow, predictions, alertsData, varianceData]);
 
   const expensePieData = useMemo(
     () =>
@@ -167,6 +194,7 @@ export default function FinancePage() {
 
   const tabs = [
     { key: "overview" as const, label: "Resumen" },
+    { key: "variance" as const, label: "Variación" },
     { key: "cashflow" as const, label: "Flujo de caja" },
     { key: "predictions" as const, label: "Predicciones" },
     { key: "alerts" as const, label: "Alertas" },
@@ -561,6 +589,15 @@ export default function FinancePage() {
             </div>
           )}
 
+          {/* ── TAB: Variance ────────────────────────────────────────── */}
+          {tab === "variance" && (
+            <VarianceTab
+              data={varianceData}
+              loading={loadingVariance}
+              fmt={fmt}
+            />
+          )}
+
           {/* ── TAB: Alerts ────────────────────────────────────────────── */}
           {tab === "alerts" && (
             <div className="space-y-6">
@@ -661,5 +698,334 @@ function KpiCard({
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Variance Tab Component ────────────────────────────────────────────────
+
+const STATUS_STYLES = {
+  over: { bg: "bg-red-50", text: "text-red-700", label: "Sobre presupuesto", icon: XCircle },
+  on_track: { bg: "bg-green-50", text: "text-green-700", label: "En línea", icon: CheckCircle2 },
+  under: { bg: "bg-blue-50", text: "text-blue-700", label: "Bajo presupuesto", icon: MinusCircle },
+};
+
+function VarianceTab({
+  data,
+  loading,
+  fmt,
+}: {
+  data: import("@/lib/api/finance").VarianceAnalysisResult | undefined;
+  loading: boolean;
+  fmt: (n: number) => string;
+}) {
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<"all" | "over" | "on_track" | "under">("all");
+
+  const toggleCat = useCallback((catId: string) => {
+    setExpandedCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    if (!data) return;
+    setExpandedCats(new Set(data.categories.map((c) => c.categoryId)));
+  }, [data]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedCats(new Set());
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 rounded-xl bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!data || data.items.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
+        <GitCompareArrows size={40} className="mx-auto text-gray-300 mb-3" />
+        <p className="text-sm text-gray-600 font-medium">Sin datos de variación</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Registrá pagos y certificaciones para ver el análisis de variación.
+        </p>
+      </div>
+    );
+  }
+
+  const { summary, categories, items } = data;
+  const filteredItems = filter === "all" ? items : items.filter((i) => i.status === filter);
+  const filteredCats = filter === "all"
+    ? categories
+    : categories.filter((c) =>
+        items.some((i) => i.categoryId === c.categoryId && i.status === filter)
+      );
+
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Costo presupuestado"
+          value={fmt(summary.totalBudgetedCost)}
+          icon={<DollarSign size={20} className="text-blue-600" />}
+          iconBg="bg-blue-50"
+        />
+        <KpiCard
+          label="Comprometido"
+          value={fmt(summary.totalCommitted)}
+          sub={`${summary.commitVariancePercent > 0 ? "Disponible" : "Excedido"}: ${fmt(Math.abs(summary.commitVariance))}`}
+          icon={<Receipt size={20} className="text-purple-600" />}
+          iconBg="bg-purple-50"
+        />
+        <KpiCard
+          label="Ejecutado (pagado)"
+          value={fmt(summary.totalPaid)}
+          sub={`Pendiente: ${fmt(summary.totalPending)}`}
+          icon={<DollarSign size={20} className="text-green-600" />}
+          iconBg="bg-green-50"
+        />
+        <KpiCard
+          label="Variación total"
+          value={fmt(Math.abs(summary.costVariance))}
+          sub={`${summary.costVariance >= 0 ? "Bajo" : "Sobre"} presupuesto: ${Math.abs(summary.costVariancePercent)}%`}
+          icon={
+            summary.costVariance >= 0
+              ? <ArrowDownRight size={20} className="text-green-600" />
+              : <ArrowUpRight size={20} className="text-red-600" />
+          }
+          iconBg={summary.costVariance >= 0 ? "bg-green-50" : "bg-red-50"}
+          valueColor={summary.costVariance >= 0 ? "text-green-700" : "text-red-700"}
+        />
+      </div>
+
+      {/* Status distribution */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <button
+          type="button"
+          onClick={() => setFilter(filter === "over" ? "all" : "over")}
+          className={`rounded-xl border p-4 text-left transition-colors cursor-pointer ${
+            filter === "over" ? "border-red-400 bg-red-50" : "border-gray-200 bg-white hover:bg-red-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <XCircle size={16} className="text-red-500" />
+            <span className="text-xs text-gray-500">Sobre presupuesto</span>
+          </div>
+          <p className="text-2xl font-bold text-red-700">{summary.overBudgetItems}</p>
+          <p className="text-xs text-gray-400">partidas</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter(filter === "on_track" ? "all" : "on_track")}
+          className={`rounded-xl border p-4 text-left transition-colors cursor-pointer ${
+            filter === "on_track" ? "border-green-400 bg-green-50" : "border-gray-200 bg-white hover:bg-green-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 size={16} className="text-green-500" />
+            <span className="text-xs text-gray-500">En línea</span>
+          </div>
+          <p className="text-2xl font-bold text-green-700">{summary.onTrackItems}</p>
+          <p className="text-xs text-gray-400">partidas</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter(filter === "under" ? "all" : "under")}
+          className={`rounded-xl border p-4 text-left transition-colors cursor-pointer ${
+            filter === "under" ? "border-blue-400 bg-blue-50" : "border-gray-200 bg-white hover:bg-blue-50/50"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <MinusCircle size={16} className="text-blue-500" />
+            <span className="text-xs text-gray-500">Bajo presupuesto</span>
+          </div>
+          <p className="text-2xl font-bold text-blue-700">{summary.underBudgetItems}</p>
+          <p className="text-xs text-gray-400">partidas</p>
+        </button>
+      </div>
+
+      {/* Variance table by category */}
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Detalle por rubro y partida
+            {filter !== "all" && (
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                (filtrado: {STATUS_STYLES[filter].label})
+              </span>
+            )}
+          </h3>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={expandAll}
+              className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+            >
+              Expandir todo
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={collapseAll}
+              className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+            >
+              Colapsar todo
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
+                <th className="py-2.5 px-4">Rubro / Partida</th>
+                <th className="py-2.5 px-3 text-right">Presupuestado</th>
+                <th className="py-2.5 px-3 text-right">Comprometido</th>
+                <th className="py-2.5 px-3 text-right">Pagado</th>
+                <th className="py-2.5 px-3 text-right">Pendiente</th>
+                <th className="py-2.5 px-3 text-right">Certificado</th>
+                <th className="py-2.5 px-3 text-right">Variación</th>
+                <th className="py-2.5 px-3 text-center">Estado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredCats.map((cat) => {
+                const isExpanded = expandedCats.has(cat.categoryId);
+                const catItems = filteredItems.filter((i) => i.categoryId === cat.categoryId);
+                return (
+                  <CategoryRow
+                    key={cat.categoryId}
+                    cat={cat}
+                    items={catItems}
+                    isExpanded={isExpanded}
+                    onToggle={() => toggleCat(cat.categoryId)}
+                    fmt={fmt}
+                  />
+                );
+              })}
+            </tbody>
+            {/* Totals footer */}
+            <tfoot>
+              <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold text-gray-900">
+                <td className="py-3 px-4">TOTAL</td>
+                <td className="py-3 px-3 text-right tabular-nums">{fmt(summary.totalBudgetedCost)}</td>
+                <td className="py-3 px-3 text-right tabular-nums">{fmt(summary.totalCommitted)}</td>
+                <td className="py-3 px-3 text-right tabular-nums">{fmt(summary.totalPaid)}</td>
+                <td className="py-3 px-3 text-right tabular-nums">{fmt(summary.totalPending)}</td>
+                <td className="py-3 px-3 text-right tabular-nums">{fmt(summary.totalCertified)}</td>
+                <td className={`py-3 px-3 text-right tabular-nums ${summary.costVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
+                  {summary.costVariance >= 0 ? "+" : ""}{fmt(summary.costVariance)} ({Math.abs(summary.costVariancePercent)}%)
+                </td>
+                <td className="py-3 px-3 text-center">—</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Category Row with expandable items ────────────────────────────────────
+
+function CategoryRow({
+  cat,
+  items,
+  isExpanded,
+  onToggle,
+  fmt,
+}: {
+  cat: CategoryVariance;
+  items: import("@/lib/api/finance").VarianceItem[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  fmt: (n: number) => string;
+}) {
+  return (
+    <>
+      {/* Category header row */}
+      <tr
+        className="bg-gray-50 hover:bg-gray-100 cursor-pointer"
+        onClick={onToggle}
+      >
+        <td className="py-2.5 px-4 font-medium text-gray-900">
+          <div className="flex items-center gap-2">
+            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {cat.categoryName}
+            <span className="text-xs text-gray-400 font-normal">({cat.itemCount} partidas)</span>
+            {cat.overCount > 0 && (
+              <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+                {cat.overCount} sobre
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmt(cat.budgetedCost)}</td>
+        <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmt(cat.committedPrice)}</td>
+        <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmt(cat.paidAmount)}</td>
+        <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmt(cat.pendingAmount)}</td>
+        <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmt(cat.certifiedAmount)}</td>
+        <td className={`py-2.5 px-3 text-right tabular-nums font-medium ${cat.costVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
+          {cat.costVariance >= 0 ? "+" : ""}{fmt(cat.costVariance)}
+        </td>
+        <td className="py-2.5 px-3 text-center">
+          <span className="text-xs text-gray-400">{Math.abs(cat.costVariancePercent)}%</span>
+        </td>
+      </tr>
+
+      {/* Item detail rows */}
+      {isExpanded &&
+        items.map((item) => {
+          const s = STATUS_STYLES[item.status];
+          const Icon = s.icon;
+          return (
+            <tr key={item.itemId} className="hover:bg-gray-50">
+              <td className="py-2 px-4 pl-10 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="truncate max-w-[250px]">{item.itemName}</span>
+                  <span className="text-xs text-gray-400 shrink-0">
+                    {item.budgetedQty} {item.unit}
+                  </span>
+                  {item.progressPercent > 0 && (
+                    <span className="text-xs text-gray-400 shrink-0">
+                      · {item.progressPercent}% avance
+                    </span>
+                  )}
+                </div>
+              </td>
+              <td className="py-2 px-3 text-right tabular-nums text-gray-600">{fmt(item.budgetedCost)}</td>
+              <td className="py-2 px-3 text-right tabular-nums text-gray-600">{fmt(item.committedPrice)}</td>
+              <td className="py-2 px-3 text-right tabular-nums text-gray-600">{fmt(item.paidAmount)}</td>
+              <td className="py-2 px-3 text-right tabular-nums text-gray-600">{fmt(item.pendingAmount)}</td>
+              <td className="py-2 px-3 text-right tabular-nums text-gray-600">{fmt(item.certifiedAmount)}</td>
+              <td className={`py-2 px-3 text-right tabular-nums font-medium ${item.costVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
+                {item.costVariance >= 0 ? "+" : ""}{fmt(item.costVariance)}
+                <span className="text-xs text-gray-400 ml-1">({Math.abs(item.costVariancePercent)}%)</span>
+              </td>
+              <td className="py-2 px-3 text-center">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${s.bg} ${s.text}`}
+                  title={s.label}
+                >
+                  <Icon size={12} />
+                  <span className="hidden sm:inline">{s.label}</span>
+                </span>
+              </td>
+            </tr>
+          );
+        })}
+    </>
   );
 }

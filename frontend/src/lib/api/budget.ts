@@ -64,3 +64,17 @@ export async function updateBudgetItem(
 export async function deleteBudgetItem(itemId: string): Promise<void> {
   await api.delete(`/budget-items/${itemId}`);
 }
+
+export async function reorderBudgetItems(
+  projectId: string,
+  items: { id: string; sortOrder: number }[]
+): Promise<void> {
+  await api.patch(`/projects/${projectId}/budget-items/reorder`, { items });
+}
+
+export async function reorderCategories(
+  projectId: string,
+  categories: { id: string; sortOrder: number }[]
+): Promise<void> {
+  await api.patch(`/projects/${projectId}/categories/reorder`, { categories });
+}

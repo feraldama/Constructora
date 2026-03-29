@@ -7,6 +7,8 @@ import {
   updateBudgetItemSchema,
   createExpenseSchema,
   updateExpenseSchema,
+  reorderItemsSchema,
+  reorderCategoriesSchema,
 } from "../controllers/budget/budget.schema.js";
 import {
   getProjectBudget,
@@ -15,6 +17,8 @@ import {
   createBudgetItem,
   updateBudgetItem,
   deleteBudgetItem,
+  reorderBudgetItems,
+  reorderCategories,
   listExpenses,
   createExpense,
   updateExpense,
@@ -23,6 +27,7 @@ import {
 import {
   financialSummary,
   financialItems,
+  varianceAnalysis,
 } from "../controllers/finance/finance.controller.js";
 
 const router = Router();
@@ -36,6 +41,8 @@ router.delete("/projects/:projectId/categories/:categoryId", deleteCategory);
 router.post("/categories/:categoryId/budget-items", validate(createBudgetItemSchema), createBudgetItem);
 router.patch("/budget-items/:itemId", validate(updateBudgetItemSchema), updateBudgetItem);
 router.delete("/budget-items/:itemId", deleteBudgetItem);
+router.patch("/projects/:projectId/budget-items/reorder", validate(reorderItemsSchema), reorderBudgetItems);
+router.patch("/projects/:projectId/categories/reorder", validate(reorderCategoriesSchema), reorderCategories);
 
 // Gastos adicionales
 router.get("/projects/:projectId/expenses", listExpenses);
@@ -46,5 +53,6 @@ router.delete("/expenses/:expenseId", deleteExpense);
 // Finanzas
 router.get("/projects/:projectId/finance/summary", financialSummary);
 router.get("/projects/:projectId/finance/items", financialItems);
+router.get("/projects/:projectId/finance/variance", varianceAnalysis);
 
 export default router;

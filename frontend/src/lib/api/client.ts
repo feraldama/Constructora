@@ -26,13 +26,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect a login si 401
+// Redirect a login si 401 (solo si no estamos ya en login/register)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      const path = window.location.pathname;
+      if (path !== "/login" && path !== "/register") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

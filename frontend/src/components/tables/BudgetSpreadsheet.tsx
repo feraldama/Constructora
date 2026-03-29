@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useRef, useEffect } from "react";
+import { useMemo, useCallback, useRef, useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,6 +8,22 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from "@tanstack/react-table";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Plus, Copy, Trash2, GripVertical, Save, Ruler } from "lucide-react";
 import EditableCell, { type CellCoord } from "./EditableCell";
 import { cn } from "@/lib/utils/cn";
@@ -53,6 +69,10 @@ interface BudgetSpreadsheetProps {
   progressData?: Map<string, { measured: number; percent: number }>;
   /** Callback al hacer click en la celda de avance */
   onOpenProgress?: (itemId: string) => void;
+  /** Callback al reordenar items (recibe nuevo orden de IDs) */
+  onReorderItems?: (reorderedIds: string[]) => void;
+  /** Props para el drag handle de la categoría (pasado por SortableCategory) */
+  categoryDragHandleProps?: Record<string, unknown>;
 }
 
 const columnHelper = createColumnHelper<BudgetItem>();
@@ -72,6 +92,8 @@ export default function BudgetSpreadsheet({
   readOnly = false,
   progressData,
   onOpenProgress,
+  onReorderItems,
+  categoryDragHandleProps,
 }: BudgetSpreadsheetProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -173,7 +195,10 @@ export default function BudgetSpreadsheet({
         cell: (info) => (
           <div className="flex items-center gap-1 px-1">
             {!readOnly && (
-              <GripVertical size={14} className="text-gray-300 cursor-grab shrink-0" />
+              <GripVertical
+                size={14}
+                className="text-gray-300 hover:text-gray-500 cursor-grab shrink-0 drag-handle"
+              />
             )}
             <span className="text-xs text-gray-400 tabular-nums">
               {info.row.index + 1}
@@ -410,6 +435,27 @@ export default function BudgetSpreadsheet({
     getRowId: (row) => row.id,
   });
 
+  // ─── DnD ───
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const itemIds = useMemo(() => items.map((i) => i.id), [items]);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id || !onReorderItems) return;
+      const oldIndex = itemIds.indexOf(active.id as string);
+      const newIndex = itemIds.indexOf(over.id as string);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const newOrder = arrayMove(itemIds, oldIndex, newIndex);
+      onReorderItems(newOrder);
+    },
+    [itemIds, onReorderItems]
+  );
+
   // ─── Totales ───
   const categoryCostTotal = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity * item.costUnitPrice, 0),
@@ -427,7 +473,16 @@ export default function BudgetSpreadsheet({
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
       {/* Header de categoría */}
       <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {categoryDragHandleProps && (
+            <div
+              {...categoryDragHandleProps}
+              className="p-1 -ml-2 cursor-grab text-gray-400 hover:text-gray-600 rounded transition-colors"
+              title="Arrastrar para reordenar rubro"
+            >
+              <GripVertical size={16} />
+            </div>
+          )}
           <h3 className="font-semibold text-gray-800">{categoryName}</h3>
           <span className="text-xs text-gray-400">{itemCount} partida{itemCount !== 1 ? "s" : ""}</span>
         </div>
@@ -472,39 +527,35 @@ export default function BudgetSpreadsheet({
               </tr>
             ))}
           </thead>
-          <tbody>
-            {table.getRowModel().rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-4 py-8 text-center text-sm text-gray-400"
-                >
-                  Sin partidas. Haz click en &quot;Agregar partida&quot; para comenzar.
-                </td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map((row, rowIdx) => (
-                <tr
-                  key={row.id}
-                  className={cn(
-                    "border-b border-gray-100 transition-colors",
-                    "hover:bg-blue-50/30",
-                    rowIdx % 2 === 1 && "bg-gray-50/30"
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+              <tbody>
+                {table.getRowModel().rows.length === 0 ? (
+                  <tr>
                     <td
-                      key={cell.id}
-                      className="p-0"
-                      style={{ width: cell.column.getSize() }}
+                      colSpan={columns.length}
+                      className="px-4 py-8 text-center text-sm text-gray-400"
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      Sin partidas. Haz click en &quot;Agregar partida&quot; para comenzar.
                     </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
+                  </tr>
+                ) : (
+                  table.getRowModel().rows.map((row, rowIdx) => (
+                    <SortableRow
+                      key={row.id}
+                      row={row}
+                      rowIdx={rowIdx}
+                      readOnly={readOnly}
+                    />
+                  ))
+                )}
+              </tbody>
+            </SortableContext>
+          </DndContext>
           {/* Footer con totales */}
           {items.length > 0 && (
             <tfoot>
@@ -547,13 +598,67 @@ export default function BudgetSpreadsheet({
 
       {/* Atajos de teclado */}
       {!readOnly && items.length > 0 && (
-        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex gap-4 text-[11px] text-gray-600">
+        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex flex-wrap gap-4 text-[11px] text-gray-600">
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Tab</kbd> / <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Shift+Tab</kbd> navegar celdas</span>
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Enter</kbd> confirmar y bajar</span>
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Esc</kbd> cancelar edicion</span>
           <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">↑↓←→</kbd> navegar</span>
+          <span><GripVertical size={11} className="inline" /> arrastrar para reordenar</span>
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Sortable Row ───────────────────────────────────────────────────────
+
+import type { Row } from "@tanstack/react-table";
+
+function SortableRow({
+  row,
+  rowIdx,
+  readOnly,
+}: {
+  row: Row<BudgetItem>;
+  rowIdx: number;
+  readOnly: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id, disabled: readOnly });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "border-b border-gray-100 transition-colors",
+        "hover:bg-blue-50/30",
+        rowIdx % 2 === 1 && "bg-gray-50/30",
+        isDragging && "bg-blue-50 shadow-sm z-10"
+      )}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <td
+          key={cell.id}
+          className="p-0"
+          style={{ width: cell.column.getSize() }}
+          {...(cell.column.id === "index" ? { ...attributes, ...listeners } : {})}
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </td>
+      ))}
+    </tr>
   );
 }

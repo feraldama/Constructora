@@ -286,6 +286,13 @@ Cada partida muestra una columna **"Avance"** con:
 - Click en **"Eliminar rubro"** en la cabecera del rubro
 - Elimina el rubro y todas sus partidas (bloqueado si hay pagos activos en las partidas)
 
+### Reordenar rubros y partidas (Drag & Drop)
+
+- **Reordenar rubros**: arrastrar el ícono ☰ que aparece a la izquierda del nombre del rubro para moverlo arriba o abajo
+- **Reordenar partidas dentro de un rubro**: arrastrar el ícono ☰ de la columna "#" de la partida hacia la nueva posición
+- El nuevo orden se guarda automáticamente al soltar
+- Las flechas del teclado y la navegación por celdas siguen funcionando normalmente
+
 ---
 
 ## 7. Avance Físico de Obra
@@ -372,7 +379,20 @@ Todos los pagos del contratista agrupados por proyecto, expandibles.
 
 ## 9. Asignaciones de Partidas
 
-Las asignaciones vinculan contratistas con partidas del presupuesto.
+**Ruta:** `/assignments`
+
+Las asignaciones vinculan contratistas con partidas del presupuesto. Se pueden gestionar desde esta página o desde el detalle de un contratista.
+
+### Vista general de asignaciones
+
+La página muestra KPIs superiores: total comprometido, total pagado, contratistas activos y deuda vencida.
+
+Dos modos de visualización disponibles:
+
+- **Por partida**: muestra las partidas agrupadas por rubro (categoría), con columnas de presupuestado, contratado, pagado, pendiente, varianza y cantidad de contratistas. Las partidas sin asignar se destacan con badge amarillo "Sin asignar"
+- **Por contratista**: resumen financiero de cada contratista con partidas asignadas, montos acordados, pagados, pendientes, vencidos y barra de ejecución. Link directo al detalle del contratista
+
+Ambas vistas tienen búsqueda en tiempo real y las categorías se expanden/colapsan.
 
 ### Crear una asignación
 
@@ -534,6 +554,12 @@ En el detalle de la certificación (`/certificates/{id}`):
 3. El pago queda vinculado a la certificación
 4. Solo se puede generar un pago por certificación
 
+### Exportar certificación a PDF
+
+- Click en el botón **"PDF"** (azul) para descargar la certificación como archivo PDF
+- El PDF incluye: encabezado con número de certificación, proyecto, contratista, período, tabla de partidas con todas las columnas y total
+- El nombre del archivo se genera automáticamente: `Certificacion_{número}_{contratista}.pdf`
+
 ### Imprimir certificación
 
 - Click en el ícono de impresora para imprimir el documento
@@ -580,28 +606,42 @@ Vista mensual que muestra todos los eventos relevantes del proyecto activo.
 
 **Ruta:** `/expenses`
 
-Gastos del proyecto que no están vinculados a partidas del presupuesto (materiales, equipamiento, permisos, etc.).
+Gastos del proyecto como materiales, equipamiento, permisos, etc. Pueden vincularse opcionalmente a una partida del presupuesto.
 
 ### Crear un gasto
 
 1. Click en **"Nuevo gasto"**
 2. Completá:
    - **Descripción** (obligatorio)
-   - **Monto** (obligatorio)
+   - **Cantidad** (obligatorio, por defecto 1)
+   - **Precio unitario** (obligatorio)
+   - **Total**: se calcula automáticamente (cantidad × precio unitario)
    - **Tipo**: Materiales, Equipamiento, Gastos generales, Permisos, Otros
+   - **Partida** (opcional): vincular el gasto a una partida específica del presupuesto. La partida aparece agrupada por rubro en el selector
    - **Fecha** (por defecto: hoy)
    - **Ref. factura** (opcional)
    - **Notas** (opcional)
 3. Click en **"Crear gasto"**
 
+### Vinculación a partidas
+
+Cuando un gasto se vincula a una partida del presupuesto:
+- Aparece en la columna "Partida" de la tabla de gastos
+- Se refleja en el análisis de variación (tab Variación en Finanzas) como ejecución adicional contra esa partida
+- Permite rastrear qué gastos corresponden a qué ítems del presupuesto
+
 ### Resumen por tipo
 
 Debajo de los filtros se muestran tarjetas con el total gastado por cada tipo de gasto.
 
+### Tabla de gastos
+
+La tabla muestra: Fecha, Descripción, Tipo, Partida vinculada, Cantidad, Precio unitario, Total, Factura y acciones de editar/eliminar.
+
 ### Filtros
 
 - **Tipo**: filtrar por tipo de gasto
-- **Buscar**: por descripción o referencia de factura
+- **Buscar**: por descripción, referencia de factura o nombre de partida
 
 ---
 
@@ -609,7 +649,7 @@ Debajo de los filtros se muestran tarjetas con el total gastado por cada tipo de
 
 **Ruta:** `/finance`
 
-Análisis financiero completo del proyecto activo, dividido en 4 tabs:
+Análisis financiero completo del proyecto activo, dividido en 5 tabs:
 
 ### Tab: Resumen
 
@@ -637,6 +677,22 @@ Análisis financiero completo del proyecto activo, dividido en 4 tabs:
   - Montos acordados vs pagados
   - Frecuencia de pagos
 - Nivel de confianza: Alto (3+ pagos previos), Medio (1-2), Ninguno
+
+### Tab: Variación (Presupuesto vs Real)
+
+Análisis línea por línea comparando lo presupuestado contra lo realmente ejecutado:
+
+- **KPIs superiores**: costo presupuestado, comprometido (asignaciones), ejecutado (pagado) y variación total con porcentaje
+- **Tarjetas de estado**: cantidad de partidas sobre presupuesto, en línea y bajo presupuesto. Hacer clic en una tarjeta filtra la tabla
+- **Tabla expandible por rubro**: cada categoría se expande para mostrar sus partidas
+  - **Columnas**: presupuestado, comprometido, pagado, pendiente, certificado, variación ($) y variación (%)
+  - **Estado por partida**:
+    - Sobre presupuesto (rojo): ejecutado supera el presupuesto en más de 5%
+    - En línea (verde): ejecución dentro del rango esperado
+    - Bajo presupuesto (azul): ejecución significativamente menor al presupuesto
+  - **Avance físico**: porcentaje de avance medido por partida
+- **Botones**: "Expandir todo" / "Colapsar todo" para navegar rápidamente
+- **Exportar Excel**: los datos de variación se incluyen en la exportación financiera como una hoja adicional
 
 ### Tab: Alertas
 

@@ -15,6 +15,10 @@ import {
   Pencil,
   Trash2,
   CheckCircle,
+  Banknote,
+  ArrowLeftRight,
+  FileCheck,
+  MoreHorizontal,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -37,6 +41,13 @@ import { useProject } from "@/hooks/useProject";
 import { useContractors } from "@/hooks/useContractors";
 
 // ── Etiquetas de método de pago ───────────────────────────────────────────────
+const METHOD_CONFIG: Record<string, { label: string; icon: typeof Banknote; bg: string; text: string }> = {
+  CASH:          { label: "Efectivo",       icon: Banknote,         bg: "bg-green-50",  text: "text-green-700" },
+  BANK_TRANSFER: { label: "Transferencia",  icon: ArrowLeftRight,   bg: "bg-blue-50",   text: "text-blue-700" },
+  CHECK:         { label: "Cheque",         icon: FileCheck,        bg: "bg-purple-50", text: "text-purple-700" },
+  OTHER:         { label: "Otro",           icon: MoreHorizontal,   bg: "bg-gray-100",  text: "text-gray-600" },
+};
+
 const METHOD_LABEL: Record<string, string> = {
   CASH:          "Efectivo",
   BANK_TRANSFER: "Transferencia",
@@ -165,11 +176,19 @@ export default function PaymentsPage() {
       }),
       columnHelper.accessor("paymentMethod" as keyof PaymentDetail, {
         header: "Método",
-        size: 120,
+        size: 140,
         cell: (info) => {
           const m = info.getValue() as string | null | undefined;
           if (!m) return <span className="text-gray-400">-</span>;
-          return <span className="text-sm text-gray-600">{METHOD_LABEL[m] ?? m}</span>;
+          const cfg = METHOD_CONFIG[m];
+          if (!cfg) return <span className="text-sm text-gray-600">{m}</span>;
+          const Icon = cfg.icon;
+          return (
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+              <Icon size={13} />
+              {cfg.label}
+            </span>
+          );
         },
       }),
       columnHelper.display({

@@ -134,3 +134,76 @@ export async function getDebtAlerts(projectId: string): Promise<DebtAlertsResult
   });
   return data;
 }
+
+// ── Variance Analysis ──────────────────────────────────────────────────────
+
+export interface VarianceItem {
+  itemId: string;
+  itemName: string;
+  categoryId: string;
+  categoryName: string;
+  unit: string;
+  budgetedQty: number;
+  costUnitPrice: number;
+  saleUnitPrice: number;
+  budgetedCost: number;
+  budgetedSale: number;
+  committedPrice: number;
+  paidAmount: number;
+  pendingAmount: number;
+  totalExecuted: number;
+  linkedExpenses: number;
+  certifiedAmount: number;
+  certifiedQty: number;
+  progressQty: number;
+  progressPercent: number;
+  costVariance: number;
+  costVariancePercent: number;
+  saleVariance: number;
+  status: "under" | "on_track" | "over";
+}
+
+export interface CategoryVariance {
+  categoryId: string;
+  categoryName: string;
+  budgetedCost: number;
+  budgetedSale: number;
+  committedPrice: number;
+  paidAmount: number;
+  pendingAmount: number;
+  totalExecuted: number;
+  certifiedAmount: number;
+  costVariance: number;
+  costVariancePercent: number;
+  itemCount: number;
+  overCount: number;
+}
+
+export interface VarianceAnalysisResult {
+  summary: {
+    totalBudgetedCost: number;
+    totalBudgetedSale: number;
+    totalCommitted: number;
+    totalPaid: number;
+    totalPending: number;
+    totalExecuted: number;
+    totalCertified: number;
+    costVariance: number;
+    costVariancePercent: number;
+    commitVariance: number;
+    commitVariancePercent: number;
+    overBudgetItems: number;
+    onTrackItems: number;
+    underBudgetItems: number;
+  };
+  categories: CategoryVariance[];
+  items: VarianceItem[];
+  generatedAt: string;
+}
+
+export async function getVarianceAnalysis(projectId: string): Promise<VarianceAnalysisResult> {
+  const { data } = await api.get<VarianceAnalysisResult>(
+    `/projects/${projectId}/finance/variance`
+  );
+  return data;
+}

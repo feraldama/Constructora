@@ -3,11 +3,14 @@ import type { ProjectExpense, ExpenseType } from "@/types";
 
 export interface CreateExpensePayload {
   description: string;
-  amount: number;
+  quantity: number;
+  unitPrice: number;
+  amount?: number;
   expenseType: ExpenseType;
   expenseDate?: string;
   invoiceRef?: string;
   notes?: string;
+  budgetItemId?: string | null;
 }
 
 export type UpdateExpensePayload = Partial<CreateExpensePayload>;

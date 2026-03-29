@@ -58,6 +58,7 @@ export interface Payment {
   budgetItemId?: string;
   amount: number;
   status: PaymentStatus;
+  paymentMethod?: PaymentMethod;
   description?: string;
   invoiceNumber?: string;
   dueDate?: string;
@@ -74,11 +75,15 @@ export interface ProjectExpense {
   id: string;
   projectId: string;
   description: string;
+  quantity: number;
+  unitPrice: number;
   amount: number;
   expenseType: ExpenseType;
   expenseDate: string;
   invoiceRef?: string;
   notes?: string;
+  budgetItemId?: string | null;
+  budgetItemName?: string | null;
   createdAt: string;
 }
 

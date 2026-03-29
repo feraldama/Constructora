@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   FileSpreadsheet,
   Printer,
+  Receipt,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useProject } from "@/hooks/useProject";
@@ -96,13 +97,16 @@ export default function ReportsPage() {
         new Date(e.expenseDate).toLocaleDateString("es-AR"),
         e.description,
         e.expenseType,
+        e.quantity,
+        e.unitPrice,
         e.amount,
+        e.budgetItemName ?? "",
         e.invoiceRef ?? "",
         e.notes ?? "",
       ]);
       sheets.push({
         name: "Gastos",
-        headers: ["Fecha", "Descripción", "Tipo", "Monto", "Factura", "Notas"],
+        headers: ["Fecha", "Descripción", "Tipo", "Cantidad", "P.U.", "Total", "Partida", "Factura", "Notas"],
         rows: expenseRows,
       });
     }
@@ -150,6 +154,32 @@ export default function ReportsPage() {
   );
 
   const pieTotal = pieData.reduce((s, d) => s + d.value, 0);
+
+  const EXPENSE_LABELS: Record<string, string> = {
+    MATERIALS: "Materiales",
+    EQUIPMENT: "Equipamiento",
+    OVERHEAD: "Gastos generales",
+    PERMITS: "Permisos",
+    OTHER: "Otros",
+  };
+
+  const expenseSummary = useMemo(() => {
+    if (!expensesData || expensesData.length === 0) return null;
+    let total = 0;
+    const byType: Record<string, number> = {};
+    const byItem: Record<string, { name: string; total: number }> = {};
+    for (const e of expensesData) {
+      total += e.amount;
+      byType[e.expenseType] = (byType[e.expenseType] ?? 0) + e.amount;
+      if (e.budgetItemId && e.budgetItemName) {
+        const existing = byItem[e.budgetItemId];
+        if (existing) existing.total += e.amount;
+        else byItem[e.budgetItemId] = { name: e.budgetItemName, total: e.amount };
+      }
+    }
+    const unlinked = expensesData.filter((e) => !e.budgetItemId).reduce((s, e) => s + e.amount, 0);
+    return { total, count: expensesData.length, byType, byItem: Object.values(byItem), unlinked };
+  }, [expensesData]);
 
   return (
     <div className="space-y-6">
@@ -355,6 +385,68 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+
+          {/* Gastos adicionales */}
+          {expenseSummary && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Receipt size={18} className="text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-900">Gastos adicionales</h3>
+                <span className="text-xs text-gray-400">({expenseSummary.count} registros)</span>
+              </div>
+
+              {/* Total + por tipo */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Total gastos</p>
+                  <p className="text-lg font-bold text-gray-900">{fmt(expenseSummary.total)}</p>
+                </div>
+                {Object.entries(expenseSummary.byType).map(([type, amount]) => (
+                  <div key={type} className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">{EXPENSE_LABELS[type] ?? type}</p>
+                    <p className="text-sm font-semibold text-gray-900">{fmt(amount)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Por partida vinculada */}
+              {(expenseSummary.byItem.length > 0 || expenseSummary.unlinked > 0) && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Desglose por partida</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="py-2 text-left text-xs font-medium text-gray-500">Partida</th>
+                          <th className="py-2 text-right text-xs font-medium text-gray-500">Total gastado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {expenseSummary.byItem.map((item) => (
+                          <tr key={item.name}>
+                            <td className="py-2 text-gray-900">{item.name}</td>
+                            <td className="py-2 text-right tabular-nums font-medium">{fmt(item.total)}</td>
+                          </tr>
+                        ))}
+                        {expenseSummary.unlinked > 0 && (
+                          <tr>
+                            <td className="py-2 text-gray-500 italic">Sin vincular a partida</td>
+                            <td className="py-2 text-right tabular-nums font-medium text-gray-500">{fmt(expenseSummary.unlinked)}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-gray-200">
+                          <td className="py-2 font-semibold text-gray-900">Total</td>
+                          <td className="py-2 text-right tabular-nums font-bold text-gray-900">{fmt(expenseSummary.total)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

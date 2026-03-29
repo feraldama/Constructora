@@ -7,6 +7,8 @@ import type {
   UpdateBudgetItemInput,
   CreateExpenseInput,
   UpdateExpenseInput,
+  ReorderItemsInput,
+  ReorderCategoriesInput,
 } from "./budget.schema.js";
 
 function routeParam(req: Request, key: string): string {
@@ -357,9 +359,64 @@ export async function deleteBudgetItem(req: Request, res: Response): Promise<voi
   res.status(204).send();
 }
 
+// PATCH /api/projects/:projectId/budget-items/reorder
+export async function reorderBudgetItems(req: Request, res: Response): Promise<void> {
+  const projectId = routeParam(req, "projectId");
+  if (!(await assertMember(req.user!.userId, projectId, res))) return;
+
+  const body = req.body as ReorderItemsInput;
+
+  await prisma.$transaction(
+    body.items.map((item) =>
+      prisma.budgetItem.update({
+        where: { id: item.id },
+        data: { sortOrder: item.sortOrder },
+      })
+    )
+  );
+
+  res.json({ ok: true });
+}
+
+// PATCH /api/projects/:projectId/categories/reorder
+export async function reorderCategories(req: Request, res: Response): Promise<void> {
+  const projectId = routeParam(req, "projectId");
+  if (!(await assertMember(req.user!.userId, projectId, res))) return;
+
+  const body = req.body as ReorderCategoriesInput;
+
+  await prisma.$transaction(
+    body.categories.map((cat) =>
+      prisma.category.update({
+        where: { id: cat.id },
+        data: { sortOrder: cat.sortOrder },
+      })
+    )
+  );
+
+  res.json({ ok: true });
+}
+
 // ============================================================================
 // GASTOS ADICIONALES
 // ============================================================================
+
+function serializeExpense(e: {
+  id: string; projectId: string; description: string;
+  quantity: unknown; unitPrice: unknown; amount: unknown;
+  expenseType: string; expenseDate: Date; invoiceRef: string | null;
+  notes: string | null; budgetItemId: string | null;
+  createdAt: Date; updatedAt: Date;
+  budgetItem?: { id: string; name: string } | null;
+}) {
+  return {
+    ...e,
+    quantity: Number(e.quantity),
+    unitPrice: Number(e.unitPrice),
+    amount: Number(e.amount),
+    budgetItemName: e.budgetItem?.name ?? null,
+  };
+}
 
 // GET /api/projects/:projectId/expenses
 export async function listExpenses(req: Request, res: Response): Promise<void> {
@@ -369,9 +426,10 @@ export async function listExpenses(req: Request, res: Response): Promise<void> {
   const expenses = await prisma.projectExpense.findMany({
     where: { projectId },
     orderBy: { expenseDate: "desc" },
+    include: { budgetItem: { select: { id: true, name: true } } },
   });
 
-  res.json(expenses.map((e) => ({ ...e, amount: Number(e.amount) })));
+  res.json(expenses.map(serializeExpense));
 }
 
 // POST /api/projects/:projectId/expenses
@@ -381,16 +439,36 @@ export async function createExpense(req: Request, res: Response): Promise<void> 
 
   const body = req.body as CreateExpenseInput;
 
+  const quantity = body.quantity ?? 1;
+  const unitPrice = body.unitPrice ?? 0;
+  const amount = Math.round(quantity * unitPrice * 100) / 100;
+
+  // Validar que budgetItem pertenece al proyecto
+  if (body.budgetItemId) {
+    const item = await prisma.budgetItem.findUnique({
+      where: { id: body.budgetItemId },
+      include: { category: { select: { projectId: true } } },
+    });
+    if (!item || item.category.projectId !== projectId) {
+      res.status(400).json({ error: "La partida no pertenece a este proyecto" });
+      return;
+    }
+  }
+
   const expense = await prisma.projectExpense.create({
     data: {
       projectId,
       description: body.description,
-      amount: body.amount,
+      quantity,
+      unitPrice,
+      amount,
       expenseType: body.expenseType,
       expenseDate: body.expenseDate ? new Date(body.expenseDate) : new Date(),
       invoiceRef: body.invoiceRef,
       notes: body.notes,
+      budgetItemId: body.budgetItemId ?? null,
     },
+    include: { budgetItem: { select: { id: true, name: true } } },
   });
 
   await prisma.activityLog.create({
@@ -400,12 +478,12 @@ export async function createExpense(req: Request, res: Response): Promise<void> 
       action: "CREATE_EXPENSE",
       entityType: "ProjectExpense",
       entityId: expense.id,
-      metadata: { description: body.description, amount: body.amount, expenseType: body.expenseType },
+      metadata: { description: body.description, amount, expenseType: body.expenseType },
     },
   });
 
   await recalcBudgetSummary(projectId);
-  res.status(201).json({ ...expense, amount: Number(expense.amount) });
+  res.status(201).json(serializeExpense(expense));
 }
 
 // PATCH /api/expenses/:expenseId
@@ -422,12 +500,36 @@ export async function updateExpense(req: Request, res: Response): Promise<void> 
   }
   if (!(await assertMember(req.user!.userId, existing.projectId, res))) return;
 
+  // Validar budgetItem si se cambió
+  if (body.budgetItemId) {
+    const item = await prisma.budgetItem.findUnique({
+      where: { id: body.budgetItemId },
+      include: { category: { select: { projectId: true } } },
+    });
+    if (!item || item.category.projectId !== existing.projectId) {
+      res.status(400).json({ error: "La partida no pertenece a este proyecto" });
+      return;
+    }
+  }
+
+  // Recalcular amount si cambia quantity o unitPrice
+  const quantity = body.quantity !== undefined ? body.quantity : Number(existing.quantity);
+  const unitPrice = body.unitPrice !== undefined ? body.unitPrice : Number(existing.unitPrice);
+  const amount = Math.round(quantity * unitPrice * 100) / 100;
+
+  const { amount: _ignoreAmount, ...rest } = body;
+
   const expense = await prisma.projectExpense.update({
     where: { id: expenseId },
     data: {
-      ...body,
+      ...rest,
+      quantity,
+      unitPrice,
+      amount,
       expenseDate: body.expenseDate ? new Date(body.expenseDate) : undefined,
+      budgetItemId: body.budgetItemId !== undefined ? body.budgetItemId : undefined,
     },
+    include: { budgetItem: { select: { id: true, name: true } } },
   });
 
   await prisma.activityLog.create({
@@ -442,7 +544,7 @@ export async function updateExpense(req: Request, res: Response): Promise<void> 
   });
 
   await recalcBudgetSummary(existing.projectId);
-  res.json({ ...expense, amount: Number(expense.amount) });
+  res.json(serializeExpense(expense));
 }
 
 // DELETE /api/expenses/:expenseId

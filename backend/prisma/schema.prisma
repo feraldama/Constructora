@@ -106,6 +106,7 @@ model BudgetItem {
   category         Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   assignments      ContractorAssignment[]
   certificateItems CertificateItem[]
+  expenses         ProjectExpense[]
   payments         Payment[]
   progressEntries  ProgressEntry[]
 
@@ -198,23 +199,28 @@ model Payment {
   @@map("payments")
 }
 
-/// Gastos adicionales del proyecto (no ligados a partidas)
+/// Gastos adicionales del proyecto
 model ProjectExpense {
-  id          String      @id @default(uuid())
-  projectId   String      @map("project_id")
-  description String
-  amount      Decimal     @db.Decimal(14, 2)
-  expenseType ExpenseType @map("expense_type")
-  expenseDate DateTime    @default(now()) @map("expense_date")
-  invoiceRef  String?     @map("invoice_ref")
-  notes       String?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id           String      @id @default(uuid())
+  projectId    String      @map("project_id")
+  description  String
+  quantity     Decimal     @default(1) @db.Decimal(12, 4)
+  unitPrice    Decimal     @default(0) @map("unit_price") @db.Decimal(14, 2)
+  amount       Decimal     @db.Decimal(14, 2)
+  expenseType  ExpenseType @map("expense_type")
+  expenseDate  DateTime    @default(now()) @map("expense_date")
+  invoiceRef   String?     @map("invoice_ref")
+  notes        String?
+  budgetItemId String?     @map("budget_item_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  budgetItem BudgetItem? @relation(fields: [budgetItemId], references: [id], onDelete: SetNull)
 
   @@index([projectId, expenseType])
   @@index([projectId, expenseDate(sort: Desc)])
+  @@index([budgetItemId])
   @@map("project_expenses")
 }
 

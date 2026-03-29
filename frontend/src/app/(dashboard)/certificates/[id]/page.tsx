@@ -12,6 +12,7 @@ import {
   Trash2,
   Printer,
   AlertTriangle,
+  FileDown,
 } from "lucide-react";
 import {
   useCertificate,
@@ -25,6 +26,7 @@ import {
 } from "@/hooks/useCertificates";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
+import { exportCertificatePdf } from "@/lib/utils/certificatePdf";
 
 const STATUS_BADGE: Record<string, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {
   DRAFT: { label: "Borrador", variant: "default" },
@@ -193,8 +195,17 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
               </button>
             )}
             <button
+              onClick={() => exportCertificatePdf(cert)}
+              className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+              title="Descargar PDF"
+            >
+              <FileDown size={16} />
+              PDF
+            </button>
+            <button
               onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              title="Imprimir"
             >
               <Printer size={16} />
             </button>

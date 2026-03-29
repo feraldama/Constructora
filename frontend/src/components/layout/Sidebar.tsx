@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Settings,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useUnreadCount } from "@/hooks/useNotifications";
@@ -30,6 +31,7 @@ const navigation = [
   { name: "Proyectos", href: "/projects", icon: FolderKanban },
   { name: "Computo Metrico", href: "/budget", icon: Calculator },
   { name: "Contratistas", href: "/contractors", icon: HardHat },
+  { name: "Asignaciones", href: "/assignments", icon: ClipboardList },
   { name: "Pagos", href: "/payments", icon: CreditCard },
   { name: "Certificaciones", href: "/certificates", icon: FileCheck2 },
   { name: "Calendario", href: "/calendar", icon: CalendarDays },

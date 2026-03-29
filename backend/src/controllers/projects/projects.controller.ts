@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma.js";
-import type { CreateProjectInput, UpdateProjectInput } from "./projects.schema.js";
+import type {
+  CreateProjectInput,
+  UpdateProjectInput,
+} from "./projects.schema.js";
 import { ProjectStatus } from "../../generated/prisma/enums.js";
 
 function queryString(val: unknown): string | undefined {
@@ -28,7 +31,9 @@ type DeletableResult =
       };
     };
 
-async function evaluateProjectDeletable(projectId: string): Promise<DeletableResult> {
+async function evaluateProjectDeletable(
+  projectId: string,
+): Promise<DeletableResult> {
   const [payments, contractors, budgetItems, attachments] = await Promise.all([
     prisma.payment.count({ where: { projectId } }),
     prisma.projectContractor.count({ where: { projectId } }),
@@ -36,7 +41,12 @@ async function evaluateProjectDeletable(projectId: string): Promise<DeletableRes
     prisma.attachment.count({ where: { projectId } }),
   ]);
 
-  if (payments === 0 && contractors === 0 && budgetItems === 0 && attachments === 0) {
+  if (
+    payments === 0 &&
+    contractors === 0 &&
+    budgetItems === 0 &&
+    attachments === 0
+  ) {
     return { ok: true };
   }
 
@@ -62,8 +72,8 @@ function serializeProject<T extends { initialBudget: unknown }>(p: T) {
 
 /** Rubros iniciales del cómputo métrico para cada proyecto nuevo */
 const DEFAULT_BUDGET_CATEGORIES = [
-  "Mampostería",
   "Movimiento de Suelo",
+  "Mampostería",
   "Replanteo",
   "Marcación",
 ] as const;
@@ -74,13 +84,17 @@ const DEFAULT_BUDGET_CATEGORIES = [
 export async function listProjects(req: Request, res: Response): Promise<void> {
   const userId = req.user!.userId;
   const search = queryString(req.query.search);
-  const statusParam = queryString(req.query.status) as ProjectStatus | undefined;
+  const statusParam = queryString(req.query.status) as
+    | ProjectStatus
+    | undefined;
   const page = Number(req.query.page) || 1;
   const limit = Math.min(Number(req.query.limit) || 20, 100);
 
   const where = {
     members: { some: { userId } },
-    ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
+    ...(search
+      ? { name: { contains: search, mode: "insensitive" as const } }
+      : {}),
     ...(statusParam && Object.values(ProjectStatus).includes(statusParam)
       ? { status: statusParam }
       : {}),
@@ -125,7 +139,7 @@ export async function listProjects(req: Request, res: Response): Promise<void> {
     for (const c of catRows) {
       itemsByProject.set(
         c.projectId,
-        (itemsByProject.get(c.projectId) ?? 0) + c._count.budgetItems
+        (itemsByProject.get(c.projectId) ?? 0) + c._count.budgetItems,
       );
     }
     for (const g of attGroups) {
@@ -161,7 +175,10 @@ export async function listProjects(req: Request, res: Response): Promise<void> {
 // ============================================================================
 // POST /api/projects — Crear (el usuario queda como ADMIN del proyecto)
 // ============================================================================
-export async function createProject(req: Request, res: Response): Promise<void> {
+export async function createProject(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const body = req.body as CreateProjectInput;
 
   const project = await prisma.$transaction(async (tx) => {
@@ -215,7 +232,10 @@ export async function createProject(req: Request, res: Response): Promise<void> 
 // ============================================================================
 // PATCH /api/projects/:projectId — Editar proyecto (ADMIN o EDITOR)
 // ============================================================================
-export async function updateProject(req: Request, res: Response): Promise<void> {
+export async function updateProject(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const projectId = routeParam(req, "projectId");
   const userId = req.user!.userId;
   const body = req.body as UpdateProjectInput;
@@ -230,7 +250,9 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
     return;
   }
   if (membership.role === "VIEWER") {
-    res.status(403).json({ error: "No tenés permisos para editar este proyecto" });
+    res
+      .status(403)
+      .json({ error: "No tenés permisos para editar este proyecto" });
     return;
   }
 
@@ -239,9 +261,13 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
       where: { id: projectId },
       data: {
         ...(body.name !== undefined && { name: body.name }),
-        ...(body.description !== undefined && { description: body.description }),
+        ...(body.description !== undefined && {
+          description: body.description,
+        }),
         ...(body.address !== undefined && { address: body.address }),
-        ...(body.initialBudget !== undefined && { initialBudget: body.initialBudget }),
+        ...(body.initialBudget !== undefined && {
+          initialBudget: body.initialBudget,
+        }),
         ...(body.status !== undefined && { status: body.status }),
         ...(body.startDate !== undefined && {
           startDate: body.startDate ? new Date(body.startDate) : null,
@@ -272,7 +298,10 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
 // ============================================================================
 // DELETE /api/projects/:projectId — Solo ADMIN; proyecto sin datos operativos
 // ============================================================================
-export async function deleteProject(req: Request, res: Response): Promise<void> {
+export async function deleteProject(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const projectId = routeParam(req, "projectId");
   const userId = req.user!.userId;
 

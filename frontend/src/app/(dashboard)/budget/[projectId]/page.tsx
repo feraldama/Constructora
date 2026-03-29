@@ -1,6 +1,22 @@
 "use client";
 
 import { use, useState, useCallback, useMemo } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import BudgetSpreadsheet from "@/components/tables/BudgetSpreadsheet";
 import Modal from "@/components/ui/Modal";
 import {
@@ -10,12 +26,15 @@ import {
   useCreateBudgetItem,
   useUpdateBudgetItem,
   useDeleteBudgetItem,
+  useReorderBudgetItems,
+  useReorderCategories,
 } from "@/hooks/useProjectBudget";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectProgress } from "@/hooks/useProgress";
 import ProgressEntryModal from "@/components/progress/ProgressEntryModal";
 import type { BudgetItem, MeasurementUnit } from "@/types";
-import { Plus } from "lucide-react";
+import { Plus, GripVertical } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 export default function BudgetPage({
   params,
@@ -62,6 +81,40 @@ export default function BudgetPage({
   const createItem = useCreateBudgetItem(projectId);
   const updateItem = useUpdateBudgetItem(projectId);
   const deleteItem = useDeleteBudgetItem(projectId);
+  const reorderItems = useReorderBudgetItems(projectId);
+  const reorderCats = useReorderCategories(projectId);
+
+  // ─── DnD sensors for categories ───
+  const catSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
+
+  const handleCategoryDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = categoryIds.indexOf(active.id as string);
+      const newIndex = categoryIds.indexOf(over.id as string);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const newOrder = arrayMove(categoryIds, oldIndex, newIndex);
+      void reorderCats.mutateAsync(
+        newOrder.map((id, idx) => ({ id, sortOrder: idx }))
+      );
+    },
+    [categoryIds, reorderCats]
+  );
+
+  const handleReorderItems = useCallback(
+    (reorderedIds: string[]) => {
+      void reorderItems.mutateAsync(
+        reorderedIds.map((id, idx) => ({ id, sortOrder: idx }))
+      );
+    },
+    [reorderItems]
+  );
 
   const saving =
     createCat.isPending ||
@@ -213,22 +266,35 @@ export default function BudgetPage({
           No hay rubros en este proyecto. Creá la primera con &quot;Nueva categoría&quot;.
         </div>
       ) : (
-        categories.map((cat) => (
-          <BudgetSpreadsheet
-            key={cat.id}
-            items={cat.items}
-            categoryName={cat.name}
-            debounceMs={0}
-            isSaving={saving}
-            onCellChange={(itemId, field, value) => handleCellChange(itemId, field, value)}
-            onAddItem={() => handleAddItem(cat.id)}
-            onDuplicateItem={(itemId) => handleDuplicateItem(cat.id, itemId)}
-            onDeleteItem={(itemId) => handleDeleteItem(cat.id, itemId)}
-            onDeleteCategory={() => setDeleteCatTarget({ id: cat.id, name: cat.name })}
-            progressData={progressData}
-            onOpenProgress={(itemId) => setProgressItemId(itemId)}
-          />
-        ))
+        <DndContext
+          sensors={catSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleCategoryDragEnd}
+        >
+          <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
+            {categories.map((cat) => (
+              <SortableCategory key={cat.id} id={cat.id}>
+                {({ dragHandleProps }) => (
+                  <BudgetSpreadsheet
+                    items={cat.items}
+                    categoryName={cat.name}
+                    debounceMs={0}
+                    isSaving={saving}
+                    onCellChange={(itemId, field, value) => handleCellChange(itemId, field, value)}
+                    onAddItem={() => handleAddItem(cat.id)}
+                    onDuplicateItem={(itemId) => handleDuplicateItem(cat.id, itemId)}
+                    onDeleteItem={(itemId) => handleDeleteItem(cat.id, itemId)}
+                    onDeleteCategory={() => setDeleteCatTarget({ id: cat.id, name: cat.name })}
+                    progressData={progressData}
+                    onOpenProgress={(itemId) => setProgressItemId(itemId)}
+                    onReorderItems={handleReorderItems}
+                    categoryDragHandleProps={dragHandleProps}
+                  />
+                )}
+              </SortableCategory>
+            ))}
+          </SortableContext>
+        </DndContext>
       )}
 
       <Modal isOpen={newCatOpen} onClose={() => setNewCatOpen(false)} title="Nueva categoría">
@@ -302,6 +368,39 @@ export default function BudgetPage({
           </div>
         )}
       </Modal>
+    </div>
+  );
+}
+
+// ─── Sortable Category Wrapper ────────────────────────────────────────────
+
+function SortableCategory({
+  id,
+  children,
+}: {
+  id: string;
+  children: ((props: { dragHandleProps: Record<string, unknown> }) => React.ReactNode) | React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "z-10 shadow-lg rounded-lg")}>
+      {typeof children === "function"
+        ? (children as (props: { dragHandleProps: Record<string, unknown> }) => React.ReactNode)({ dragHandleProps: { ...attributes, ...listeners } })
+        : children}
     </div>
   );
 }

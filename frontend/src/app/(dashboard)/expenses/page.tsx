@@ -16,6 +16,7 @@ import {
   useUpdateExpense,
   useDeleteExpense,
 } from "@/hooks/useExpenses";
+import { useProjectBudget } from "@/hooks/useProjectBudget";
 import type { ProjectExpense, ExpenseType } from "@/types";
 import type { CreateExpensePayload } from "@/lib/api/expenses";
 import Modal from "@/components/ui/Modal";
@@ -37,7 +38,7 @@ const EXPENSE_COLORS: Record<ExpenseType, string> = {
 };
 
 function fmt(n: number): string {
-  return "$" + n.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return "$" + n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtDate(iso: string): string {
@@ -48,13 +49,26 @@ function fmtDate(iso: string): string {
   });
 }
 
-const EMPTY_FORM: CreateExpensePayload = {
+interface ExpenseForm {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  expenseType: ExpenseType;
+  expenseDate: string;
+  invoiceRef: string;
+  notes: string;
+  budgetItemId: string;
+}
+
+const EMPTY_FORM: ExpenseForm = {
   description: "",
-  amount: 0,
+  quantity: 1,
+  unitPrice: 0,
   expenseType: "MATERIALS",
   expenseDate: new Date().toISOString().slice(0, 10),
   invoiceRef: "",
   notes: "",
+  budgetItemId: "",
 };
 
 export default function ExpensesPage() {
@@ -64,15 +78,20 @@ export default function ExpensesPage() {
   const [filterType, setFilterType] = useState<ExpenseType | "">("");
 
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(projectId ?? undefined);
+  const { data: budgetData } = useProjectBudget(projectId ?? undefined);
   const createMut = useCreateExpense(projectId ?? undefined);
   const updateMut = useUpdateExpense(projectId ?? undefined);
   const deleteMut = useDeleteExpense(projectId ?? undefined);
 
+  const categories = budgetData?.categories ?? [];
+
   // Modal state
   const [formOpen, setFormOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ProjectExpense | null>(null);
-  const [form, setForm] = useState<CreateExpensePayload>(EMPTY_FORM);
+  const [form, setForm] = useState<ExpenseForm>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<ProjectExpense | null>(null);
+
+  const computedTotal = form.quantity * form.unitPrice;
 
   const openCreate = useCallback(() => {
     setEditingExpense(null);
@@ -84,25 +103,30 @@ export default function ExpensesPage() {
     setEditingExpense(exp);
     setForm({
       description: exp.description,
-      amount: exp.amount,
+      quantity: exp.quantity,
+      unitPrice: exp.unitPrice,
       expenseType: exp.expenseType,
       expenseDate: exp.expenseDate ? exp.expenseDate.slice(0, 10) : "",
       invoiceRef: exp.invoiceRef ?? "",
       notes: exp.notes ?? "",
+      budgetItemId: exp.budgetItemId ?? "",
     });
     setFormOpen(true);
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!form.description.trim() || form.amount <= 0) return;
+    if (!form.description.trim() || form.unitPrice <= 0 || form.quantity <= 0) return;
     const payload: CreateExpensePayload = {
-      ...form,
       description: form.description.trim(),
+      quantity: form.quantity,
+      unitPrice: form.unitPrice,
+      expenseType: form.expenseType,
       expenseDate: form.expenseDate
         ? new Date(form.expenseDate + "T12:00:00").toISOString()
         : undefined,
       invoiceRef: form.invoiceRef?.trim() || undefined,
       notes: form.notes?.trim() || undefined,
+      budgetItemId: form.budgetItemId || null,
     };
     if (editingExpense) {
       await updateMut.mutateAsync({ id: editingExpense.id, payload });
@@ -128,7 +152,8 @@ export default function ExpensesPage() {
       list = list.filter(
         (e) =>
           e.description.toLowerCase().includes(q) ||
-          (e.invoiceRef && e.invoiceRef.toLowerCase().includes(q))
+          (e.invoiceRef && e.invoiceRef.toLowerCase().includes(q)) ||
+          (e.budgetItemName && e.budgetItemName.toLowerCase().includes(q))
       );
     }
     return list;
@@ -196,7 +221,7 @@ export default function ExpensesPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Descripción o factura..."
+              placeholder="Descripción, factura o partida..."
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
             />
           </div>
@@ -260,56 +285,56 @@ export default function ExpensesPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Monto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Factura
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                    Acciones
-                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partida</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cant.</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">P.U.</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factura</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Acc.</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((exp) => (
                   <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-3.5 text-sm text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {fmtDate(exp.expenseDate)}
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-gray-900 font-medium max-w-[260px] truncate">
+                    <td className="px-4 py-3 text-sm text-gray-900 font-medium max-w-[200px] truncate">
                       {exp.description}
                       {exp.notes && (
                         <span className="block text-xs text-gray-400 font-normal truncate">{exp.notes}</span>
                       )}
                     </td>
-                    <td className="px-6 py-3.5 text-sm whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${EXPENSE_COLORS[exp.expenseType]}`}>
                         {EXPENSE_LABELS[exp.expenseType]}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-gray-900 font-semibold tabular-nums text-right whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap max-w-[150px] truncate">
+                      {exp.budgetItemName || <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 tabular-nums text-right whitespace-nowrap">
+                      {exp.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 tabular-nums text-right whitespace-nowrap">
+                      {fmt(exp.unitPrice)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 font-semibold tabular-nums text-right whitespace-nowrap">
                       {fmt(exp.amount)}
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {exp.invoiceRef || "—"}
                     </td>
-                    <td className="px-6 py-3.5 text-right whitespace-nowrap">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       <div className="inline-flex items-center gap-1">
                         <button
                           type="button"
                           title="Editar"
                           onClick={() => openEdit(exp)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
                         >
                           <Pencil size={15} />
                         </button>
@@ -317,7 +342,7 @@ export default function ExpensesPage() {
                           type="button"
                           title="Eliminar"
                           onClick={() => setDeleteTarget(exp)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -348,19 +373,42 @@ export default function ExpensesPage() {
               placeholder="Ej. Compra de cemento"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          {/* Cantidad + Precio unitario + Total */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={form.quantity || ""}
+                onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio unit. *</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                value={form.amount || ""}
-                onChange={(e) => setForm((f) => ({ ...f, amount: Number(e.target.value) }))}
+                value={form.unitPrice || ""}
+                onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number(e.target.value) }))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 placeholder="0.00"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total</label>
+              <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-900 tabular-nums">
+                {fmt(Math.round(computedTotal * 100) / 100)}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
               <select
@@ -373,7 +421,27 @@ export default function ExpensesPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Partida (opcional)</label>
+              <select
+                value={form.budgetItemId}
+                onChange={(e) => setForm((f) => ({ ...f, budgetItemId: e.target.value }))}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+              >
+                <option value="">Sin vincular</option>
+                {categories.map((cat) => (
+                  <optgroup key={cat.id} label={cat.name}>
+                    {cat.items.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.unit})
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
@@ -415,7 +483,7 @@ export default function ExpensesPage() {
             </button>
             <button
               type="button"
-              disabled={!form.description.trim() || form.amount <= 0 || isSaving}
+              disabled={!form.description.trim() || form.unitPrice <= 0 || form.quantity <= 0 || isSaving}
               onClick={() => void handleSubmit()}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >

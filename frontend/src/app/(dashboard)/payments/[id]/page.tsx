@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileText, Calendar, DollarSign, User } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, DollarSign, User, Banknote, ArrowLeftRight, FileCheck, MoreHorizontal, CreditCard } from "lucide-react";
 import { usePayment, useUpdatePayment } from "@/hooks/usePayments";
 import Badge from "@/components/ui/Badge";
 import FileUpload from "@/components/ui/FileUpload";
@@ -27,6 +27,13 @@ function formatDate(dateStr?: string | null): string {
     day: "numeric",
   });
 }
+
+const METHOD_DISPLAY: Record<string, { label: string; icon: typeof Banknote; bg: string; text: string }> = {
+  CASH:          { label: "Efectivo",      icon: Banknote,       bg: "bg-green-50",  text: "text-green-700" },
+  BANK_TRANSFER: { label: "Transferencia", icon: ArrowLeftRight, bg: "bg-blue-50",   text: "text-blue-700" },
+  CHECK:         { label: "Cheque",        icon: FileCheck,      bg: "bg-purple-50", text: "text-purple-700" },
+  OTHER:         { label: "Otro",          icon: MoreHorizontal, bg: "bg-gray-100",  text: "text-gray-600" },
+};
 
 export default function PaymentDetailPage({
   params,
@@ -154,6 +161,27 @@ export default function PaymentDetailPage({
               <div>
                 <p className="text-xs text-gray-500">N° Factura</p>
                 <p className="text-sm font-medium">{payment.invoiceNumber || "-"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <CreditCard size={18} className="text-gray-400 mt-0.5" />
+              <div>
+                <p className="text-xs text-gray-500">Método de pago</p>
+                {payment.paymentMethod && METHOD_DISPLAY[payment.paymentMethod] ? (
+                  (() => {
+                    const cfg = METHOD_DISPLAY[payment.paymentMethod!];
+                    const Icon = cfg.icon;
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.bg} ${cfg.text} mt-0.5`}>
+                        <Icon size={13} />
+                        {cfg.label}
+                      </span>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm font-medium">-</p>
+                )}
               </div>
             </div>
 

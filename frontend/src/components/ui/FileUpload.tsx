@@ -11,6 +11,8 @@ import {
   Trash2,
   Download,
   Paperclip,
+  Eye,
+  Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -71,6 +73,7 @@ export default function FileUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
   const { data: attachments = [], isLoading } = useAttachments(entityType, entityId);
   const uploadMutation = useUploadAttachments();
@@ -224,22 +227,31 @@ export default function FileUpload({
             const Icon = getFileIcon(att.mimeType);
             const url = getFileUrl(att);
             const isImage = att.mimeType?.startsWith("image/");
+            const isPdf = att.mimeType === "application/pdf";
+            const canPreview = isImage || isPdf;
 
             return (
               <div
                 key={att.id}
                 className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors"
               >
-                {/* Preview thumbnail para imágenes */}
+                {/* Preview thumbnail */}
                 {isImage ? (
                   <img
                     src={url}
                     alt={att.fileName}
-                    className="w-9 h-9 rounded object-cover border border-gray-200"
+                    className="w-9 h-9 rounded object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-blue-300"
+                    onClick={() => setPreviewAttachment(att)}
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded bg-white border border-gray-200 flex items-center justify-center">
-                    <Icon size={18} className="text-gray-400" />
+                  <div
+                    className={cn(
+                      "w-9 h-9 rounded bg-white border border-gray-200 flex items-center justify-center",
+                      canPreview && "cursor-pointer hover:ring-2 hover:ring-blue-300"
+                    )}
+                    onClick={() => canPreview && setPreviewAttachment(att)}
+                  >
+                    <Icon size={18} className={isPdf ? "text-red-400" : "text-gray-400"} />
                   </div>
                 )}
 
@@ -254,6 +266,15 @@ export default function FileUpload({
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {canPreview && (
+                    <button
+                      onClick={() => setPreviewAttachment(att)}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors cursor-pointer"
+                      title="Vista previa"
+                    >
+                      <Eye size={15} />
+                    </button>
+                  )}
                   <a
                     href={url}
                     target="_blank"
@@ -289,6 +310,79 @@ export default function FileUpload({
         <p className="text-sm text-red-600">
           Error al subir: {(uploadMutation.error as Error)?.message ?? "Error desconocido"}
         </p>
+      )}
+
+      {/* Preview Modal */}
+      {previewAttachment && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreviewAttachment(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl h-[85vh] mx-4 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                {previewAttachment.mimeType === "application/pdf" ? (
+                  <FileText size={16} className="text-red-500 shrink-0" />
+                ) : (
+                  <Image size={16} className="text-blue-500 shrink-0" />
+                )}
+                <span className="text-sm font-medium text-gray-900 truncate">
+                  {previewAttachment.fileName}
+                </span>
+                <span className="text-xs text-gray-400 shrink-0">
+                  {formatFileSize(previewAttachment.fileSize)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={getFileUrl(previewAttachment)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Abrir en nueva pestaña"
+                >
+                  <Maximize2 size={16} />
+                </a>
+                <a
+                  href={getFileUrl(previewAttachment)}
+                  download
+                  className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Descargar"
+                >
+                  <Download size={16} />
+                </a>
+                <button
+                  onClick={() => setPreviewAttachment(null)}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  title="Cerrar"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center">
+              {previewAttachment.mimeType === "application/pdf" ? (
+                <iframe
+                  src={getFileUrl(previewAttachment)}
+                  className="w-full h-full border-0"
+                  title={previewAttachment.fileName}
+                />
+              ) : previewAttachment.mimeType?.startsWith("image/") ? (
+                <img
+                  src={getFileUrl(previewAttachment)}
+                  alt={previewAttachment.fileName}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

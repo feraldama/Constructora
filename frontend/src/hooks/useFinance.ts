@@ -7,6 +7,7 @@ import {
   getCashFlow,
   getPaymentPredictions,
   getDebtAlerts,
+  getVarianceAnalysis,
 } from "@/lib/api/finance";
 
 export function useFinancialSummary(projectId: string | undefined) {
@@ -45,6 +46,14 @@ export function useDebtAlerts(projectId: string | undefined) {
   return useQuery({
     queryKey: ["finance", "debt-alerts", projectId],
     queryFn: () => getDebtAlerts(projectId!),
+    enabled: !!projectId,
+  });
+}
+
+export function useVarianceAnalysis(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ["finance", "variance", projectId],
+    queryFn: () => getVarianceAnalysis(projectId!),
     enabled: !!projectId,
   });
 }

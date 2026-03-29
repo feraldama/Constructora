@@ -8,6 +8,8 @@ import {
   createBudgetItem,
   updateBudgetItem,
   deleteBudgetItem,
+  reorderBudgetItems,
+  reorderCategories,
 } from "@/lib/api/budget";
 import type { BudgetItem, MeasurementUnit } from "@/types";
 
@@ -94,6 +96,28 @@ export function useDeleteBudgetItem(projectId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (itemId: string) => deleteBudgetItem(itemId),
+    onSuccess: () => {
+      if (projectId) void qc.invalidateQueries({ queryKey: budgetKey(projectId) });
+    },
+  });
+}
+
+export function useReorderBudgetItems(projectId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (items: { id: string; sortOrder: number }[]) =>
+      reorderBudgetItems(projectId!, items),
+    onSuccess: () => {
+      if (projectId) void qc.invalidateQueries({ queryKey: budgetKey(projectId) });
+    },
+  });
+}
+
+export function useReorderCategories(projectId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (categories: { id: string; sortOrder: number }[]) =>
+      reorderCategories(projectId!, categories),
     onSuccess: () => {
       if (projectId) void qc.invalidateQueries({ queryKey: budgetKey(projectId) });
     },
