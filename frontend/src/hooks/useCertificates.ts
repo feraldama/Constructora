@@ -15,6 +15,7 @@ import {
   generateCertificatePayment,
   type CertificateFilters,
   type CreateCertificatePayload,
+  type GeneratePaymentPayload,
 } from "@/lib/api/certificates";
 
 const CERTS_KEY = ["certificates"];
@@ -104,7 +105,8 @@ export function useResubmitCertificate() {
 export function useGeneratePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => generateCertificatePayment(id),
+    mutationFn: ({ id, payload }: { id: string; payload: GeneratePaymentPayload }) =>
+      generateCertificatePayment(id, payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: CERTS_KEY });
       void qc.invalidateQueries({ queryKey: ["payments"] });

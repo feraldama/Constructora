@@ -27,7 +27,18 @@ export const rejectCertificateSchema = z.object({
   reason: z.string().min(1, "El motivo es obligatorio").max(500),
 });
 
+export const generatePaymentSchema = z
+  .object({
+    mode: z.enum(["FULL", "BY_ITEMS"]),
+    itemIds: z.array(z.string().uuid()).optional(),
+  })
+  .refine(
+    (d) => d.mode === "FULL" || (d.itemIds && d.itemIds.length > 0),
+    { message: "Debe seleccionar al menos una partida", path: ["itemIds"] }
+  );
+
 export type CreateCertificateInput = z.infer<typeof createCertificateSchema>;
 export type UpdateCertificateInput = z.infer<typeof updateCertificateSchema>;
 export type UpdateCertificateItemInput = z.infer<typeof updateCertificateItemSchema>;
 export type RejectCertificateInput = z.infer<typeof rejectCertificateSchema>;
+export type GeneratePaymentInput = z.infer<typeof generatePaymentSchema>;

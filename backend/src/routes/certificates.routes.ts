@@ -6,6 +6,7 @@ import {
   updateCertificateSchema,
   updateCertificateItemSchema,
   rejectCertificateSchema,
+  generatePaymentSchema,
 } from "../controllers/certificates/certificates.schema.js";
 import {
   listCertificates,
@@ -37,7 +38,7 @@ router.post("/:id/submit", submitCertificate);
 router.post("/:id/approve", approveCertificate);
 router.post("/:id/reject", validate(rejectCertificateSchema), rejectCertificate);
 router.post("/:id/resubmit", resubmitCertificate);
-router.post("/:id/generate-payment", generatePayment);
+router.post("/:id/generate-payment", validate(generatePaymentSchema), generatePayment);
 
 export default router;
 

@@ -223,6 +223,28 @@ export async function getPayment(req: Request, res: Response): Promise<void> {
       budgetItem: true,
       project: { select: { id: true, name: true } },
       attachments: true,
+      certificate: {
+        select: {
+          id: true,
+          certificateNumber: true,
+          totalAmount: true,
+          status: true,
+          items: {
+            select: {
+              id: true,
+              budgetItemId: true,
+              currentAmount: true,
+              currentQuantity: true,
+              unitPrice: true,
+              budgetItem: { select: { name: true, unit: true, category: { select: { name: true } } } },
+            },
+            orderBy: { budgetItem: { sortOrder: "asc" } },
+          },
+          payments: {
+            select: { id: true, budgetItemId: true, status: true, amount: true },
+          },
+        },
+      },
     },
   });
 
@@ -231,7 +253,32 @@ export async function getPayment(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  res.json(payment);
+  res.json({
+    ...payment,
+    amount: Number(payment.amount),
+    certificate: payment.certificate
+      ? {
+          ...payment.certificate,
+          totalAmount: Number(payment.certificate.totalAmount),
+          items: payment.certificate.items.map((i) => ({
+            id: i.id,
+            budgetItemId: i.budgetItemId,
+            budgetItemName: i.budgetItem.name,
+            categoryName: i.budgetItem.category.name,
+            unit: i.budgetItem.unit,
+            currentQuantity: Number(i.currentQuantity),
+            unitPrice: Number(i.unitPrice),
+            currentAmount: Number(i.currentAmount),
+          })),
+          payments: payment.certificate.payments.map((p) => ({
+            id: p.id,
+            budgetItemId: p.budgetItemId,
+            status: p.status,
+            amount: Number(p.amount),
+          })),
+        }
+      : null,
+  });
 }
 
 // ============================================================================

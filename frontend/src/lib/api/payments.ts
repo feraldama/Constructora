@@ -39,6 +39,33 @@ export interface UpdatePaymentPayload {
   paidAt?:        string;
 }
 
+export interface CertificateItemSummary {
+  id: string;
+  budgetItemId: string;
+  budgetItemName: string;
+  categoryName: string;
+  unit: string;
+  currentQuantity: number;
+  unitPrice: number;
+  currentAmount: number;
+}
+
+export interface CertificatePaymentSummary {
+  id: string;
+  budgetItemId?: string | null;
+  status: string;
+  amount: number;
+}
+
+export interface PaymentCertificate {
+  id: string;
+  certificateNumber: number;
+  totalAmount: number;
+  status: string;
+  items: CertificateItemSummary[];
+  payments: CertificatePaymentSummary[];
+}
+
 export interface PaymentDetail extends Payment {
   budgetItem?: {
     id: string;
@@ -47,6 +74,7 @@ export interface PaymentDetail extends Payment {
   };
   attachments?: { id: string; fileName: string; fileUrl: string }[];
   _count?: { attachments: number };
+  certificate?: PaymentCertificate | null;
 }
 
 export interface ContractorDebt {

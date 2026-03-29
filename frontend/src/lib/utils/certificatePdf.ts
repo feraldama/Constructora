@@ -15,6 +15,8 @@ interface CertificateForPdf {
     categoryName: string;
     budgetItemName: string;
     unit: string;
+    budgetedQuantity: number;
+    progressPercent: number;
     unitPrice: number;
     previousQuantity: number;
     currentQuantity: number;
@@ -81,18 +83,20 @@ export function exportCertificatePdf(cert: CertificateForPdf) {
   // Table
   autoTable(doc, {
     startY: y,
-    head: [["Rubro", "Partida", "Unidad", "P. Unitario", "Anterior", "Actual", "Acumulado", "Monto"]],
+    head: [["Rubro", "Partida", "Unidad", "Cantidad", "Avance %", "P. Unit.", "Anterior", "Actual", "Acumulado", "Monto"]],
     body: cert.items.map((item) => [
       item.categoryName,
       item.budgetItemName,
       item.unit,
+      String(item.budgetedQuantity),
+      `${item.progressPercent}%`,
       fmtCurrency(item.unitPrice),
       String(item.previousQuantity),
       String(item.currentQuantity),
       String(item.accumulatedQuantity),
       fmtCurrency(item.currentAmount),
     ]),
-    foot: [["", "", "", "", "", "", "TOTAL", fmtCurrency(cert.totalAmount)]],
+    foot: [["", "", "", "", "", "", "", "", "TOTAL", fmtCurrency(cert.totalAmount)]],
     styles: {
       fontSize: 8,
       cellPadding: 3,
@@ -109,12 +113,14 @@ export function exportCertificatePdf(cert: CertificateForPdf) {
       fontSize: 9,
     },
     columnStyles: {
-      0: { cellWidth: 35 },
+      0: { cellWidth: 30 },
       3: { halign: "right" },
-      4: { halign: "right" },
+      4: { halign: "center" },
       5: { halign: "right" },
       6: { halign: "right" },
       7: { halign: "right" },
+      8: { halign: "right" },
+      9: { halign: "right" },
     },
     margin: { left: 14, right: 14 },
   });

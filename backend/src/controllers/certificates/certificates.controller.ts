@@ -6,6 +6,7 @@ import type {
   UpdateCertificateInput,
   UpdateCertificateItemInput,
   RejectCertificateInput,
+  GeneratePaymentInput,
 } from "./certificates.schema.js";
 
 function routeParam(req: Request, key: string): string {
@@ -93,7 +94,7 @@ export async function getCertificate(req: Request, res: Response): Promise<void>
         },
         orderBy: { budgetItem: { sortOrder: "asc" } },
       },
-      payments: { select: { id: true, amount: true, status: true, createdAt: true } },
+      payments: { select: { id: true, amount: true, status: true, budgetItemId: true, createdAt: true } },
     },
   });
 
@@ -120,23 +121,36 @@ export async function getCertificate(req: Request, res: Response): Promise<void>
     rejectedAt: cert.rejectedAt,
     rejectionReason: cert.rejectionReason,
     createdAt: cert.createdAt,
-    items: cert.items.map((i) => ({
-      id: i.id,
-      budgetItemId: i.budgetItemId,
-      budgetItemName: i.budgetItem.name,
-      categoryName: i.budgetItem.category.name,
-      unit: i.budgetItem.unit,
-      budgetedQuantity: Number(i.budgetItem.quantity),
-      previousQuantity: Number(i.previousQuantity),
-      currentQuantity: Number(i.currentQuantity),
-      accumulatedQuantity: Number(i.accumulatedQuantity),
-      unitPrice: Number(i.unitPrice),
-      currentAmount: Number(i.currentAmount),
+    items: await Promise.all(cert.items.map(async (i) => {
+      // Avance físico medido para esta partida
+      const progressResult = await prisma.progressEntry.aggregate({
+        where: { budgetItemId: i.budgetItemId },
+        _sum: { quantity: true },
+      });
+      const progressQuantity = Number(progressResult._sum.quantity ?? 0);
+      const budgetedQty = Number(i.budgetItem.quantity);
+
+      return {
+        id: i.id,
+        budgetItemId: i.budgetItemId,
+        budgetItemName: i.budgetItem.name,
+        categoryName: i.budgetItem.category.name,
+        unit: i.budgetItem.unit,
+        budgetedQuantity: budgetedQty,
+        progressQuantity,
+        progressPercent: budgetedQty > 0 ? Math.round((progressQuantity / budgetedQty) * 10000) / 100 : 0,
+        previousQuantity: Number(i.previousQuantity),
+        currentQuantity: Number(i.currentQuantity),
+        accumulatedQuantity: Number(i.accumulatedQuantity),
+        unitPrice: Number(i.unitPrice),
+        currentAmount: Number(i.currentAmount),
+      };
     })),
     payments: cert.payments.map((p) => ({
       id: p.id,
       amount: Number(p.amount),
       status: p.status,
+      budgetItemId: p.budgetItemId,
       createdAt: p.createdAt,
     })),
   });
@@ -511,10 +525,15 @@ export async function resubmitCertificate(req: Request, res: Response): Promise<
 // POST /api/certificates/:id/generate-payment
 export async function generatePayment(req: Request, res: Response): Promise<void> {
   const id = routeParam(req, "id");
+  const { mode, itemIds } = req.body as GeneratePaymentInput;
 
   const cert = await prisma.certificate.findUnique({
     where: { id },
-    include: { payments: { select: { id: true } }, contractor: { select: { name: true } } },
+    include: {
+      items: { select: { id: true, budgetItemId: true, currentAmount: true, budgetItem: { select: { name: true } } } },
+      payments: { select: { id: true, budgetItemId: true } },
+      contractor: { select: { name: true } },
+    },
   });
   if (!cert) { res.status(404).json({ error: "Certificación no encontrada" }); return; }
   if (cert.status !== "APPROVED") {
@@ -523,38 +542,116 @@ export async function generatePayment(req: Request, res: Response): Promise<void
   }
   if (!(await assertEditorOrAdmin(req.user!.userId, cert.projectId, res))) return;
 
-  if (cert.payments.length > 0) {
-    res.status(409).json({ error: "Ya existe un pago generado para esta certificación" });
+  // Determine which items already have payments
+  const paidBudgetItemIds = new Set(cert.payments.map((p) => p.budgetItemId).filter(Boolean));
+
+  if (mode === "FULL") {
+    // Check no items have been paid yet (full payment covers everything)
+    if (cert.payments.length > 0) {
+      res.status(409).json({ error: "Ya existen pagos generados para esta certificación. Use el modo por partidas para pagar las restantes." });
+      return;
+    }
+
+    const payment = await prisma.payment.create({
+      data: {
+        projectId: cert.projectId,
+        contractorId: cert.contractorId,
+        certificateId: cert.id,
+        amount: cert.totalAmount,
+        status: "PENDING",
+        description: `Certificación #${cert.certificateNumber} — ${cert.contractor.name}`,
+      },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user!.userId,
+        projectId: cert.projectId,
+        action: "GENERATE_CERTIFICATE_PAYMENT",
+        entityType: "Payment",
+        entityId: payment.id,
+        metadata: { certificateNumber: cert.certificateNumber, amount: Number(cert.totalAmount), mode: "FULL" },
+      },
+    });
+
+    await recalcBudgetSummary(cert.projectId);
+
+    res.status(201).json({
+      payments: [{ paymentId: payment.id, amount: Number(payment.amount), status: payment.status }],
+    });
     return;
   }
 
-  const payment = await prisma.payment.create({
-    data: {
-      projectId: cert.projectId,
-      contractorId: cert.contractorId,
-      certificateId: cert.id,
-      amount: cert.totalAmount,
-      status: "PENDING",
-      description: `Certificación #${cert.certificateNumber} — ${cert.contractor.name}`,
-    },
-  });
+  // mode === "BY_ITEMS"
+  // Validate selected items belong to this certificate and haven't been paid yet
+  const certItemMap = new Map(cert.items.map((i) => [i.id, i]));
+  const selectedItems = (itemIds ?? []).map((iid) => {
+    const item = certItemMap.get(iid);
+    if (!item) return null;
+    return item;
+  }).filter(Boolean) as typeof cert.items;
 
-  await prisma.activityLog.create({
-    data: {
-      userId: req.user!.userId,
-      projectId: cert.projectId,
-      action: "GENERATE_CERTIFICATE_PAYMENT",
-      entityType: "Payment",
-      entityId: payment.id,
-      metadata: { certificateNumber: cert.certificateNumber, amount: Number(cert.totalAmount) },
-    },
-  });
+  if (selectedItems.length === 0) {
+    res.status(400).json({ error: "Ninguna de las partidas seleccionadas pertenece a esta certificación" });
+    return;
+  }
+
+  // Check for already paid items
+  const alreadyPaid = selectedItems.filter((i) => paidBudgetItemIds.has(i.budgetItemId));
+  if (alreadyPaid.length > 0) {
+    const names = alreadyPaid.map((i) => i.budgetItem.name).join(", ");
+    res.status(409).json({ error: `Las siguientes partidas ya tienen pago generado: ${names}` });
+    return;
+  }
+
+  // Filter out items with zero amount
+  const payableItems = selectedItems.filter((i) => Number(i.currentAmount) > 0);
+  if (payableItems.length === 0) {
+    res.status(400).json({ error: "Las partidas seleccionadas no tienen monto a pagar" });
+    return;
+  }
+
+  // Create one payment per selected item
+  const createdPayments = await prisma.$transaction(
+    payableItems.map((item) =>
+      prisma.payment.create({
+        data: {
+          projectId: cert.projectId,
+          contractorId: cert.contractorId,
+          certificateId: cert.id,
+          budgetItemId: item.budgetItemId,
+          amount: item.currentAmount,
+          status: "PENDING",
+          description: `Cert. #${cert.certificateNumber} — ${item.budgetItem.name}`,
+        },
+      })
+    )
+  );
+
+  // Log activity for each payment
+  await Promise.all(
+    createdPayments.map((p) =>
+      prisma.activityLog.create({
+        data: {
+          userId: req.user!.userId,
+          projectId: cert.projectId,
+          action: "GENERATE_CERTIFICATE_PAYMENT",
+          entityType: "Payment",
+          entityId: p.id,
+          metadata: { certificateNumber: cert.certificateNumber, amount: Number(p.amount), mode: "BY_ITEMS", budgetItemId: p.budgetItemId },
+        },
+      })
+    )
+  );
 
   await recalcBudgetSummary(cert.projectId);
 
   res.status(201).json({
-    paymentId: payment.id,
-    amount: Number(payment.amount),
-    status: payment.status,
+    payments: createdPayments.map((p) => ({
+      paymentId: p.id,
+      amount: Number(p.amount),
+      status: p.status,
+      budgetItemId: p.budgetItemId,
+    })),
   });
 }

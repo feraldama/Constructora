@@ -456,12 +456,16 @@ CANCELADO -> (estado final)
 ### Marcar como pagado
 
 - En la lista: click en el ícono de check verde
-- En el detalle: click en **"Marcar como Pagado"**
+- En el detalle: click en **"Marcar como Pagado"**, que abre un modal para completar los datos del pago:
+  - **Método de pago**: Efectivo, Transferencia bancaria, Cheque, Otro
+  - **Fecha de pago**: fecha en que se realizó el pago (no puede ser futura)
+  - **N° Factura** (opcional): número de comprobante/factura asociado
+- Al confirmar, el pago pasa a estado PAGADO con todos los datos registrados
 
 ### Detalle del pago
 
 Click en un pago para ver `/payments/{id}`:
-- Información completa del pago
+- Información completa del pago (monto, método, fecha de pago, factura)
 - Contratista y proyecto vinculado
 - Partida asociada (si aplica)
 - **Comprobantes adjuntos**: zona de upload para subir facturas, recibos, etc.
@@ -549,10 +553,17 @@ En el detalle de la certificación (`/certificates/{id}`):
 
 ### Generar pago desde certificación
 
-1. Desde una certificación APROBADA, click en **"Generar pago"**
-2. Se crea automáticamente un pago PENDIENTE por el monto total de la certificación
-3. El pago queda vinculado a la certificación
-4. Solo se puede generar un pago por certificación
+1. Desde una certificación APROBADA, click en **"Generar pago"** (o **"Generar pago restante"** si ya existen pagos parciales)
+2. Se abre un modal con dos opciones:
+   - **Certificado completo**: crea un único pago PENDIENTE por el monto total de la certificación
+   - **Por partidas**: permite seleccionar partidas específicas para generar un pago individual por cada una
+3. En modo "Por partidas":
+   - Se muestra una tabla con todas las partidas de la certificación
+   - Las partidas que ya tienen pago generado aparecen deshabilitadas con la etiqueta "Pago generado"
+   - Se pueden seleccionar una o más partidas con checkbox
+   - Se muestra el total de las partidas seleccionadas
+4. Los pagos quedan vinculados a la certificación (y a la partida específica en modo por partidas)
+5. Si ya existen pagos previos, solo se permite el modo por partidas para las restantes
 
 ### Exportar certificación a PDF
 

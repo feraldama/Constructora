@@ -23,6 +23,8 @@ export interface CertificateItemDTO {
   categoryName: string;
   unit: string;
   budgetedQuantity: number;
+  progressQuantity: number;
+  progressPercent: number;
   previousQuantity: number;
   currentQuantity: number;
   accumulatedQuantity: number;
@@ -48,7 +50,7 @@ export interface CertificateDetail {
   rejectionReason: string | null;
   createdAt: string;
   items: CertificateItemDTO[];
-  payments: { id: string; amount: number; status: string; createdAt: string }[];
+  payments: { id: string; amount: number; status: string; budgetItemId?: string | null; createdAt: string }[];
 }
 
 export interface CertificateFilters {
@@ -114,7 +116,16 @@ export async function resubmitCertificate(id: string) {
   return data;
 }
 
-export async function generateCertificatePayment(id: string) {
-  const { data } = await api.post(`/certificates/${id}/generate-payment`);
-  return data as { paymentId: string; amount: number; status: string };
+export interface GeneratePaymentPayload {
+  mode: "FULL" | "BY_ITEMS";
+  itemIds?: string[];
+}
+
+export interface GeneratePaymentResult {
+  payments: { paymentId: string; amount: number; status: string; budgetItemId?: string }[];
+}
+
+export async function generateCertificatePayment(id: string, payload: GeneratePaymentPayload) {
+  const { data } = await api.post<GeneratePaymentResult>(`/certificates/${id}/generate-payment`, payload);
+  return data;
 }
