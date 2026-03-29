@@ -253,8 +253,14 @@ Proyecto
    - **Descripción**: nombre de la partida
    - **Unidad**: m², m³, ml, Unidad, kg, Ton, Global
    - **Cantidad**: cantidad presupuestada
-   - **Precio Unit.**: precio unitario de costo
-4. El **Subtotal** se calcula automáticamente (cantidad x precio)
+   - **P.U. Costo**: precio unitario de costo (lo que te cuesta a vos)
+   - **P.U. Venta**: precio unitario de venta (lo que le cobrás al cliente)
+4. Se calculan automáticamente:
+   - **Subt. Costo**: cantidad x P.U. Costo
+   - **Subt. Venta**: cantidad x P.U. Venta
+5. En la cabecera de cada rubro se muestran los totales de costo y venta
+6. En la cabecera de la página se muestran los totales generales del proyecto
+7. La diferencia entre venta y costo es el **margen de ganancia**, visible en la sección de Finanzas
 
 ### Edición inline
 

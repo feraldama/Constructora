@@ -26,7 +26,7 @@ const UNITS: { value: MeasurementUnit; label: string }[] = [
 ];
 
 // Columnas navegables (en orden de izquierda a derecha)
-const NAV_COLUMNS = ["name", "unit", "quantity", "costUnitPrice"] as const;
+const NAV_COLUMNS = ["name", "unit", "quantity", "costUnitPrice", "saleUnitPrice"] as const;
 
 function fmtCurrency(value: number): string {
   return "$" + value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -262,8 +262,8 @@ export default function BudgetSpreadsheet({
 
       // Precio unitario (costo)
       columnHelper.accessor("costUnitPrice", {
-        header: "Precio Unit.",
-        size: 130,
+        header: "P.U. Costo",
+        size: 120,
         cell: (info) => (
           <EditableCell
             value={info.getValue()}
@@ -278,15 +278,48 @@ export default function BudgetSpreadsheet({
         ),
       }),
 
-      // Subtotal (calculado — siempre deshabilitado)
+      // Precio unitario (venta)
+      columnHelper.accessor("saleUnitPrice", {
+        header: "P.U. Venta",
+        size: 120,
+        cell: (info) => (
+          <EditableCell
+            value={info.getValue()}
+            type="number"
+            disabled={readOnly}
+            coord={{ rowIndex: info.row.index, colId: "saleUnitPrice" }}
+            onNavigate={navigateTo}
+            onSave={(v) => handleCellSave(info.row.original.id, "saleUnitPrice", v)}
+            formatDisplay={(v) => fmtCurrency(Number(v))}
+            placeholder="$0.00"
+          />
+        ),
+      }),
+
+      // Subtotal costo (calculado)
       columnHelper.display({
         id: "costSubtotal",
-        header: "Subtotal",
-        size: 130,
+        header: "Subt. Costo",
+        size: 120,
         cell: (info) => {
           const sub = info.row.original.quantity * info.row.original.costUnitPrice;
           return (
             <div className="px-3 py-2 text-sm font-medium tabular-nums text-gray-700 bg-gray-50/50">
+              {fmtCurrency(sub)}
+            </div>
+          );
+        },
+      }),
+
+      // Subtotal venta (calculado)
+      columnHelper.display({
+        id: "saleSubtotal",
+        header: "Subt. Venta",
+        size: 120,
+        cell: (info) => {
+          const sub = info.row.original.quantity * info.row.original.saleUnitPrice;
+          return (
+            <div className="px-3 py-2 text-sm font-medium tabular-nums text-gray-700 bg-blue-50/50">
               {fmtCurrency(sub)}
             </div>
           );
@@ -378,8 +411,12 @@ export default function BudgetSpreadsheet({
   });
 
   // ─── Totales ───
-  const categoryTotal = useMemo(
+  const categoryCostTotal = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity * item.costUnitPrice, 0),
+    [items]
+  );
+  const categorySaleTotal = useMemo(
+    () => items.reduce((sum, item) => sum + item.quantity * item.saleUnitPrice, 0),
     [items]
   );
 
@@ -410,9 +447,10 @@ export default function BudgetSpreadsheet({
               Eliminar rubro
             </button>
           )}
-          <span className="text-sm font-semibold text-gray-700 tabular-nums">
-            Total: {fmtCurrency(categoryTotal)}
-          </span>
+          <div className="flex items-center gap-4 text-sm tabular-nums">
+            <span className="text-gray-500">Costo: <strong className="text-gray-700">{fmtCurrency(categoryCostTotal)}</strong></span>
+            <span className="text-gray-500">Venta: <strong className="text-blue-700">{fmtCurrency(categorySaleTotal)}</strong></span>
+          </div>
         </div>
       </div>
 
@@ -471,17 +509,24 @@ export default function BudgetSpreadsheet({
           {items.length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50/80">
+                {/* cols 1-6: #, Desc, Unidad, Cantidad, P.U.Costo, P.U.Venta */}
                 <td
-                  colSpan={4}
+                  colSpan={6}
                   className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase"
                 >
                   Total categoría
                 </td>
-                <td className="px-3 py-2.5" />
+                {/* col 7: Subt. Costo */}
                 <td className="px-3 py-2.5 text-sm font-bold text-gray-900 tabular-nums">
-                  {fmtCurrency(categoryTotal)}
+                  {fmtCurrency(categoryCostTotal)}
                 </td>
+                {/* col 8: Subt. Venta */}
+                <td className="px-3 py-2.5 text-sm font-bold text-blue-700 tabular-nums">
+                  {fmtCurrency(categorySaleTotal)}
+                </td>
+                {/* col 9: Avance (condicional) */}
                 {progressData && <td />}
+                {/* col 10: Acciones (condicional) */}
                 {!readOnly && <td />}
               </tr>
             </tfoot>

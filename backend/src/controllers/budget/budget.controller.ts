@@ -202,7 +202,8 @@ export async function createBudgetItem(req: Request, res: Response): Promise<voi
   const unit = body.unit ?? "M2";
   const quantity = body.quantity ?? 0;
   const costUnitPrice = body.costUnitPrice ?? 0;
-  const saleUnitPrice = body.saleUnitPrice ?? 0;
+  // Default: precio de venta = costo + 30%
+  const saleUnitPrice = body.saleUnitPrice ?? Math.round(costUnitPrice * 1.3 * 100) / 100;
   const costSubtotal = quantity * costUnitPrice;
   const saleSubtotal = quantity * saleUnitPrice;
 
@@ -263,7 +264,24 @@ export async function updateBudgetItem(req: Request, res: Response): Promise<voi
 
   const quantity = body.quantity !== undefined ? body.quantity : Number(existing.quantity);
   const costUnitPrice = body.costUnitPrice !== undefined ? body.costUnitPrice : Number(existing.costUnitPrice);
-  const saleUnitPrice = body.saleUnitPrice !== undefined ? body.saleUnitPrice : Number(existing.saleUnitPrice);
+
+  // Auto-calcular precio de venta (+30%) si:
+  // - Se cambió el costo Y no se envió precio de venta explícito
+  // - Y el precio de venta actual era el default del costo anterior (costo * 1.3)
+  let saleUnitPrice: number;
+  if (body.saleUnitPrice !== undefined) {
+    saleUnitPrice = body.saleUnitPrice;
+  } else if (body.costUnitPrice !== undefined) {
+    const oldCost = Number(existing.costUnitPrice);
+    const oldSale = Number(existing.saleUnitPrice);
+    const wasDefault = oldCost === 0 || Math.abs(oldSale - oldCost * 1.3) < 0.02;
+    saleUnitPrice = wasDefault
+      ? Math.round(costUnitPrice * 1.3 * 100) / 100
+      : oldSale;
+  } else {
+    saleUnitPrice = Number(existing.saleUnitPrice);
+  }
+
   const costSubtotal = quantity * costUnitPrice;
   const saleSubtotal = quantity * saleUnitPrice;
 
@@ -271,6 +289,7 @@ export async function updateBudgetItem(req: Request, res: Response): Promise<voi
     where: { id: itemId },
     data: {
       ...body,
+      saleUnitPrice,
       costSubtotal,
       saleSubtotal,
     },

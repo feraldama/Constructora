@@ -88,6 +88,8 @@ export default function BudgetPage({
           await updateItem.mutateAsync({ itemId, payload: { quantity: value as number } });
         } else if (field === "costUnitPrice") {
           await updateItem.mutateAsync({ itemId, payload: { costUnitPrice: value as number } });
+        } else if (field === "saleUnitPrice") {
+          await updateItem.mutateAsync({ itemId, payload: { saleUnitPrice: value as number } });
         }
       })();
     },
@@ -146,8 +148,12 @@ export default function BudgetPage({
     })();
   }, [deleteCat, deleteCatTarget]);
 
-  const grandTotal = categories.reduce(
+  const grandCostTotal = categories.reduce(
     (sum, cat) => sum + cat.items.reduce((s, i) => s + i.quantity * i.costUnitPrice, 0),
+    0
+  );
+  const grandSaleTotal = categories.reduce(
+    (sum, cat) => sum + cat.items.reduce((s, i) => s + i.quantity * i.saleUnitPrice, 0),
     0
   );
 
@@ -185,11 +191,19 @@ export default function BudgetPage({
             <Plus size={18} />
             Nueva categoría
           </button>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">Presupuesto total</p>
-            <p className="text-xl font-bold text-gray-900 tabular-nums">
-              ${grandTotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-            </p>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Total Costo</p>
+              <p className="text-lg font-bold text-gray-900 tabular-nums">
+                ${grandCostTotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Total Venta</p>
+              <p className="text-lg font-bold text-blue-700 tabular-nums">
+                ${grandSaleTotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         </div>
       </div>
