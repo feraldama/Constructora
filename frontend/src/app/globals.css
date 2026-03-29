@@ -30,3 +30,48 @@ button:disabled,
 select:disabled {
   cursor: not-allowed;
 }
+
+/* Print styles — certificaciones y reportes */
+@media print {
+  /* Ocultar sidebar, navbar, botones de acción */
+  aside,
+  header,
+  nav,
+  button,
+  select,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* El contenido ocupa todo */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .flex.h-screen {
+    display: block !important;
+  }
+
+  /* Forzar fondo blanco y bordes visibles */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Tablas: evitar corte de filas entre páginas */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Badges y barras de progreso se imprimen con color */
+  [class*="bg-green"],
+  [class*="bg-blue"],
+  [class*="bg-yellow"],
+  [class*="bg-red"],
+  [class*="bg-gray"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

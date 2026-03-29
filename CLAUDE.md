@@ -61,3 +61,7 @@
 - Índices compuestos optimizados para dashboard y pagos
 - Express v5: `req.params.id` es `string | string[]`, usar helper para castear
 - Registrar acciones en `ActivityLog` al crear/editar/eliminar entidades
+
+## Documentación
+- **Manual de usuario**: `MANUAL_USUARIO.md` en la raíz del proyecto
+- **Actualización obligatoria**: al agregar funcionalidades nuevas, crear componentes, modificar flujos existentes o cambiar la navegación, **actualizar el manual de usuario** reflejando los cambios. Incluir: descripción de la feature, cómo usarla paso a paso, campos/opciones disponibles, y restricciones/permisos. Mantener la tabla de contenidos sincronizada.

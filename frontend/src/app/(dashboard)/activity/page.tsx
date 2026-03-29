@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   History,
   ChevronLeft,
   ChevronRight,
   User,
   FolderKanban,
+  FileSpreadsheet,
 } from "lucide-react";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import { useActivityLogs } from "@/hooks/useActivity";
+import { exportToExcel } from "@/lib/utils/export";
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE_PROJECT: "Creó proyecto",
@@ -34,6 +36,19 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_EXPENSE: "Eliminó gasto",
   UPLOAD_ATTACHMENT: "Subió archivo",
   DELETE_ATTACHMENT: "Eliminó archivo",
+  CREATE_PROGRESS_ENTRY: "Registró avance físico",
+  UPDATE_PROGRESS_ENTRY: "Editó avance físico",
+  DELETE_PROGRESS_ENTRY: "Eliminó avance físico",
+  CREATE_CERTIFICATE: "Creó certificación",
+  UPDATE_CERTIFICATE: "Editó certificación",
+  DELETE_CERTIFICATE: "Eliminó certificación",
+  SUBMIT_CERTIFICATE: "Envió certificación",
+  APPROVE_CERTIFICATE: "Aprobó certificación",
+  REJECT_CERTIFICATE: "Rechazó certificación",
+  RESUBMIT_CERTIFICATE: "Reenvió certificación",
+  GENERATE_CERTIFICATE_PAYMENT: "Generó pago de certificación",
+  CREATE_BUDGET_CATEGORY: "Creó rubro",
+  DELETE_BUDGET_CATEGORY: "Eliminó rubro",
 };
 
 const ENTITY_COLORS: Record<string, string> = {
@@ -45,6 +60,8 @@ const ENTITY_COLORS: Record<string, string> = {
   ContractorAssignment: "bg-purple-50 text-purple-700",
   ProjectExpense: "bg-yellow-50 text-yellow-700",
   Attachment: "bg-pink-50 text-pink-700",
+  ProgressEntry: "bg-teal-50 text-teal-700",
+  Certificate: "bg-cyan-50 text-cyan-700",
 };
 
 function fmtDate(iso: string): string {
@@ -71,24 +88,43 @@ function relativeTime(iso: string): string {
 }
 
 export default function ActivityPage() {
-  const { data: projectsRes, isLoading: loadingProjects } = useProjects({ page: 1, limit: 100 });
-  const projects = projectsRes?.data ?? [];
+  const { projectId: globalProjectId, projects } = useProject();
 
-  const [projectId, setProjectId] = useState("");
+  const [filterProjectId, setFilterProjectId] = useState<string>("");
   const [page, setPage] = useState(1);
+
+  // Inicializar filtro con el proyecto global
+  useEffect(() => {
+    if (globalProjectId && !filterProjectId) {
+      setFilterProjectId(globalProjectId);
+    }
+  }, [globalProjectId, filterProjectId]);
 
   useEffect(() => {
     setPage(1);
-  }, [projectId]);
+  }, [filterProjectId]);
 
   const { data, isLoading } = useActivityLogs({
-    projectId: projectId || undefined,
+    projectId: filterProjectId || undefined,
     page,
     limit: 30,
   });
 
   const logs = data?.data ?? [];
   const pagination = data?.pagination;
+
+  const handleExport = useCallback(() => {
+    if (!logs.length) return;
+    const rows = logs.map((log) => [
+      fmtDate(log.createdAt),
+      ACTION_LABELS[log.action] ?? log.action,
+      log.entityType,
+      log.user ? `${log.user.firstName} ${log.user.lastName}` : "Sistema",
+    ]);
+    exportToExcel("Actividad", [
+      { name: "Historial", headers: ["Fecha", "Acción", "Entidad", "Usuario"], rows },
+    ]);
+  }, [logs]);
 
   return (
     <div className="space-y-6">
@@ -100,6 +136,16 @@ export default function ActivityPage() {
             Registro de todas las acciones realizadas en los proyectos
           </p>
         </div>
+        {logs.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 shrink-0"
+          >
+            <FileSpreadsheet size={16} />
+            Exportar Excel
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -107,10 +153,9 @@ export default function ActivityPage() {
         <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[240px]">
           <label className="text-xs font-medium text-gray-500">Filtrar por proyecto</label>
           <select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            disabled={loadingProjects}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
+            value={filterProjectId}
+            onChange={(e) => setFilterProjectId(e.target.value)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
           >
             <option value="">Todos los proyectos</option>
             {projects.map((p) => (
@@ -141,7 +186,7 @@ export default function ActivityPage() {
             </div>
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Sin actividad</h3>
             <p className="text-sm text-gray-500 max-w-sm">
-              No se encontraron registros de actividad{projectId ? " para este proyecto" : ""}.
+              No se encontraron registros de actividad{filterProjectId ? " para este proyecto" : ""}.
             </p>
           </div>
         ) : (

@@ -19,7 +19,7 @@ export interface ProjectDashboard {
   };
   progress: {
     totalItems: number;
-    itemsWithPayments: number;
+    itemsWithProgress: number;
     percent: number;
   };
   recentActivity: {
@@ -47,6 +47,58 @@ export async function getProjectDashboard(
 ): Promise<ProjectDashboard> {
   const { data } = await api.get<ProjectDashboard>("/dashboard", {
     params: { projectId },
+  });
+  return data;
+}
+
+export interface OverviewProject {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string | null;
+  estimatedEnd: string | null;
+  estimated: number;
+  revenue: number;
+  paid: number;
+  pending: number;
+  overdue: number;
+  committed: number;
+  executionPercent: number;
+  progressPercent: number;
+  profitMargin: number;
+}
+
+export interface DashboardOverview {
+  projects: OverviewProject[];
+  totals: {
+    totalPaid: number;
+    totalPending: number;
+    totalOverdue: number;
+    totalEstimated: number;
+  };
+}
+
+export async function getDashboardOverview(): Promise<DashboardOverview> {
+  const { data } = await api.get<DashboardOverview>("/dashboard/overview");
+  return data;
+}
+
+export interface CalendarEvent {
+  id: string;
+  type: "PAYMENT_DUE" | "PAYMENT_PAID" | "CERTIFICATE" | "PROJECT_START" | "PROJECT_END";
+  title: string;
+  date: string;
+  color: string;
+  meta?: Record<string, unknown>;
+}
+
+export async function getCalendarEvents(
+  projectId: string,
+  from: string,
+  to: string
+): Promise<CalendarEvent[]> {
+  const { data } = await api.get<CalendarEvent[]>("/dashboard/calendar", {
+    params: { projectId, from, to },
   });
   return data;
 }

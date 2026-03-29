@@ -19,9 +19,10 @@ model User {
   isActive       Boolean         @default(true) @map("is_active")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
-  activityLogs   ActivityLog[]
-  notifications  Notification[]
-  projectMembers ProjectMember[]
+  activityLogs    ActivityLog[]
+  notifications   Notification[]
+  projectMembers  ProjectMember[]
+  progressEntries ProgressEntry[]
 
   @@map("users")
 }
@@ -43,6 +44,7 @@ model Project {
   attachments   Attachment[]
   budgetSummary BudgetSummary?
   categories    Category[]
+  certificates  Certificate[]
   expenses      ProjectExpense[]
   payments      Payment[]
   contractors   ProjectContractor[]
@@ -100,10 +102,12 @@ model BudgetItem {
   sortOrder      Int                    @default(0) @map("sort_order")
   createdAt   DateTime               @default(now()) @map("created_at")
   updatedAt   DateTime               @updatedAt @map("updated_at")
-  attachments Attachment[]
-  category    Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  assignments ContractorAssignment[]
-  payments    Payment[]
+  attachments      Attachment[]
+  category         Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  assignments      ContractorAssignment[]
+  certificateItems CertificateItem[]
+  payments         Payment[]
+  progressEntries  ProgressEntry[]
 
   @@index([categoryId, sortOrder])
   @@map("budget_items")
@@ -122,10 +126,11 @@ model Contractor {
   isActive    Boolean                @default(true) @map("is_active")
   createdAt   DateTime               @default(now()) @map("created_at")
   updatedAt   DateTime               @updatedAt @map("updated_at")
-  attachments Attachment[]
-  assignments ContractorAssignment[]
-  payments    Payment[]
-  projects    ProjectContractor[]
+  attachments  Attachment[]
+  assignments  ContractorAssignment[]
+  certificates Certificate[]
+  payments     Payment[]
+  projects     ProjectContractor[]
 
   @@index([isActive, name])
   @@map("contractors")
@@ -169,20 +174,22 @@ model Payment {
   id            String         @id @default(uuid())
   projectId     String         @map("project_id")
   contractorId  String         @map("contractor_id")
-  budgetItemId  String?        @map("budget_item_id")
-  amount        Decimal        @db.Decimal(14, 2)
-  status        PaymentStatus  @default(PENDING)
-  paymentMethod PaymentMethod? @map("payment_method")
-  description   String?
-  invoiceNumber String?        @map("invoice_number")
-  dueDate       DateTime?      @map("due_date")
-  paidAt        DateTime?      @map("paid_at")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  attachments   Attachment[]
-  budgetItem    BudgetItem?   @relation(fields: [budgetItemId], references: [id])
-  contractor    Contractor    @relation(fields: [contractorId], references: [id])
-  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  budgetItemId   String?         @map("budget_item_id")
+  certificateId  String?         @map("certificate_id")
+  amount         Decimal         @db.Decimal(14, 2)
+  status         PaymentStatus   @default(PENDING)
+  paymentMethod  PaymentMethod?  @map("payment_method")
+  description    String?
+  invoiceNumber  String?         @map("invoice_number")
+  dueDate        DateTime?       @map("due_date")
+  paidAt         DateTime?       @map("paid_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  attachments    Attachment[]
+  budgetItem     BudgetItem?    @relation(fields: [budgetItemId], references: [id])
+  certificate    Certificate?   @relation(fields: [certificateId], references: [id])
+  contractor     Contractor     @relation(fields: [contractorId], references: [id])
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, status])
   @@index([projectId, contractorId])
@@ -295,6 +302,73 @@ model ActivityLog {
   @@map("activity_logs")
 }
 
+/// Certificación periódica de obra ejecutada por contratista
+model Certificate {
+  id                String            @id @default(uuid())
+  projectId         String            @map("project_id")
+  contractorId      String            @map("contractor_id")
+  certificateNumber Int               @map("certificate_number")
+  periodStart       DateTime          @map("period_start")
+  periodEnd         DateTime          @map("period_end")
+  status            CertificateStatus @default(DRAFT)
+  notes             String?
+  totalAmount       Decimal           @default(0) @map("total_amount") @db.Decimal(14, 2)
+  submittedAt       DateTime?         @map("submitted_at")
+  approvedAt        DateTime?         @map("approved_at")
+  rejectedAt        DateTime?         @map("rejected_at")
+  rejectionReason   String?           @map("rejection_reason")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contractor Contractor        @relation(fields: [contractorId], references: [id])
+  items      CertificateItem[]
+  payments   Payment[]
+
+  @@unique([projectId, certificateNumber])
+  @@index([projectId, status])
+  @@index([projectId, contractorId])
+  @@map("certificates")
+}
+
+/// Línea de detalle de certificación (una por partida asignada)
+model CertificateItem {
+  id                  String     @id @default(uuid())
+  certificateId       String     @map("certificate_id")
+  budgetItemId        String     @map("budget_item_id")
+  previousQuantity    Decimal    @default(0) @map("previous_quantity") @db.Decimal(12, 4)
+  currentQuantity     Decimal    @default(0) @map("current_quantity") @db.Decimal(12, 4)
+  accumulatedQuantity Decimal    @default(0) @map("accumulated_quantity") @db.Decimal(12, 4)
+  unitPrice           Decimal    @default(0) @map("unit_price") @db.Decimal(14, 2)
+  currentAmount       Decimal    @default(0) @map("current_amount") @db.Decimal(14, 2)
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+
+  certificate Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  budgetItem  BudgetItem  @relation(fields: [budgetItemId], references: [id])
+
+  @@unique([certificateId, budgetItemId])
+  @@index([certificateId])
+  @@map("certificate_items")
+}
+
+/// Registro de avance físico por partida
+model ProgressEntry {
+  id           String     @id @default(uuid())
+  budgetItemId String     @map("budget_item_id")
+  quantity     Decimal    @db.Decimal(12, 4)
+  date         DateTime   @default(now())
+  notes        String?
+  recordedById String     @map("recorded_by_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  budgetItem   BudgetItem @relation(fields: [budgetItemId], references: [id], onDelete: Cascade)
+  recordedBy   User       @relation(fields: [recordedById], references: [id])
+
+  @@index([budgetItemId, date(sort: Desc)])
+  @@map("progress_entries")
+}
+
 enum GlobalRole {
   SUPER_ADMIN
   ADMIN
@@ -323,6 +397,13 @@ enum MeasurementUnit {
   KG
   TON
   GLOBAL
+}
+
+enum CertificateStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
 }
 
 enum PaymentStatus {

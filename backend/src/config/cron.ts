@@ -1,6 +1,8 @@
 import cron from "node-cron";
 import { markOverduePayments } from "../services/payment-state.service.js";
 import { runAlertChecks, purgeOldNotifications } from "../services/alerts.service.js";
+import prisma from "./prisma.js";
+import { recalcBudgetSummary } from "../services/payments.service.js";
 
 // ============================================================================
 // CRON JOBS
@@ -75,5 +77,25 @@ export function startCronJobs(): void {
     }
   });
 
-  console.log("✓ Cron jobs registrados (estados: 1 min | alertas: 15 min | limpieza: 3 AM)");
+  // ── Job 4: reconciliación de BudgetSummary ────────────────────────────────
+  cron.schedule("*/5 * * * *", async () => {
+    try {
+      const projects = await prisma.project.findMany({
+        where: { status: { in: ["IN_PROGRESS", "PLANNING"] } },
+        select: { id: true },
+      });
+      for (const p of projects) {
+        await recalcBudgetSummary(p.id);
+      }
+      if (projects.length > 0) {
+        console.log(
+          `[CRON:budget] ${new Date().toISOString()} — ${projects.length} proyecto${projects.length !== 1 ? "s" : ""} reconciliado${projects.length !== 1 ? "s" : ""}`
+        );
+      }
+    } catch (err) {
+      console.error("[CRON:budget] Error al reconciliar BudgetSummary:", err);
+    }
+  });
+
+  console.log("✓ Cron jobs registrados (estados: 1 min | alertas: 15 min | budget: 5 min | limpieza: 3 AM)");
 }

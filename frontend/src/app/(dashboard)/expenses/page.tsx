@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Plus,
   Receipt,
@@ -9,7 +9,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import {
   useExpenses,
   useCreateExpense,
@@ -58,21 +58,15 @@ const EMPTY_FORM: CreateExpensePayload = {
 };
 
 export default function ExpensesPage() {
-  const { data: projectsRes, isLoading: loadingProjects } = useProjects({ page: 1, limit: 100 });
-  const projects = projectsRes?.data ?? [];
+  const { projectId, project } = useProject();
 
-  const [projectId, setProjectId] = useState("");
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<ExpenseType | "">("");
 
-  useEffect(() => {
-    if (!projectId && projects.length > 0) setProjectId(projects[0].id);
-  }, [projectId, projects]);
-
-  const { data: expenses, isLoading: loadingExpenses } = useExpenses(projectId || undefined);
-  const createMut = useCreateExpense(projectId || undefined);
-  const updateMut = useUpdateExpense(projectId || undefined);
-  const deleteMut = useDeleteExpense(projectId || undefined);
+  const { data: expenses, isLoading: loadingExpenses } = useExpenses(projectId ?? undefined);
+  const createMut = useCreateExpense(projectId ?? undefined);
+  const updateMut = useUpdateExpense(projectId ?? undefined);
+  const deleteMut = useDeleteExpense(projectId ?? undefined);
 
   // Modal state
   const [formOpen, setFormOpen] = useState(false);
@@ -175,26 +169,8 @@ export default function ExpensesPage() {
         </button>
       </div>
 
-      {/* Project selector + filters */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[220px]">
-          <label className="text-xs font-medium text-gray-500">Proyecto</label>
-          <select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            disabled={loadingProjects}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
-          >
-            {projects.length === 0 ? (
-              <option value="">Sin proyectos</option>
-            ) : (
-              projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))
-            )}
-          </select>
-        </div>
-
         <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[180px]">
           <label className="text-xs font-medium text-gray-500">Tipo</label>
           <div className="relative">

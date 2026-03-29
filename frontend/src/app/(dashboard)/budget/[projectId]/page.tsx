@@ -12,6 +12,8 @@ import {
   useDeleteBudgetItem,
 } from "@/hooks/useProjectBudget";
 import { useProjects } from "@/hooks/useProjects";
+import { useProjectProgress } from "@/hooks/useProgress";
+import ProgressEntryModal from "@/components/progress/ProgressEntryModal";
 import type { BudgetItem, MeasurementUnit } from "@/types";
 import { Plus } from "lucide-react";
 
@@ -30,6 +32,30 @@ export default function BudgetPage({
   );
 
   const categories = budgetData?.categories ?? [];
+
+  // Progress data
+  const { data: progressRes } = useProjectProgress(projectId);
+  const progressData = useMemo(() => {
+    if (!progressRes) return undefined;
+    const map = new Map<string, { measured: number; percent: number }>();
+    for (const item of progressRes.items) {
+      map.set(item.budgetItemId, {
+        measured: item.measuredQuantity,
+        percent: item.percent,
+      });
+    }
+    return map;
+  }, [progressRes]);
+
+  const [progressItemId, setProgressItemId] = useState<string | null>(null);
+  const progressItem = useMemo(() => {
+    if (!progressItemId) return null;
+    for (const cat of categories) {
+      const found = cat.items.find((i) => i.id === progressItemId);
+      if (found) return found;
+    }
+    return null;
+  }, [progressItemId, categories]);
 
   const createCat = useCreateBudgetCategory(projectId);
   const deleteCat = useDeleteBudgetCategory(projectId);
@@ -185,6 +211,8 @@ export default function BudgetPage({
             onDuplicateItem={(itemId) => handleDuplicateItem(cat.id, itemId)}
             onDeleteItem={(itemId) => handleDeleteItem(cat.id, itemId)}
             onDeleteCategory={() => setDeleteCatTarget({ id: cat.id, name: cat.name })}
+            progressData={progressData}
+            onOpenProgress={(itemId) => setProgressItemId(itemId)}
           />
         ))
       )}
@@ -221,6 +249,13 @@ export default function BudgetPage({
           </div>
         </div>
       </Modal>
+
+      {/* Progress modal */}
+      <ProgressEntryModal
+        item={progressItem}
+        isOpen={!!progressItemId}
+        onClose={() => setProgressItemId(null)}
+      />
 
       <Modal
         isOpen={!!deleteCatTarget}

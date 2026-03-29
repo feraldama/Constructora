@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -29,7 +29,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import {
   useFinancialSummary,
   useCashFlow,
@@ -71,22 +71,16 @@ const CONFIDENCE_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function FinancePage() {
-  const { data: projectsRes, isLoading: loadingProjects } = useProjects({ page: 1, limit: 100 });
-  const projects = projectsRes?.data ?? [];
-  const [projectId, setProjectId] = useState("");
+  const { projectId, project } = useProject();
   const [tab, setTab] = useState<"overview" | "cashflow" | "predictions" | "alerts">("overview");
 
-  useEffect(() => {
-    if (!projectId && projects.length > 0) setProjectId(projects[0].id);
-  }, [projectId, projects]);
-
-  const pid = projectId || undefined;
+  const pid = projectId ?? undefined;
   const { data: fin, isLoading: loadingFin } = useFinancialSummary(pid);
   const { data: cashFlow, isLoading: loadingCF } = useCashFlow(tab === "cashflow" ? pid : undefined);
   const { data: predictions, isLoading: loadingPred } = usePaymentPredictions(tab === "predictions" ? pid : undefined);
   const { data: alertsData, isLoading: loadingAlerts } = useDebtAlerts(tab === "alerts" ? pid : undefined);
 
-  const selectedProject = projects.find((p) => p.id === projectId);
+  const selectedProject = project;
 
   const handleExportFinance = useCallback(() => {
     if (!fin || !selectedProject) return;
@@ -169,7 +163,7 @@ export default function FinancePage() {
     [fin]
   );
 
-  const isLoading = loadingProjects || loadingFin;
+  const isLoading = loadingFin;
 
   const tabs = [
     { key: "overview" as const, label: "Resumen" },
@@ -189,23 +183,6 @@ export default function FinancePage() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-end gap-3">
-          <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[220px]">
-            <label className="text-xs font-medium text-gray-500">Proyecto</label>
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              disabled={loadingProjects}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
-            >
-              {projects.length === 0 ? (
-                <option value="">Sin proyectos</option>
-              ) : (
-                projects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))
-              )}
-            </select>
-          </div>
           {fin && (
             <button
               type="button"

@@ -33,7 +33,7 @@ import Badge from "@/components/ui/Badge";
 import PaymentForm from "@/components/forms/PaymentForm";
 import PaymentSummaryCards from "@/components/charts/PaymentSummaryCards";
 import DebtTable from "@/components/charts/DebtTable";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import { useContractors } from "@/hooks/useContractors";
 
 // ── Etiquetas de método de pago ───────────────────────────────────────────────
@@ -81,15 +81,13 @@ export default function PaymentsPage() {
   const [deletingPayment, setDeletingPayment] = useState<PaymentDetail | null>(null);
   const [formError, setFormError] = useState("");
   const [activeTab, setActiveTab] = useState<"list" | "debts">("list");
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
 
-  // Datos reales de proyectos y contratistas
-  const { data: projectsData } = useProjects({ limit: 100 });
+  const { projectId: globalProjectId, projects: allProjects } = useProject();
   const { data: contractorsData } = useContractors({ limit: 200, isActive: true });
 
-  const projects     = projectsData?.data     ?? [];
   const contractors  = contractorsData?.data  ?? [];
-  const projectId    = selectedProjectId || undefined;
+  const projects     = allProjects.map((p) => ({ id: p.id, name: p.name }));
+  const projectId    = globalProjectId ?? undefined;
 
   const activeFilters: PaymentFilters = {
     ...filters,
@@ -334,18 +332,6 @@ export default function PaymentsPage() {
               <span className="text-sm font-medium text-gray-700">Filtros</span>
             </div>
             <div className="flex flex-wrap gap-3">
-              {/* Selector de proyecto */}
-              <select
-                value={selectedProjectId}
-                onChange={(e) => { setSelectedProjectId(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
-              >
-                <option value="">Todos los proyectos</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
@@ -376,10 +362,9 @@ export default function PaymentsPage() {
                 />
               </div>
 
-              {(selectedProjectId || statusFilter || dateFrom || dateTo) && (
+              {(statusFilter || dateFrom || dateTo) && (
                 <button
                   onClick={() => {
-                    setSelectedProjectId("");
                     setStatusFilter("");
                     setDateFrom("");
                     setDateTo("");

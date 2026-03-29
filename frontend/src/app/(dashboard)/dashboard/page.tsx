@@ -10,6 +10,7 @@ import {
   BarChart3,
   CalendarClock,
 } from "lucide-react";
+import Link from "next/link";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useProject } from "@/hooks/useProject";
 import Badge from "@/components/ui/Badge";
@@ -27,6 +28,14 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE_BUDGET_ITEM: "Partida creada",
   UPDATE_BUDGET_ITEM: "Partida actualizada",
   DELETE_BUDGET_ITEM: "Partida eliminada",
+  CREATE_PROGRESS_ENTRY: "Avance físico registrado",
+  CREATE_CERTIFICATE: "Certificación creada",
+  SUBMIT_CERTIFICATE: "Certificación enviada",
+  APPROVE_CERTIFICATE: "Certificación aprobada",
+  REJECT_CERTIFICATE: "Certificación rechazada",
+  GENERATE_CERTIFICATE_PAYMENT: "Pago de certificación generado",
+  CREATE_EXPENSE: "Gasto registrado",
+  CREATE_ASSIGNMENT: "Partida asignada a contratista",
 };
 
 const STATUS_BADGE: Record<string, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {
@@ -171,11 +180,19 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {project ? project.name : "Resumen del proyecto activo"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {project ? project.name : "Resumen del proyecto activo"}
+          </p>
+        </div>
+        <Link
+          href="/dashboard/overview"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Vista general
+        </Link>
       </div>
 
       {/* KPI Cards */}
@@ -251,7 +268,7 @@ export default function DashboardPage() {
           </div>
           <ProgressRing percent={dash.progress.percent} />
           <p className="text-center text-xs text-gray-500 mt-3">
-            {dash.progress.itemsWithPayments} de {dash.progress.totalItems} partidas con pagos realizados
+            {dash.progress.itemsWithProgress} de {dash.progress.totalItems} partidas con avance registrado
           </p>
         </div>
       </div>

@@ -23,11 +23,11 @@ export interface ProjectDashboard {
     countOverdue: number;
     countUpcoming7d: number; // Vencen en los próximos 7 días
   };
-  // Avance de obra
+  // Avance de obra (físico ponderado por saleSubtotal)
   progress: {
     totalItems: number;
-    itemsWithPayments: number; // Partidas que tienen al menos un pago PAID
-    percent: number;           // (itemsWithPayments / totalItems) * 100
+    itemsWithProgress: number; // Partidas con mediciones de avance
+    percent: number;           // Progreso ponderado por valor de partida
   };
   // Últimos movimientos
   recentActivity: {
@@ -66,7 +66,8 @@ interface DashboardRawRow {
   count_overdue: string | null;
   count_upcoming_7d: string | null;
   total_items: string | null;
-  items_with_payments: string | null;
+  items_with_progress: string | null;
+  progress_percent: string | null;
 }
 
 /**
@@ -121,7 +122,7 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
         THEN 1
       END) AS count_upcoming_7d,
 
-      -- Avance de obra: total partidas vs partidas con al menos un pago PAID
+      -- Avance de obra físico (ponderado por sale_subtotal)
       (
         SELECT COUNT(*)
         FROM budget_items bi
@@ -130,12 +131,29 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
       ) AS total_items,
 
       (
-        SELECT COUNT(DISTINCT bi.id)
+        SELECT COUNT(DISTINCT pe.budget_item_id)
+        FROM progress_entries pe
+        INNER JOIN budget_items bi ON bi.id = pe.budget_item_id
+        INNER JOIN categories c ON c.id = bi.category_id
+        WHERE c.project_id = $1
+      ) AS items_with_progress,
+
+      (
+        SELECT COALESCE(
+          SUM(
+            LEAST(COALESCE(item_prog.measured, 0) / NULLIF(bi.quantity, 0), 1.0) * bi.sale_subtotal
+          ) / NULLIF(SUM(bi.sale_subtotal), 0) * 100,
+          0
+        )
         FROM budget_items bi
         INNER JOIN categories c ON c.id = bi.category_id
-        INNER JOIN payments pp ON pp.budget_item_id = bi.id AND pp.status = 'PAID'
+        LEFT JOIN (
+          SELECT budget_item_id, SUM(quantity) AS measured
+          FROM progress_entries
+          GROUP BY budget_item_id
+        ) item_prog ON item_prog.budget_item_id = bi.id
         WHERE c.project_id = $1
-      ) AS items_with_payments
+      ) AS progress_percent
 
     FROM payments p
     WHERE p.project_id = $1
@@ -191,7 +209,8 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
     count_overdue: "0",
     count_upcoming_7d: "0",
     total_items: "0",
-    items_with_payments: "0",
+    items_with_progress: "0",
+    progress_percent: "0",
   };
 
   const n = (val: string | null) => Number(val ?? 0);
@@ -200,7 +219,8 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
   const executed = n(row.total_paid);
   const committed = n(row.total_committed);
   const totalItems = n(row.total_items);
-  const itemsWithPayments = n(row.items_with_payments);
+  const itemsWithProgress = n(row.items_with_progress);
+  const progressPercent = n(row.progress_percent);
 
   return {
     budget: {
@@ -221,8 +241,8 @@ export async function getProjectDashboard(projectId: string): Promise<ProjectDas
     },
     progress: {
       totalItems,
-      itemsWithPayments,
-      percent: totalItems > 0 ? Math.round((itemsWithPayments / totalItems) * 100) : 0,
+      itemsWithProgress,
+      percent: Math.round(progressPercent),
     },
     recentActivity: recentActivity.map((a) => ({
       id: a.id,

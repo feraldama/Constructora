@@ -8,7 +8,7 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Plus, Copy, Trash2, GripVertical, Save } from "lucide-react";
+import { Plus, Copy, Trash2, GripVertical, Save, Ruler } from "lucide-react";
 import EditableCell, { type CellCoord } from "./EditableCell";
 import { cn } from "@/lib/utils/cn";
 import type { BudgetItem, MeasurementUnit } from "@/types";
@@ -49,6 +49,10 @@ interface BudgetSpreadsheetProps {
   /** Indicador de guardando */
   isSaving?: boolean;
   readOnly?: boolean;
+  /** Datos de avance físico por item (Map<budgetItemId, { measured, percent }>) */
+  progressData?: Map<string, { measured: number; percent: number }>;
+  /** Callback al hacer click en la celda de avance */
+  onOpenProgress?: (itemId: string) => void;
 }
 
 const columnHelper = createColumnHelper<BudgetItem>();
@@ -66,6 +70,8 @@ export default function BudgetSpreadsheet({
   onDeleteCategory,
   isSaving = false,
   readOnly = false,
+  progressData,
+  onOpenProgress,
 }: BudgetSpreadsheetProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -287,6 +293,51 @@ export default function BudgetSpreadsheet({
         },
       }),
 
+      // Avance físico
+      ...(progressData
+        ? [
+            columnHelper.display({
+              id: "progress",
+              header: "Avance",
+              size: 140,
+              cell: (info: { row: { original: BudgetItem } }) => {
+                const item = info.row.original;
+                const prog = progressData.get(item.id);
+                const pct = prog?.percent ?? 0;
+                const measured = prog?.measured ?? 0;
+                return (
+                  <div
+                    className="px-2 py-1.5 cursor-pointer hover:bg-blue-50 rounded transition-colors"
+                    onClick={() => onOpenProgress?.(item.id)}
+                    title="Registrar avance"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            pct >= 100
+                              ? "bg-green-500"
+                              : pct > 0
+                              ? "bg-blue-500"
+                              : "bg-gray-200"
+                          }`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums text-gray-600 w-8 text-right shrink-0">
+                        {pct}%
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-0.5 tabular-nums">
+                      {measured} / {item.quantity}
+                    </p>
+                  </div>
+                );
+              },
+            }),
+          ]
+        : []),
+
       // Acciones
       ...(!readOnly
         ? [
@@ -421,7 +472,7 @@ export default function BudgetSpreadsheet({
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50/80">
                 <td
-                  colSpan={readOnly ? 4 : 4}
+                  colSpan={4}
                   className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase"
                 >
                   Total categoría
@@ -430,6 +481,7 @@ export default function BudgetSpreadsheet({
                 <td className="px-3 py-2.5 text-sm font-bold text-gray-900 tabular-nums">
                   {fmtCurrency(categoryTotal)}
                 </td>
+                {progressData && <td />}
                 {!readOnly && <td />}
               </tr>
             </tfoot>

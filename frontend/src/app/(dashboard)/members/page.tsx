@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Users,
   Plus,
@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Eye,
 } from "lucide-react";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useMembers,
@@ -42,16 +42,9 @@ const ROLE_COLORS: Record<ProjectRole, string> = {
 
 export default function MembersPage() {
   const { user: currentUser } = useAuth();
-  const { data: projectsRes, isLoading: loadingProjects } = useProjects({ page: 1, limit: 100 });
-  const projects = projectsRes?.data ?? [];
+  const { projectId } = useProject();
 
-  const [projectId, setProjectId] = useState("");
-
-  useEffect(() => {
-    if (!projectId && projects.length > 0) setProjectId(projects[0].id);
-  }, [projectId, projects]);
-
-  const pid = projectId || undefined;
+  const pid = projectId ?? undefined;
   const { data: members, isLoading: loadingMembers } = useMembers(pid);
   const addMut = useAddMember(pid);
   const updateRoleMut = useUpdateMemberRole(pid);
@@ -138,25 +131,6 @@ export default function MembersPage() {
             Agregar miembro
           </button>
         )}
-      </div>
-
-      {/* Project selector */}
-      <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[240px] sm:max-w-xs">
-        <label className="text-xs font-medium text-gray-500">Proyecto</label>
-        <select
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          disabled={loadingProjects}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
-        >
-          {projects.length === 0 ? (
-            <option value="">Sin proyectos</option>
-          ) : (
-            projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))
-          )}
-        </select>
       </div>
 
       {/* Members list */}

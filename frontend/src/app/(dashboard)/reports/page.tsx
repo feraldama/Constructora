@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -14,7 +14,7 @@ import {
   Printer,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { useProjects } from "@/hooks/useProjects";
+import { useProject } from "@/hooks/useProject";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useProjectBudget } from "@/hooks/useProjectBudget";
 import { usePayments } from "@/hooks/usePayments";
@@ -33,24 +33,15 @@ function fmt(value: number): string {
 }
 
 export default function ReportsPage() {
-  const { data: projectsRes, isLoading: loadingProjects } = useProjects({ page: 1, limit: 100 });
-  const projects = projectsRes?.data ?? [];
+  const { projectId, project } = useProject();
 
-  const [projectId, setProjectId] = useState<string>("");
-
-  useEffect(() => {
-    if (!projectId && projects.length > 0) {
-      setProjectId(projects[0].id);
-    }
-  }, [projectId, projects]);
-
-  const { data: dash, isLoading: loadingDash } = useDashboard(projectId || undefined);
-  const { data: budgetData } = useProjectBudget(projectId || undefined);
+  const { data: dash, isLoading: loadingDash } = useDashboard(projectId ?? undefined);
+  const { data: budgetData } = useProjectBudget(projectId ?? undefined);
   const { data: paymentsData } = usePayments(projectId ? { projectId } : undefined);
-  const { data: expensesData } = useExpenses(projectId || undefined);
-  const { data: finSummary } = useFinancialSummary(projectId || undefined);
+  const { data: expensesData } = useExpenses(projectId ?? undefined);
+  const { data: finSummary } = useFinancialSummary(projectId ?? undefined);
 
-  const selectedProject = projects.find((p) => p.id === projectId);
+  const selectedProject = project;
 
   const handleExportExcel = useCallback(() => {
     if (!selectedProject) return;
@@ -169,28 +160,9 @@ export default function ReportsPage() {
             Resumen ejecutivo por proyecto (presupuesto, pagos y avance)
           </p>
         </div>
-        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[220px]">
-          <label className="text-xs font-medium text-gray-500">Proyecto</label>
-          <select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            disabled={loadingProjects || projects.length === 0}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
-          >
-            {projects.length === 0 ? (
-              <option value="">Sin proyectos</option>
-            ) : (
-              projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
       </div>
 
-      {loadingProjects || !projectId ? (
+      {!projectId ? (
         <div className="space-y-4">
           <div className="h-40 rounded-xl bg-gray-100 animate-pulse" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -198,14 +170,6 @@ export default function ReportsPage() {
               <div key={i} className="h-28 rounded-xl bg-gray-100 animate-pulse" />
             ))}
           </div>
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">
-          No hay proyectos asignados.{" "}
-          <Link href="/projects" className="text-blue-600 font-medium hover:underline">
-            Gestioná proyectos
-          </Link>
-          .
         </div>
       ) : loadingDash || !dash ? (
         <div className="space-y-4">
@@ -314,7 +278,7 @@ export default function ReportsPage() {
               <p className="text-sm text-gray-500 mb-1">Avance de obra</p>
               <p className="text-3xl font-bold text-gray-900">{dash.progress.percent}%</p>
               <p className="text-xs text-gray-500 mt-2">
-                {dash.progress.itemsWithPayments} de {dash.progress.totalItems} partidas con pagos
+                {dash.progress.itemsWithProgress} de {dash.progress.totalItems} partidas con avance
               </p>
             </div>
           </div>

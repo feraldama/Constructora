@@ -17,6 +17,8 @@ import activityRoutes from "./routes/activity.routes.js";
 import memberRoutes from "./routes/members.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import accountRoutes from "./routes/account.routes.js";
+import progressRoutes from "./routes/progress.routes.js";
+import certificateRoutes, { certificateItemsRouter } from "./routes/certificates.routes.js";
 
 dotenv.config();
 
@@ -54,6 +56,9 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/projects", memberRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api", progressRoutes);
+app.use("/api/certificates", certificateRoutes);
+app.use("/api", certificateItemsRouter);
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);

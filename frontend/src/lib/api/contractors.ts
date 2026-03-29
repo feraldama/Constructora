@@ -6,6 +6,7 @@ import type { Contractor, PaginatedResponse } from "@/types";
 export interface ContractorFilters {
   search?: string;
   isActive?: boolean;
+  projectId?: string;
   page?: number;
   limit?: number;
 }
