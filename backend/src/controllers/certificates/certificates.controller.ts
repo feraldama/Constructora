@@ -170,9 +170,10 @@ export async function createCertificate(req: Request, res: Response): Promise<vo
   });
   const certificateNumber = (maxNum._max.certificateNumber ?? 0) + 1;
 
-  // For each assignment, calculate previousQuantity from approved certificates
+  // For each assignment, calculate previousQuantity + suggest currentQuantity from progress
   const itemsData = await Promise.all(
     assignments.map(async (a) => {
+      // Cantidad ya certificada en certificaciones aprobadas
       const prevResult = await prisma.certificateItem.aggregate({
         where: {
           budgetItemId: a.budgetItemId,
@@ -185,19 +186,38 @@ export async function createCertificate(req: Request, res: Response): Promise<vo
         _sum: { currentQuantity: true },
       });
       const previousQuantity = Number(prevResult._sum.currentQuantity ?? 0);
+
+      // Avance físico medido total para esta partida
+      const progressResult = await prisma.progressEntry.aggregate({
+        where: { budgetItemId: a.budgetItemId },
+        _sum: { quantity: true },
+      });
+      const measuredProgress = Number(progressResult._sum.quantity ?? 0);
+
+      // Sugerir: avance medido - ya certificado (mínimo 0, máximo lo asignado - ya certificado)
       const assignedQty = Number(a.assignedQuantity);
+      const maxCertifiable = Math.max(0, assignedQty - previousQuantity);
+      const suggestedQty = Math.min(
+        Math.max(0, measuredProgress - previousQuantity),
+        maxCertifiable
+      );
+
       const unitPrice = assignedQty > 0 ? Number(a.agreedPrice) / assignedQty : 0;
+      const roundedUnitPrice = Math.round(unitPrice * 100) / 100;
+      const currentAmount = Math.round(suggestedQty * roundedUnitPrice * 100) / 100;
 
       return {
         budgetItemId: a.budgetItemId,
         previousQuantity,
-        currentQuantity: 0,
-        accumulatedQuantity: previousQuantity,
-        unitPrice: Math.round(unitPrice * 100) / 100,
-        currentAmount: 0,
+        currentQuantity: suggestedQty,
+        accumulatedQuantity: previousQuantity + suggestedQty,
+        unitPrice: roundedUnitPrice,
+        currentAmount,
       };
     })
   );
+
+  const totalAmount = itemsData.reduce((s, i) => s + i.currentAmount, 0);
 
   const cert = await prisma.certificate.create({
     data: {
@@ -207,7 +227,7 @@ export async function createCertificate(req: Request, res: Response): Promise<vo
       periodStart: new Date(body.periodStart),
       periodEnd: new Date(body.periodEnd),
       notes: body.notes,
-      totalAmount: 0,
+      totalAmount,
       items: { create: itemsData },
     },
     include: {
@@ -231,7 +251,7 @@ export async function createCertificate(req: Request, res: Response): Promise<vo
     id: cert.id,
     certificateNumber: cert.certificateNumber,
     status: cert.status,
-    totalAmount: 0,
+    totalAmount: Number(cert.totalAmount),
     itemCount: cert._count.items,
   });
 }
