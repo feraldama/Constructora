@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   async rewrites() {
-    const target = process.env.API_PROXY_TARGET || "http://127.0.0.1:4000";
+    const target = process.env.API_PROXY_TARGET || "http://127.0.0.1:3015";
     return [
       {
         source: "/api/:path*",
