@@ -212,7 +212,8 @@ export default function MembersPage() {
                         onChange={(e) =>
                           void handleRoleChange(member.id, e.target.value as ProjectRole)
                         }
-                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        disabled={updateRoleMut.isPending}
+                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
                       >
                         <option value="ADMIN">Administrador</option>
                         <option value="EDITOR">Editor</option>

@@ -41,6 +41,7 @@ import type { CreateAssignmentPayload, UpdateAssignmentPayload } from "@/lib/api
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 import ContractorForm from "@/components/forms/ContractorForm";
+import FileUpload from "@/components/ui/FileUpload";
 import type { PaymentStatus } from "@/types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -663,6 +664,15 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Documentación adjunta */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <FileUpload
+          entityType="CONTRACTOR"
+          entityId={id}
+          label="Documentación adjunta"
+        />
       </div>
 
       {/* Partidas asignadas */}

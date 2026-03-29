@@ -142,10 +142,28 @@ export async function deleteCategory(req: Request, res: Response): Promise<void>
 
   const existing = await prisma.category.findFirst({
     where: { id: categoryId, projectId },
+    include: { budgetItems: { select: { id: true } } },
   });
   if (!existing) {
     res.status(404).json({ error: "Categoría no encontrada" });
     return;
+  }
+
+  // Bloquear si alguna partida del rubro tiene pagos activos
+  if (existing.budgetItems.length > 0) {
+    const activePayments = await prisma.payment.count({
+      where: {
+        budgetItemId: { in: existing.budgetItems.map((i) => i.id) },
+        status: { in: ["PENDING", "PAID"] },
+      },
+    });
+    if (activePayments > 0) {
+      res.status(409).json({
+        error: `No se puede eliminar el rubro: tiene ${activePayments} pago${activePayments > 1 ? "s" : ""} activo${activePayments > 1 ? "s" : ""} en sus partidas.`,
+        activePayments,
+      });
+      return;
+    }
   }
 
   await prisma.category.delete({ where: { id: categoryId } });
@@ -287,6 +305,21 @@ export async function deleteBudgetItem(req: Request, res: Response): Promise<voi
   }
   const projectId = existing.category.projectId;
   if (!(await assertMember(req.user!.userId, projectId, res))) return;
+
+  // Bloquear si tiene pagos activos (PENDING o PAID)
+  const activePayments = await prisma.payment.count({
+    where: {
+      budgetItemId: itemId,
+      status: { in: ["PENDING", "PAID"] },
+    },
+  });
+  if (activePayments > 0) {
+    res.status(409).json({
+      error: `No se puede eliminar la partida: tiene ${activePayments} pago${activePayments > 1 ? "s" : ""} activo${activePayments > 1 ? "s" : ""} (PENDING o PAID). Cancelá o completá los pagos primero.`,
+      activePayments,
+    });
+    return;
+  }
 
   await prisma.budgetItem.delete({ where: { id: itemId } });
 

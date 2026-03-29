@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
+import { useProject } from "@/hooks/useProject";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -52,24 +53,51 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: unreadCount } = useUnreadCount();
   const { user } = useAuth();
+  const { projectId, projects, isLoading: loadingProjects, setProjectId } = useProject();
 
   const isGlobalAdmin = user?.globalRole === "SUPER_ADMIN" || user?.globalRole === "ADMIN";
 
   const navContent = (
     <>
-      <div className="mb-8 px-2 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">BuildControl</h1>
-          <p className="text-xs text-gray-500 mt-1">Gestion de Obras</p>
+      <div className="mb-6 px-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">BuildControl</h1>
+            <p className="text-xs text-gray-500 mt-1">Gestion de Obras</p>
+          </div>
+          {/* Botón cerrar — solo visible en mobile */}
+          <button
+            onClick={onClose}
+            className="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            aria-label="Cerrar menú"
+          >
+            <X size={20} />
+          </button>
         </div>
-        {/* Botón cerrar — solo visible en mobile */}
-        <button
-          onClick={onClose}
-          className="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-          aria-label="Cerrar menú"
-        >
-          <X size={20} />
-        </button>
+
+        {/* Selector de proyecto global */}
+        <div className="mt-4">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+            Proyecto activo
+          </label>
+          {loadingProjects ? (
+            <div className="h-9 rounded-lg bg-gray-100 animate-pulse" />
+          ) : projects.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">Sin proyectos</p>
+          ) : (
+            <select
+              value={projectId ?? ""}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none truncate"
+            >
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       <nav className="space-y-1 flex-1">

@@ -11,11 +11,9 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useProject } from "@/hooks/useProject";
 import Badge from "@/components/ui/Badge";
 import type { ProjectDashboard } from "@/lib/api/dashboard";
-
-// TODO: Usar projectId real del contexto de proyecto seleccionado
-const PROJECT_ID = "demo-project";
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE_PAYMENT: "Nuevo pago registrado",
@@ -148,9 +146,12 @@ function BudgetBar({ data }: { data: ProjectDashboard["budget"] }) {
 // ─── Página ──────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const { data: dash, isLoading } = useDashboard(PROJECT_ID);
+  const { projectId, project, isLoading: loadingProject } = useProject();
+  const { data: dash, isLoading: loadingDash } = useDashboard(projectId ?? undefined);
 
-  if (isLoading || !dash) {
+  const isLoading = loadingProject || loadingDash;
+
+  if (!projectId || isLoading || !dash) {
     return (
       <div className="space-y-4">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
@@ -172,7 +173,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Resumen del proyecto activo</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {project ? project.name : "Resumen del proyecto activo"}
+        </p>
       </div>
 
       {/* KPI Cards */}

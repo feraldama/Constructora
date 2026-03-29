@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Calendar, DollarSign, User } from "lucide-react";
 import { usePayment, useUpdatePayment } from "@/hooks/usePayments";
 import Badge from "@/components/ui/Badge";
+import FileUpload from "@/components/ui/FileUpload";
 import type { PaymentStatus } from "@/types";
 
 const STATUS_BADGE: Record<PaymentStatus, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {
@@ -206,25 +207,14 @@ export default function PaymentDetailPage({
       </div>
 
       {/* Adjuntos */}
-      {payment.attachments && payment.attachments.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-3">Comprobantes adjuntos</h2>
-          <div className="space-y-2">
-            {payment.attachments.map((att) => (
-              <a
-                key={att.id}
-                href={att.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-sm text-blue-600"
-              >
-                <FileText size={16} />
-                {att.fileName}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <FileUpload
+          entityType="PAYMENT"
+          entityId={payment.id}
+          label="Comprobantes adjuntos"
+          readOnly={payment.status === "CANCELLED"}
+        />
+      </div>
     </div>
   );
 }

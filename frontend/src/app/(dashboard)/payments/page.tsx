@@ -193,7 +193,8 @@ export default function PaymentsPage() {
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleMarkPaid(payment); }}
-                    className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
+                    disabled={updateMutation.isPending}
+                    className="p-1.5 text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Marcar como pagado"
                   >
                     <CheckCircle size={16} />
