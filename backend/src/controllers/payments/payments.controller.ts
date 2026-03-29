@@ -441,7 +441,41 @@ export async function createPayment(req: Request, res: Response): Promise<void> 
     },
   });
 
-  // ── 7. Respuesta ───────────────────────────────────────────────────────────
+  // ── 7. Notificar a admins/editors del proyecto ─────────────────────────────
+  const [members, projectForNotif] = await Promise.all([
+    prisma.projectMember.findMany({
+      where: { projectId: data.projectId, role: { in: ["ADMIN", "EDITOR"] } },
+      select: { userId: true },
+    }),
+    prisma.project.findUnique({
+      where: { id: data.projectId },
+      select: { name: true },
+    }),
+  ]);
+  if (members.length > 0) {
+    const amt = Number(payment.amount);
+    await prisma.notification.createMany({
+      data: members
+        .filter((m) => m.userId !== req.user!.userId)
+        .map((m) => ({
+          userId: m.userId,
+          type: "GENERAL" as const,
+          title: `Nuevo pago registrado`,
+          message: `Pago de $${amt.toLocaleString("es-AR")} a ${contractor.name} por "${budgetItem.name}" en ${projectForNotif?.name ?? "proyecto"}.`,
+          metadata: {
+            paymentId: payment.id,
+            projectId: data.projectId,
+            contractorId: data.contractorId,
+            contractorName: contractor.name,
+            budgetItemName: budgetItem.name,
+            amount: amt,
+            status: payment.status,
+          },
+        })),
+    });
+  }
+
+  // ── 8. Respuesta ───────────────────────────────────────────────────────────
   res.status(201).json({ payment, financialContext: financialContextAfter });
 }
 

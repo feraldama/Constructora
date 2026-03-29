@@ -27,7 +27,8 @@ const USER_SELECT = {
 
 /** GET /api/users — list all users (admin) */
 export async function listUsers(req: Request, res: Response): Promise<void> {
-  const { page, limit, search, role, isActive } = req.query as unknown as ListUsersInput;
+  // validate(schema, "query") puts parsed data in req.body (Express v5 req.query is read-only)
+  const { page, limit, search, role, isActive } = req.body as ListUsersInput;
 
   const where: Record<string, unknown> = {};
   if (search) {

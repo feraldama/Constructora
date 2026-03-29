@@ -15,7 +15,9 @@ export function validate(schema: ZodSchema, source: "body" | "query" = "body") {
     }
 
     if (source === "query") {
-      (req as unknown as Record<string, unknown>).query = result.data;
+      // Express v5 makes req.query read-only; attach parsed data to req.body
+      // so the controller reads validated+coerced values from there.
+      req.body = result.data;
     } else {
       req.body = result.data;
     }

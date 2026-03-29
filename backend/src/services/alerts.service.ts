@@ -326,6 +326,33 @@ async function checkUpcomingDuePayments(): Promise<number> {
 }
 
 // ============================================================================
+// 4. LIMPIEZA DE NOTIFICACIONES ANTIGUAS
+// ============================================================================
+
+/**
+ * Elimina notificaciones leídas con más de 30 días de antigüedad
+ * y no leídas con más de 90 días.
+ */
+export async function purgeOldNotifications(): Promise<{ deleted: number }> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  const result = await prisma.notification.deleteMany({
+    where: {
+      OR: [
+        { isRead: true, createdAt: { lt: thirtyDaysAgo } },
+        { isRead: false, createdAt: { lt: ninetyDaysAgo } },
+      ],
+    },
+  });
+
+  return { deleted: result.count };
+}
+
+// ============================================================================
 // HELPER: Obtener admins/editors de proyectos
 // ============================================================================
 

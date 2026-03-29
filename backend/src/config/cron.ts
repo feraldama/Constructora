@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { markOverduePayments } from "../services/payment-state.service.js";
-import { runAlertChecks } from "../services/alerts.service.js";
+import { runAlertChecks, purgeOldNotifications } from "../services/alerts.service.js";
 
 // ============================================================================
 // CRON JOBS
@@ -61,5 +61,19 @@ export function startCronJobs(): void {
     }
   });
 
-  console.log("✓ Cron jobs registrados (estados: 1 min | alertas: 15 min)");
+  // ── Job 3: limpieza de notificaciones antiguas ───────────────────────────
+  cron.schedule("0 3 * * *", async () => {
+    try {
+      const { deleted } = await purgeOldNotifications();
+      if (deleted > 0) {
+        console.log(
+          `[CRON:purge] ${new Date().toISOString()} — ${deleted} notificacion${deleted !== 1 ? "es" : ""} eliminada${deleted !== 1 ? "s" : ""}`
+        );
+      }
+    } catch (err) {
+      console.error("[CRON:purge] Error al limpiar notificaciones:", err);
+    }
+  });
+
+  console.log("✓ Cron jobs registrados (estados: 1 min | alertas: 15 min | limpieza: 3 AM)");
 }

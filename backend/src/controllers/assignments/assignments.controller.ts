@@ -249,6 +249,37 @@ export async function createAssignment(req: Request, res: Response): Promise<voi
     },
   });
 
+  // 9. Notificar a admins/editors del proyecto (ASSIGNMENT_CREATED)
+  const members = await prisma.projectMember.findMany({
+    where: { projectId, role: { in: ["ADMIN", "EDITOR"] } },
+    select: { userId: true },
+  });
+  if (members.length > 0) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+    await prisma.notification.createMany({
+      data: members
+        .filter((m) => m.userId !== userId) // no notificar al que creó
+        .map((m) => ({
+          userId: m.userId,
+          type: "ASSIGNMENT_CREATED" as const,
+          title: `Nueva asignación en ${project?.name ?? "proyecto"}`,
+          message: `${contractor.name} fue asignado a "${budgetItem.name}" por $${Number(body.agreedPrice).toLocaleString("es-AR")}.`,
+          metadata: {
+            assignmentId: assignment.id,
+            projectId,
+            contractorId: body.contractorId,
+            contractorName: contractor.name,
+            budgetItemId: body.budgetItemId,
+            budgetItemName: budgetItem.name,
+            agreedPrice: body.agreedPrice,
+          },
+        })),
+    });
+  }
+
   res.status(201).json({
     ...assignment,
     assignedQuantity: Number(assignment.assignedQuantity),
