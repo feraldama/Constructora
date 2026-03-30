@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ProjectContext } from "@/hooks/useProject";
 import { useProjects } from "@/hooks/useProjects";
 import type { ProjectListItem } from "@/lib/api/projects";
+import { useAuth } from "@/hooks/useAuth";
 
 const STORAGE_KEY = "selectedProjectId";
 
@@ -12,7 +13,13 @@ export default function ProjectProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: projectsRes, isLoading } = useProjects({ page: 1, limit: 100 });
+  const { user, isLoading: authLoading } = useAuth();
+  const canFetchProjects = !authLoading && !!user;
+
+  const { data: projectsRes, isLoading } = useProjects(
+    { page: 1, limit: 100 },
+    { enabled: canFetchProjects }
+  );
   const projects = projectsRes?.data ?? [];
 
   const [projectId, setProjectIdState] = useState<string | null>(null);

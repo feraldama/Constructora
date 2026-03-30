@@ -1,6 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
 import {
   getProjects,
   createProject,
@@ -9,14 +14,23 @@ import {
   type ProjectFilters,
   type CreateProjectPayload,
   type UpdateProjectPayload,
+  type ProjectListItem,
 } from "@/lib/api/projects";
+import type { PaginatedResponse } from "@/types";
 
 const PROJECTS_KEY = ["projects"];
 
-export function useProjects(params?: ProjectFilters) {
+export function useProjects(
+  params?: ProjectFilters,
+  options?: Omit<
+    UseQueryOptions<PaginatedResponse<ProjectListItem>, unknown, PaginatedResponse<ProjectListItem>>,
+    "queryKey" | "queryFn"
+  >
+) {
   return useQuery({
     queryKey: [...PROJECTS_KEY, params],
     queryFn: () => getProjects(params),
+    ...options,
   });
 }
 
