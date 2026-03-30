@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useState, useCallback, useMemo } from "react";
+import { use, useEffect, useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -31,6 +32,7 @@ import {
 } from "@/hooks/useProjectBudget";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectProgress } from "@/hooks/useProgress";
+import { useProject } from "@/hooks/useProject";
 import ProgressEntryModal from "@/components/progress/ProgressEntryModal";
 import type { BudgetItem, MeasurementUnit } from "@/types";
 import { Plus, GripVertical } from "lucide-react";
@@ -41,19 +43,31 @@ export default function BudgetPage({
 }: {
   params: Promise<{ projectId: string }>;
 }) {
-  const { projectId } = use(params);
+  const { projectId: routeProjectId } = use(params);
+  const router = useRouter();
+  const { projectId: activeProjectId, isLoading: loadingActiveProject } = useProject();
+  const effectiveProjectId = activeProjectId ?? routeProjectId;
 
-  const { data: budgetData, isLoading: loadingBudget } = useProjectBudget(projectId);
+  // Si cambiás el "Proyecto activo" desde el sidebar, mantenemos la pantalla de
+  // Cómputo Métrico sincronizada navegando al nuevo /budget/:projectId.
+  useEffect(() => {
+    if (loadingActiveProject) return;
+    if (!activeProjectId) return;
+    if (activeProjectId === routeProjectId) return;
+    router.replace(`/budget/${activeProjectId}`);
+  }, [activeProjectId, loadingActiveProject, routeProjectId, router]);
+
+  const { data: budgetData, isLoading: loadingBudget } = useProjectBudget(effectiveProjectId);
   const { data: projectsRes } = useProjects({ page: 1, limit: 100 });
   const projectName = useMemo(
-    () => projectsRes?.data.find((p) => p.id === projectId)?.name,
-    [projectsRes, projectId]
+    () => projectsRes?.data.find((p) => p.id === effectiveProjectId)?.name,
+    [projectsRes, effectiveProjectId]
   );
 
   const categories = budgetData?.categories ?? [];
 
   // Progress data
-  const { data: progressRes } = useProjectProgress(projectId);
+  const { data: progressRes } = useProjectProgress(effectiveProjectId);
   const progressData = useMemo(() => {
     if (!progressRes) return undefined;
     const map = new Map<string, { measured: number; percent: number }>();
@@ -76,13 +90,13 @@ export default function BudgetPage({
     return null;
   }, [progressItemId, categories]);
 
-  const createCat = useCreateBudgetCategory(projectId);
-  const deleteCat = useDeleteBudgetCategory(projectId);
-  const createItem = useCreateBudgetItem(projectId);
-  const updateItem = useUpdateBudgetItem(projectId);
-  const deleteItem = useDeleteBudgetItem(projectId);
-  const reorderItems = useReorderBudgetItems(projectId);
-  const reorderCats = useReorderCategories(projectId);
+  const createCat = useCreateBudgetCategory(effectiveProjectId);
+  const deleteCat = useDeleteBudgetCategory(effectiveProjectId);
+  const createItem = useCreateBudgetItem(effectiveProjectId);
+  const updateItem = useUpdateBudgetItem(effectiveProjectId);
+  const deleteItem = useDeleteBudgetItem(effectiveProjectId);
+  const reorderItems = useReorderBudgetItems(effectiveProjectId);
+  const reorderCats = useReorderCategories(effectiveProjectId);
 
   // ─── DnD sensors for categories ───
   const catSensors = useSensors(
@@ -224,14 +238,14 @@ export default function BudgetPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Computo Metrico</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Cómputo Métrico</h1>
           <p className="text-sm text-gray-500 mt-1">
             {projectName ? (
               <>
                 Proyecto: <span className="text-gray-700">{projectName}</span>
               </>
             ) : (
-              <>Proyecto: {projectId}</>
+              <>Proyecto: {effectiveProjectId}</>
             )}
           </p>
         </div>

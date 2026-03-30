@@ -510,29 +510,25 @@ export default function BudgetSpreadsheet({
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto">
-        <table ref={tableRef} className="w-full border-collapse">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-gray-200 bg-gray-50/60">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    style={{ width: header.getSize() }}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+          <div className="overflow-x-auto">
+            <table ref={tableRef} className="w-full border-collapse">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b border-gray-200 bg-gray-50/60">
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        style={{ width: header.getSize() }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </thead>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+              </thead>
               <tbody>
                 {table.getRowModel().rows.length === 0 ? (
                   <tr>
@@ -545,45 +541,40 @@ export default function BudgetSpreadsheet({
                   </tr>
                 ) : (
                   table.getRowModel().rows.map((row, rowIdx) => (
-                    <SortableRow
-                      key={row.id}
-                      row={row}
-                      rowIdx={rowIdx}
-                      readOnly={readOnly}
-                    />
+                    <SortableRow key={row.id} row={row} rowIdx={rowIdx} readOnly={readOnly} />
                   ))
                 )}
               </tbody>
-            </SortableContext>
-          </DndContext>
-          {/* Footer con totales */}
-          {items.length > 0 && (
-            <tfoot>
-              <tr className="border-t-2 border-gray-200 bg-gray-50/80">
-                {/* cols 1-6: #, Desc, Unidad, Cantidad, P.U.Costo, P.U.Venta */}
-                <td
-                  colSpan={6}
-                  className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase"
-                >
-                  Total categoría
-                </td>
-                {/* col 7: Subt. Costo */}
-                <td className="px-3 py-2.5 text-sm font-bold text-gray-900 tabular-nums">
-                  {fmtCurrency(categoryCostTotal)}
-                </td>
-                {/* col 8: Subt. Venta */}
-                <td className="px-3 py-2.5 text-sm font-bold text-blue-700 tabular-nums">
-                  {fmtCurrency(categorySaleTotal)}
-                </td>
-                {/* col 9: Avance (condicional) */}
-                {progressData && <td />}
-                {/* col 10: Acciones (condicional) */}
-                {!readOnly && <td />}
-              </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
+              {/* Footer con totales */}
+              {items.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-gray-200 bg-gray-50/80">
+                    {/* cols 1-6: #, Desc, Unidad, Cantidad, P.U.Costo, P.U.Venta */}
+                    <td
+                      colSpan={6}
+                      className="px-3 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase"
+                    >
+                      Total categoría
+                    </td>
+                    {/* col 7: Subt. Costo */}
+                    <td className="px-3 py-2.5 text-sm font-bold text-gray-900 tabular-nums">
+                      {fmtCurrency(categoryCostTotal)}
+                    </td>
+                    {/* col 8: Subt. Venta */}
+                    <td className="px-3 py-2.5 text-sm font-bold text-blue-700 tabular-nums">
+                      {fmtCurrency(categorySaleTotal)}
+                    </td>
+                    {/* col 9: Avance (condicional) */}
+                    {progressData && <td />}
+                    {/* col 10: Acciones (condicional) */}
+                    {!readOnly && <td />}
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Agregar partida */}
       {!readOnly && (
