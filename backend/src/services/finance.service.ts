@@ -37,6 +37,10 @@ export interface ProjectFinancialSummary {
   // Comparativa presupuesto vs ejecución
   costVariance: number;       // totalCostItems - totalExecuted (positivo = bajo presupuesto)
   costVariancePercent: number;
+  // Cobros del cliente
+  totalClientPayments: number;
+  pendingFromClients: number;  // totalRevenue - totalClientPayments
+  cashFlow: number;            // totalClientPayments - totalPaid - totalExpenses
   // Desglose por tipo de gasto
   expensesByType: { expenseType: string; total: number; count: number }[];
   // Partidas con mayor rentabilidad
@@ -75,7 +79,7 @@ export async function getProjectFinancialSummary(
     WHERE c.project_id = $1
   `;
 
-  const [rawRows, itemsRaw, expensesByTypeRaw] = await Promise.all([
+  const [rawRows, itemsRaw, expensesByTypeRaw, clientPaymentTotal] = await Promise.all([
     // 1. Totales numéricos
     prisma.$queryRawUnsafe<{
       total_revenue: string;
@@ -123,6 +127,12 @@ export async function getProjectFinancialSummary(
       _sum: { amount: true },
       _count: { id: true },
     }),
+
+    // 4. Cobros del cliente
+    prisma.clientPayment.aggregate({
+      where: { projectId },
+      _sum: { amount: true },
+    }),
   ]);
 
   const row = rawRows[0] ?? {
@@ -147,6 +157,10 @@ export async function getProjectFinancialSummary(
     totalRevenue > 0
       ? Math.round((grossProfit / totalRevenue) * 10000) / 100
       : 0;
+  const totalClientPayments = Number(clientPaymentTotal._sum.amount ?? 0);
+  const pendingFromClients = totalRevenue - totalClientPayments;
+  const cashFlow = totalClientPayments - totalPaid - totalExpenses;
+
   const costVariance = totalCostItems - totalExecuted;
   const costVariancePercent =
     totalCostItems > 0
@@ -200,6 +214,9 @@ export async function getProjectFinancialSummary(
     totalExecuted,
     grossProfit,
     profitMargin,
+    totalClientPayments,
+    pendingFromClients,
+    cashFlow,
     costVariance,
     costVariancePercent,
     expensesByType: expensesByTypeRaw.map((e) => ({

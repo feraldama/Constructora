@@ -28,6 +28,9 @@ export interface ProjectFinancialSummary {
   totalExecuted: number;
   grossProfit: number;
   profitMargin: number;
+  totalClientPayments: number;
+  pendingFromClients: number;
+  cashFlow: number;
   costVariance: number;
   costVariancePercent: number;
   expensesByType: { expenseType: string; total: number; count: number }[];

@@ -548,7 +548,7 @@ export async function getDashboardSummary(projectId: string): Promise<DashboardS
  * Recalcula el BudgetSummary de un proyecto después de un pago.
  */
 export async function recalcBudgetSummary(projectId: string): Promise<void> {
-  const [itemTotals, paymentTotals, expenseTotal] = await Promise.all([
+  const [itemTotals, paymentTotals, expenseTotal, clientPaymentTotal] = await Promise.all([
     prisma.budgetItem.aggregate({
       where: { category: { projectId } },
       _sum: { costSubtotal: true, saleSubtotal: true },
@@ -562,11 +562,16 @@ export async function recalcBudgetSummary(projectId: string): Promise<void> {
       where: { projectId },
       _sum: { amount: true },
     }),
+    prisma.clientPayment.aggregate({
+      where: { projectId },
+      _sum: { amount: true },
+    }),
   ]);
 
   const totalRevenue = Number(itemTotals._sum.saleSubtotal ?? 0);
   const totalCostItems = Number(itemTotals._sum.costSubtotal ?? 0);
   const totalExpenses = Number(expenseTotal._sum.amount ?? 0);
+  const totalClientPayments = Number(clientPaymentTotal._sum.amount ?? 0);
 
   const paidTotal = Number(
     paymentTotals.find((t) => t.status === "PAID")?._sum.amount ?? 0
@@ -582,33 +587,27 @@ export async function recalcBudgetSummary(projectId: string): Promise<void> {
     totalRevenue > 0
       ? Math.round((grossProfit / totalRevenue) * 10000) / 100
       : 0;
+  // Flujo de caja = cobros del cliente - pagos a contratistas - gastos
+  const cashFlow = totalClientPayments - paidTotal - totalExpenses;
+
+  const data = {
+    estimatedTotal: totalCostItems,
+    actualTotal: actualCost,
+    totalPaid: paidTotal,
+    totalPending: pendingTotal,
+    totalRevenue,
+    totalCostItems,
+    totalExpenses,
+    grossProfit,
+    profitMargin,
+    totalClientPayments,
+    cashFlow,
+    lastCalculatedAt: new Date(),
+  };
 
   await prisma.budgetSummary.upsert({
     where: { projectId },
-    create: {
-      projectId,
-      estimatedTotal: totalCostItems,
-      actualTotal: actualCost,
-      totalPaid: paidTotal,
-      totalPending: pendingTotal,
-      totalRevenue,
-      totalCostItems,
-      totalExpenses,
-      grossProfit,
-      profitMargin,
-      lastCalculatedAt: new Date(),
-    },
-    update: {
-      estimatedTotal: totalCostItems,
-      actualTotal: actualCost,
-      totalPaid: paidTotal,
-      totalPending: pendingTotal,
-      totalRevenue,
-      totalCostItems,
-      totalExpenses,
-      grossProfit,
-      profitMargin,
-      lastCalculatedAt: new Date(),
-    },
+    create: { projectId, ...data },
+    update: data,
   });
 }

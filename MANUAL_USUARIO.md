@@ -1,7 +1,7 @@
 # Manual de Usuario — BuildControl
 
 **Sistema de Gestión de Obras de Construcción**
-Versión actualizada: 2026-03-29
+Versión actualizada: 2026-03-31
 
 ---
 
@@ -20,16 +20,19 @@ Versión actualizada: 2026-03-29
 11. [Certificaciones](#11-certificaciones)
 12. [Calendario de Obra](#12-calendario-de-obra)
 13. [Gastos Adicionales](#13-gastos-adicionales)
-14. [Finanzas](#14-finanzas)
-15. [Reportes](#15-reportes)
-16. [Equipo (Miembros)](#16-equipo-miembros)
-17. [Notificaciones](#17-notificaciones)
-18. [Actividad (Auditoría)](#18-actividad-auditoría)
-19. [Configuración de Cuenta](#19-configuración-de-cuenta)
-20. [Administración de Usuarios](#20-administración-de-usuarios)
-21. [Archivos Adjuntos](#21-archivos-adjuntos)
-22. [Roles y Permisos](#22-roles-y-permisos)
-23. [Atajos y Tips](#23-atajos-y-tips)
+14. [Catálogo de Materiales](#14-catálogo-de-materiales)
+15. [Análisis de Precios Unitarios (APU)](#15-análisis-de-precios-unitarios-apu)
+16. [Cobros del Cliente](#16-cobros-del-cliente)
+17. [Finanzas](#17-finanzas)
+18. [Reportes](#18-reportes)
+19. [Equipo (Miembros)](#19-equipo-miembros)
+20. [Notificaciones](#20-notificaciones)
+21. [Actividad (Auditoría)](#21-actividad-auditoría)
+22. [Configuración de Cuenta](#22-configuración-de-cuenta)
+23. [Administración de Usuarios](#23-administración-de-usuarios)
+24. [Archivos Adjuntos](#24-archivos-adjuntos)
+25. [Roles y Permisos](#25-roles-y-permisos)
+26. [Atajos y Tips](#26-atajos-y-tips)
 
 ---
 
@@ -45,8 +48,11 @@ BuildControl es un sistema integral para la gestión de obras de construcción. 
 - Cómputo métrico con edición inline tipo planilla de cálculo
 - Registro de avance físico con mediciones parciales
 - Certificaciones periódicas de obra con flujo de aprobación
-- Gestión de pagos con vencimientos y alertas automáticas
-- Análisis financiero con márgenes, flujo de caja y predicciones
+- Catálogo de materiales con precios unitarios
+- Análisis de Precios Unitarios (APU) por partida con materiales y mano de obra
+- Gestión de pagos a contratistas con vencimientos y alertas automáticas
+- Cobros del cliente con seguimiento de saldo pendiente
+- Análisis financiero con márgenes, flujo de caja real y predicciones
 - Calendario visual con todos los eventos del proyecto
 - Dashboard ejecutivo por proyecto y multi-proyecto
 - Control de acceso basado en roles (por proyecto y global)
@@ -96,6 +102,8 @@ La barra lateral es el menú principal de navegación. Contiene:
    - Certificaciones
    - Calendario
    - Gastos
+   - Materiales
+   - Cobros
    - Finanzas
    - Reportes
    - Actividad
@@ -656,7 +664,119 @@ La tabla muestra: Fecha, Descripción, Tipo, Partida vinculada, Cantidad, Precio
 
 ---
 
-## 14. Finanzas
+## 14. Catálogo de Materiales
+
+**Ruta:** `/materials`
+
+Base de datos global de materiales con precios unitarios. Los materiales se comparten entre todos los proyectos y alimentan el Análisis de Precios Unitarios (APU).
+
+### Crear material
+
+1. Click en **"Nuevo material"**
+2. Completar los campos:
+   - **Nombre** (obligatorio): ej. "Cemento Portland"
+   - **Unidad** (obligatorio): m², m³, ml, unidad, kg, ton, global
+   - **Precio unitario** (obligatorio): precio actual del material
+   - **Categoría**: Cemento, Acero, Madera, Áridos, Cerámicos, Plomería, Electricidad, Pintura, Impermeabilización, Ferretería, Otros
+   - **Marca** (opcional): ej. "Loma Negra"
+   - **Proveedor** (opcional): ej. "Corralón El Obrero"
+   - **Notas** (opcional)
+3. Click en **"Crear material"**
+
+### Editar / Eliminar
+
+- **Editar**: click en el ícono de lápiz en la fila del material
+- **Eliminar**: click en el ícono de papelera. Si el material está en uso en algún APU, se desactiva en lugar de eliminarse
+
+### Filtros
+
+- **Categoría**: filtrar por tipo de material
+- **Buscar**: por nombre del material
+
+> **Nota:** Los cambios de precio en el catálogo NO se propagan automáticamente a los APU existentes. Usar "Actualizar Precios" dentro del APU de cada partida para refrescar.
+
+---
+
+## 15. Análisis de Precios Unitarios (APU)
+
+**Acceso:** Desde la página de Cómputo Métrico (`/budget/:projectId`), click en el ícono de matraz (🧪) en la columna de acciones de cada partida.
+
+El APU desglosa el costo unitario de cada partida en materiales + mano de obra. Cuando se modifica el APU, el precio unitario de costo de la partida se actualiza automáticamente, propagando el cambio al subtotal y al resumen financiero del proyecto.
+
+### Agregar materiales al APU
+
+1. Abrir el APU de una partida (ícono 🧪)
+2. En la sección **Materiales**, click en **"Agregar"**
+3. Seleccionar el material del catálogo
+4. Indicar el **consumo por unidad** (ej. 12.5 ladrillos por m²)
+5. Indicar el **desperdicio %** (ej. 5% por rotura)
+6. Click en **"Agregar"**
+
+**Fórmula:** `Subtotal = consumo/unidad × (1 + desperdicio%/100) × precio unitario`
+
+### Agregar mano de obra al APU
+
+1. En la sección **Mano de Obra**, click en **"Agregar"**
+2. Descripción (ej. "Oficial albañil")
+3. Costo por unidad de medida de la partida
+4. Click en **"Agregar"**
+
+### Edición inline
+
+- Los campos de consumo, desperdicio, descripción y costo de M.O. se editan directamente en la tabla. Al perder foco (blur), se guarda automáticamente.
+
+### Actualizar precios
+
+- Click en **"Actualizar precios"** para sincronizar los precios de materiales desde el catálogo global. Esto recalcula todos los subtotales y el costo unitario de la partida.
+
+### Cascada de cálculo
+
+```
+APU modificado → costUnitPrice actualizado → costSubtotal recalculado → BudgetSummary actualizado
+```
+
+> **Importante:** Si se edita manualmente el P.U. Costo de una partida que tiene APU, el valor manual será sobreescrito la próxima vez que se modifique el APU.
+
+---
+
+## 16. Cobros del Cliente
+
+**Ruta:** `/client-payments`
+
+Registro de ingresos del proyecto: anticipos, cobros por avance de obra y pagos finales del cliente.
+
+### Cards de resumen
+
+- **Total Presupuestado**: suma de subtotales de venta del cómputo métrico
+- **Total Cobrado**: suma de todos los cobros registrados
+- **Saldo Pendiente**: presupuestado - cobrado, con barra de progreso visual
+
+### Registrar cobro
+
+1. Click en **"Nuevo cobro"**
+2. Completar:
+   - **Monto** (obligatorio)
+   - **Fecha** (obligatorio)
+   - **Concepto**: Anticipo, Avance, Final, Liberación de retención, Otro
+   - **Método de pago**: Efectivo, Transferencia, Cheque, Otro
+   - **Referencia** (opcional): número de transferencia, recibo, etc.
+   - **Notas** (opcional)
+3. Click en **"Registrar cobro"**
+
+### Impacto en Finanzas
+
+Cada cobro actualiza automáticamente:
+- El **flujo de caja** (cobros - pagos a contratistas - gastos)
+- Las métricas de la página de **Finanzas**
+
+### Filtros
+
+- **Concepto**: filtrar por tipo de cobro
+- **Buscar**: por referencia o notas
+
+---
+
+## 17. Finanzas
 
 **Ruta:** `/finance`
 
@@ -669,6 +789,9 @@ Análisis financiero completo del proyecto activo, dividido en 5 tabs:
 - **Gastos adicionales**: suma de todos los gastos del proyecto
 - **Ganancia bruta**: ingresos - costos - gastos
 - **Margen de ganancia (%)**: ganancia / ingresos x 100
+- **Cobros del cliente**: total cobrado al cliente
+- **Pendiente del cliente**: presupuestado - cobrado
+- **Flujo de caja**: cobros - pagos a contratistas - gastos (positivo = superávit)
 - **Gráfico de torta**: distribución de gastos por tipo
 - **Tabla de márgenes por partida**: detalle de cada partida con margen individual
 - **Botón "Exportar Excel"**: descarga el análisis financiero completo
@@ -714,7 +837,7 @@ Análisis línea por línea comparando lo presupuestado contra lo realmente ejec
 
 ---
 
-## 15. Reportes
+## 18. Reportes
 
 **Ruta:** `/reports`
 
@@ -735,7 +858,7 @@ Resumen ejecutivo del proyecto activo con toda la información consolidada.
 
 ---
 
-## 16. Equipo (Miembros)
+## 19. Equipo (Miembros)
 
 **Ruta:** `/members`
 
@@ -768,7 +891,7 @@ Gestión de accesos y roles de los miembros del proyecto activo.
 
 ---
 
-## 17. Notificaciones
+## 20. Notificaciones
 
 **Ruta:** `/notifications`
 
@@ -800,7 +923,7 @@ Se evitan duplicados: no se genera la misma alerta dos veces en 24 horas.
 
 ---
 
-## 18. Actividad (Auditoría)
+## 21. Actividad (Auditoría)
 
 **Ruta:** `/activity`
 
@@ -842,7 +965,7 @@ Cada entrada incluye:
 
 ---
 
-## 19. Configuración de Cuenta
+## 22. Configuración de Cuenta
 
 **Ruta:** `/settings`
 
@@ -861,7 +984,7 @@ Cada entrada incluye:
 
 ---
 
-## 20. Administración de Usuarios
+## 23. Administración de Usuarios
 
 **Ruta:** `/admin/users`
 
@@ -885,7 +1008,7 @@ Solo accesible para usuarios con rol global ADMIN o SUPER_ADMIN.
 
 ---
 
-## 21. Archivos Adjuntos
+## 24. Archivos Adjuntos
 
 El sistema permite adjuntar archivos a distintas entidades:
 
@@ -915,7 +1038,7 @@ El sistema permite adjuntar archivos a distintas entidades:
 
 ---
 
-## 22. Roles y Permisos
+## 25. Roles y Permisos
 
 ### Roles globales (del sistema)
 
@@ -946,7 +1069,7 @@ El sistema permite adjuntar archivos a distintas entidades:
 
 ---
 
-## 23. Atajos y Tips
+## 26. Atajos y Tips
 
 ### Cómputo Métrico
 

@@ -110,6 +110,9 @@ export default function FinancePage() {
         ["Total pagado", fin.totalPaid],
         ["Pendiente + vencido", fin.totalPending],
         ["Ejecutado real", fin.totalExecuted],
+        ["Cobros del cliente", fin.totalClientPayments],
+        ["Pendiente del cliente", fin.pendingFromClients],
+        ["Flujo de caja", fin.cashFlow],
         ["Varianza", fin.costVariance],
         ["Varianza (%)", fin.costVariancePercent],
       ] as (string | number)[][],
@@ -307,10 +310,32 @@ export default function FinancePage() {
                 />
               </div>
 
+              {/* Client payments & cash flow row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl border border-green-200 p-5">
+                  <p className="text-xs text-green-600 mb-1">Cobros del cliente</p>
+                  <p className="text-xl font-bold text-green-700">{fmt(fin.totalClientPayments)}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-orange-200 p-5">
+                  <p className="text-xs text-orange-600 mb-1">Pendiente del cliente</p>
+                  <p className="text-xl font-bold text-orange-700">{fmt(fin.pendingFromClients)}</p>
+                </div>
+                <div className={`bg-white rounded-xl border p-5 ${fin.cashFlow >= 0 ? "border-green-200" : "border-red-200"}`}>
+                  <p className={`text-xs mb-1 ${fin.cashFlow >= 0 ? "text-green-600" : "text-red-600"}`}>Flujo de caja</p>
+                  <p className={`text-xl font-bold ${fin.cashFlow >= 0 ? "text-green-700" : "text-red-700"}`}>{fmt(fin.cashFlow)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Cobros - pagos - gastos</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <p className="text-xs text-gray-500 mb-1">Ejecutado real</p>
+                  <p className="text-xl font-bold text-gray-900">{fmt(fin.totalExecuted)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Pagado + gastos adicionales</p>
+                </div>
+              </div>
+
               {/* Execution row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <p className="text-xs text-gray-500 mb-1">Total pagado</p>
+                  <p className="text-xs text-gray-500 mb-1">Total pagado a contratistas</p>
                   <p className="text-xl font-bold text-gray-900">{fmt(fin.totalPaid)}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -318,9 +343,8 @@ export default function FinancePage() {
                   <p className="text-xl font-bold text-gray-900">{fmt(fin.totalPending)}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <p className="text-xs text-gray-500 mb-1">Ejecutado real</p>
-                  <p className="text-xl font-bold text-gray-900">{fmt(fin.totalExecuted)}</p>
-                  <p className="text-xs text-gray-400 mt-1">Pagado + gastos adicionales</p>
+                  <p className="text-xs text-gray-500 mb-1">Gastos adicionales</p>
+                  <p className="text-xl font-bold text-gray-900">{fmt(fin.totalExpenses)}</p>
                 </div>
               </div>
 

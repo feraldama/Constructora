@@ -1,7 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import cors from "cors";
-import dotenv from "dotenv";
 import pool from "./config/db.js";
 import { startCronJobs } from "./config/cron.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -19,8 +19,9 @@ import usersRoutes from "./routes/users.routes.js";
 import accountRoutes from "./routes/account.routes.js";
 import progressRoutes from "./routes/progress.routes.js";
 import certificateRoutes, { certificateItemsRouter } from "./routes/certificates.routes.js";
-
-dotenv.config();
+import materialRoutes from "./routes/materials.routes.js";
+import apuRoutes from "./routes/apu.routes.js";
+import clientPaymentRoutes from "./routes/client-payments.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -59,6 +60,9 @@ app.use("/api/account", accountRoutes);
 app.use("/api", progressRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api", certificateItemsRouter);
+app.use("/api/materials", materialRoutes);
+app.use("/api", apuRoutes);
+app.use("/api/projects", clientPaymentRoutes);
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);

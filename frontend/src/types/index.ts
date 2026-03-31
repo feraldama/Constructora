@@ -87,6 +87,64 @@ export interface ProjectExpense {
   createdAt: string;
 }
 
+// Material catalog
+export type MaterialCategory = "CEMENT" | "STEEL" | "WOOD" | "AGGREGATES" | "CERAMICS" | "PLUMBING" | "ELECTRICAL" | "PAINT" | "WATERPROOFING" | "HARDWARE" | "OTHER";
+
+export interface Material {
+  id: string;
+  name: string;
+  unit: MeasurementUnit;
+  unitPrice: number;
+  category: MaterialCategory;
+  brand?: string | null;
+  supplier?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// APU (Análisis de Precios Unitarios)
+export interface BudgetItemMaterial {
+  id: string;
+  budgetItemId: string;
+  materialId: string;
+  consumptionPerUnit: number;
+  wastePercent: number;
+  unitCost: number;
+  subtotal: number;
+  material?: Material;
+}
+
+export interface BudgetItemLabor {
+  id: string;
+  budgetItemId: string;
+  description: string;
+  costPerUnit: number;
+}
+
+export interface APUBreakdown {
+  materials: BudgetItemMaterial[];
+  labor: BudgetItemLabor[];
+  totalMaterials: number;
+  totalLabor: number;
+  totalCost: number;
+}
+
+// Client payments
+export type ClientPaymentConcept = "ADVANCE" | "PROGRESS" | "FINAL" | "RETENTION_RELEASE" | "OTHER";
+
+export interface ClientPayment {
+  id: string;
+  projectId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod?: PaymentMethod | null;
+  concept: ClientPaymentConcept;
+  reference?: string | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
 // API Response
 export interface PaginatedResponse<T> {
   data: T[];

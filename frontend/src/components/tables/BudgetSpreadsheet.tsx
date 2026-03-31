@@ -24,7 +24,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, Copy, Trash2, GripVertical, Save, Ruler } from "lucide-react";
+import { Plus, Copy, Trash2, GripVertical, Save, Ruler, FlaskConical } from "lucide-react";
 import EditableCell, { type CellCoord } from "./EditableCell";
 import { cn } from "@/lib/utils/cn";
 import type { BudgetItem, MeasurementUnit } from "@/types";
@@ -73,6 +73,8 @@ interface BudgetSpreadsheetProps {
   onReorderItems?: (reorderedIds: string[]) => void;
   /** Props para el drag handle de la categoría (pasado por SortableCategory) */
   categoryDragHandleProps?: Record<string, unknown>;
+  /** Callback para abrir el panel APU de un item */
+  onOpenAPU?: (itemId: string) => void;
 }
 
 const columnHelper = createColumnHelper<BudgetItem>();
@@ -94,6 +96,7 @@ export default function BudgetSpreadsheet({
   onOpenProgress,
   onReorderItems,
   categoryDragHandleProps,
+  onOpenAPU,
 }: BudgetSpreadsheetProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -405,6 +408,15 @@ export default function BudgetSpreadsheet({
               size: 72,
               cell: (info: { row: { original: BudgetItem } }) => (
                 <div className="flex items-center gap-0.5 px-1">
+                  {onOpenAPU && (
+                    <button
+                      onClick={() => onOpenAPU(info.row.original.id)}
+                      className="p-1.5 text-gray-400 hover:text-purple-600 rounded transition-colors cursor-pointer"
+                      title="Análisis de Precios (APU)"
+                    >
+                      <FlaskConical size={15} />
+                    </button>
+                  )}
                   <button
                     onClick={() => onDuplicateItem(info.row.original.id)}
                     className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
@@ -425,7 +437,7 @@ export default function BudgetSpreadsheet({
           ]
         : []),
     ],
-    [navigateTo, handleCellSave, onCellChange, onDuplicateItem, onDeleteItem, readOnly]
+    [navigateTo, handleCellSave, onCellChange, onDuplicateItem, onDeleteItem, readOnly, onOpenAPU]
   );
 
   const table = useReactTable({

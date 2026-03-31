@@ -34,8 +34,9 @@ import { useProjects } from "@/hooks/useProjects";
 import { useProjectProgress } from "@/hooks/useProgress";
 import { useProject } from "@/hooks/useProject";
 import ProgressEntryModal from "@/components/progress/ProgressEntryModal";
+import APUPanel from "@/components/budget/APUPanel";
 import type { BudgetItem, MeasurementUnit } from "@/types";
-import { Plus, GripVertical } from "lucide-react";
+import { Plus, GripVertical, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export default function BudgetPage({
@@ -81,6 +82,7 @@ export default function BudgetPage({
   }, [progressRes]);
 
   const [progressItemId, setProgressItemId] = useState<string | null>(null);
+  const [apuItemId, setApuItemId] = useState<string | null>(null);
   const progressItem = useMemo(() => {
     if (!progressItemId) return null;
     for (const cat of categories) {
@@ -89,6 +91,15 @@ export default function BudgetPage({
     }
     return null;
   }, [progressItemId, categories]);
+
+  const apuItem = useMemo(() => {
+    if (!apuItemId) return null;
+    for (const cat of categories) {
+      const found = cat.items.find((i) => i.id === apuItemId);
+      if (found) return found;
+    }
+    return null;
+  }, [apuItemId, categories]);
 
   const createCat = useCreateBudgetCategory(effectiveProjectId);
   const deleteCat = useDeleteBudgetCategory(effectiveProjectId);
@@ -301,6 +312,7 @@ export default function BudgetPage({
                     onDeleteCategory={() => setDeleteCatTarget({ id: cat.id, name: cat.name })}
                     progressData={progressData}
                     onOpenProgress={(itemId) => setProgressItemId(itemId)}
+                    onOpenAPU={(itemId) => setApuItemId(itemId)}
                     onReorderItems={handleReorderItems}
                     categoryDragHandleProps={dragHandleProps}
                   />
@@ -309,6 +321,11 @@ export default function BudgetPage({
             ))}
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* APU Panel */}
+      {apuItem && (
+        <APUPanel item={apuItem} onClose={() => setApuItemId(null)} />
       )}
 
       <Modal isOpen={newCatOpen} onClose={() => setNewCatOpen(false)} title="Nueva categoría">
