@@ -21,6 +21,11 @@ import {
 import { useMaterials } from "@/hooks/useMaterials";
 import type { BudgetItem, Material, MeasurementUnit } from "@/types";
 
+/** Parse a user-typed decimal that may use comma or dot as separator */
+function parseDecimal(raw: string): number {
+  return Number(raw.replace(",", "."));
+}
+
 const UNIT_LABELS: Record<MeasurementUnit, string> = {
   M2: "m²",
   M3: "m³",
@@ -55,36 +60,39 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
   // Add material form
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [newMaterialId, setNewMaterialId] = useState("");
-  const [newConsumption, setNewConsumption] = useState<number>(0);
-  const [newWaste, setNewWaste] = useState<number>(0);
+  const [newConsumption, setNewConsumption] = useState("");
+  const [newWaste, setNewWaste] = useState("");
 
   // Add labor form
   const [showAddLabor, setShowAddLabor] = useState(false);
   const [newLaborDesc, setNewLaborDesc] = useState("");
-  const [newLaborCost, setNewLaborCost] = useState<number>(0);
+  const [newLaborCost, setNewLaborCost] = useState("");
 
   const handleAddMaterial = useCallback(async () => {
-    if (!newMaterialId || newConsumption <= 0) return;
+    const consumption = parseDecimal(newConsumption);
+    const waste = parseDecimal(newWaste);
+    if (!newMaterialId || isNaN(consumption) || consumption <= 0) return;
     await addMaterial.mutateAsync({
       materialId: newMaterialId,
-      consumptionPerUnit: newConsumption,
-      wastePercent: newWaste,
+      consumptionPerUnit: consumption,
+      wastePercent: isNaN(waste) ? 0 : waste,
     });
     setShowAddMaterial(false);
     setNewMaterialId("");
-    setNewConsumption(0);
-    setNewWaste(0);
+    setNewConsumption("");
+    setNewWaste("");
   }, [newMaterialId, newConsumption, newWaste, addMaterial]);
 
   const handleAddLabor = useCallback(async () => {
+    const cost = parseDecimal(newLaborCost);
     if (!newLaborDesc.trim()) return;
     await addLabor.mutateAsync({
       description: newLaborDesc.trim(),
-      costPerUnit: newLaborCost,
+      costPerUnit: isNaN(cost) ? 0 : cost,
     });
     setShowAddLabor(false);
     setNewLaborDesc("");
-    setNewLaborCost(0);
+    setNewLaborCost("");
   }, [newLaborDesc, newLaborCost, addLabor]);
 
   // Materiales ya usados en el APU (para filtrar en el selector)
@@ -176,13 +184,12 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                       </td>
                       <td className="py-1.5 px-2 text-right">
                         <input
-                          type="number"
-                          step="0.0001"
-                          min="0"
+                          type="text"
+                          inputMode="decimal"
                           defaultValue={line.consumptionPerUnit}
                           onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (val !== line.consumptionPerUnit && val > 0) {
+                            const val = parseDecimal(e.target.value);
+                            if (!isNaN(val) && val !== line.consumptionPerUnit && val > 0) {
                               void updateMaterial.mutateAsync({
                                 id: line.id,
                                 payload: { consumptionPerUnit: val },
@@ -194,14 +201,12 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                       </td>
                       <td className="py-1.5 px-2 text-right">
                         <input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="100"
+                          type="text"
+                          inputMode="decimal"
                           defaultValue={line.wastePercent}
                           onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (val !== line.wastePercent) {
+                            const val = parseDecimal(e.target.value);
+                            if (!isNaN(val) && val !== line.wastePercent) {
                               void updateMaterial.mutateAsync({
                                 id: line.id,
                                 payload: { wastePercent: val },
@@ -273,24 +278,21 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                     Consumo por {UNIT_LABELS[item.unit]}
                   </label>
                   <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={newConsumption || ""}
-                    onChange={(e) => setNewConsumption(Number(e.target.value))}
+                    type="text"
+                    inputMode="decimal"
+                    value={newConsumption}
+                    onChange={(e) => setNewConsumption(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="Ej. 12.5"
+                    placeholder="Ej. 12,5"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Desperdicio %</label>
                   <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={newWaste || ""}
-                    onChange={(e) => setNewWaste(Number(e.target.value))}
+                    type="text"
+                    inputMode="decimal"
+                    value={newWaste}
+                    onChange={(e) => setNewWaste(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                     placeholder="5"
                   />
@@ -306,7 +308,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                 </button>
                 <button
                   type="button"
-                  disabled={!newMaterialId || newConsumption <= 0 || addMaterial.isPending}
+                  disabled={!newMaterialId || parseDecimal(newConsumption) <= 0 || addMaterial.isPending}
                   onClick={() => void handleAddMaterial()}
                   className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 >
@@ -365,13 +367,12 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                       </td>
                       <td className="py-1.5 px-2 text-right">
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          type="text"
+                          inputMode="decimal"
                           defaultValue={line.costPerUnit}
                           onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (val !== line.costPerUnit) {
+                            const val = parseDecimal(e.target.value);
+                            if (!isNaN(val) && val !== line.costPerUnit) {
                               void updateLabor.mutateAsync({
                                 id: line.id,
                                 payload: { costPerUnit: val },
@@ -432,13 +433,12 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                     Costo por {UNIT_LABELS[item.unit]}
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={newLaborCost || ""}
-                    onChange={(e) => setNewLaborCost(Number(e.target.value))}
+                    type="text"
+                    inputMode="decimal"
+                    value={newLaborCost}
+                    onChange={(e) => setNewLaborCost(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="0.00"
+                    placeholder="0,654"
                   />
                 </div>
               </div>
