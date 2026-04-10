@@ -63,6 +63,7 @@ export async function getAPU(req: Request, res: Response) {
       material: {
         ...m.material,
         unitPrice: Number(m.material.unitPrice),
+        presentationQty: Number(m.material.presentationQty),
       },
     })),
     labor: labor.map((l) => ({
@@ -90,7 +91,7 @@ export async function addAPUMaterial(req: Request, res: Response) {
     return;
   }
 
-  const unitCost = Number(material.unitPrice);
+  const unitCost = Number(material.unitPrice) / (Number(material.presentationQty) || 1);
   const subtotal = calcMaterialSubtotal(body.consumptionPerUnit, body.wastePercent ?? 0, unitCost);
 
   const line = await prisma.budgetItemMaterial.create({
@@ -124,7 +125,7 @@ export async function addAPUMaterial(req: Request, res: Response) {
     wastePercent: Number(line.wastePercent),
     unitCost: Number(line.unitCost),
     subtotal: Number(line.subtotal),
-    material: { ...line.material, unitPrice: Number(line.material.unitPrice) },
+    material: { ...line.material, unitPrice: Number(line.material.unitPrice), presentationQty: Number(line.material.presentationQty) },
   });
 }
 
@@ -165,7 +166,7 @@ export async function updateAPUMaterial(req: Request, res: Response) {
     wastePercent: Number(updated.wastePercent),
     unitCost: Number(updated.unitCost),
     subtotal: Number(updated.subtotal),
-    material: { ...updated.material, unitPrice: Number(updated.material.unitPrice) },
+    material: { ...updated.material, unitPrice: Number(updated.material.unitPrice), presentationQty: Number(updated.material.presentationQty) },
   });
 }
 

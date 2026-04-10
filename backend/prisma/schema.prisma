@@ -385,8 +385,9 @@ model Material {
   id        String           @id @default(uuid())
   name      String
   unit      MeasurementUnit
-  unitPrice Decimal          @default(0) @map("unit_price") @db.Decimal(14, 2)
-  category  MaterialCategory @default(OTHER)
+  unitPrice       Decimal          @default(0) @map("unit_price") @db.Decimal(14, 2)
+  presentationQty Decimal          @default(1) @map("presentation_qty") @db.Decimal(12, 4)
+  category        MaterialCategory @default(OTHER)
   brand     String?
   supplier  String?
   notes     String?

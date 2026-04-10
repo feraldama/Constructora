@@ -5,6 +5,7 @@ export interface CreateMaterialPayload {
   name: string;
   unit: MeasurementUnit;
   unitPrice: number;
+  presentationQty?: number;
   category?: MaterialCategory;
   brand?: string | null;
   supplier?: string | null;

@@ -675,13 +675,16 @@ Base de datos global de materiales con precios unitarios. Los materiales se comp
 1. Click en **"Nuevo material"**
 2. Completar los campos:
    - **Nombre** (obligatorio): ej. "Cemento Portland"
-   - **Unidad** (obligatorio): m², m³, ml, unidad, kg, ton, global
-   - **Precio unitario** (obligatorio): precio actual del material
+   - **Unidad base** (obligatorio): m², m³, ml, unidad, kg, ton, global
    - **Categoría**: Cemento, Acero, Madera, Áridos, Cerámicos, Plomería, Electricidad, Pintura, Impermeabilización, Ferretería, Otros
+   - **Presentación** (obligatorio, default 1): cuántas unidades base vienen en el envase de compra. Ej: si el cemento se compra en bolsas de 50 kg, la unidad base es "kg" y la presentación es "50"
+   - **Precio por envase** (obligatorio): precio del envase completo. El sistema calcula automáticamente el precio por unidad base (ej: $57.000 / 50 kg = $1.140/kg)
    - **Marca** (opcional): ej. "Loma Negra"
    - **Proveedor** (opcional): ej. "Corralón El Obrero"
    - **Notas** (opcional)
 3. Click en **"Crear material"**
+
+> **Ejemplo:** Cemento en bolsa de 50 kg a $57.000 → Unidad: kg, Presentación: 50, Precio envase: $57.000. El APU usará $1.140/kg para calcular costos.
 
 ### Editar / Eliminar
 

@@ -51,13 +51,13 @@ export async function recalcAPU(budgetItemId: string): Promise<void> {
 export async function refreshMaterialPrices(budgetItemId: string): Promise<void> {
   const apuMaterials = await prisma.budgetItemMaterial.findMany({
     where: { budgetItemId },
-    include: { material: { select: { unitPrice: true } } },
+    include: { material: { select: { unitPrice: true, presentationQty: true } } },
   });
 
   // Actualizar cada línea con el precio actual del catálogo
   await Promise.all(
     apuMaterials.map((line) => {
-      const unitCost = Number(line.material.unitPrice);
+      const unitCost = Number(line.material.unitPrice) / (Number(line.material.presentationQty) || 1);
       const consumption = Number(line.consumptionPerUnit);
       const waste = Number(line.wastePercent);
       const subtotal = Math.round(consumption * (1 + waste / 100) * unitCost * 100) / 100;

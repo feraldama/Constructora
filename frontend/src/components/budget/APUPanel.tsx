@@ -168,7 +168,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                     <th className="text-left py-1.5 px-2 text-xs font-medium text-gray-500">Material</th>
                     <th className="text-right py-1.5 px-2 text-xs font-medium text-gray-500">Consumo/{UNIT_LABELS[item.unit]}</th>
                     <th className="text-right py-1.5 px-2 text-xs font-medium text-gray-500">Desp.%</th>
-                    <th className="text-right py-1.5 px-2 text-xs font-medium text-gray-500">P.U.</th>
+                    <th className="text-right py-1.5 px-2 text-xs font-medium text-gray-500">$/unit.</th>
                     <th className="text-right py-1.5 px-2 text-xs font-medium text-gray-500">Subtotal</th>
                     <th className="w-8"></th>
                   </tr>
@@ -265,11 +265,14 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                 >
                   <option value="">Seleccionar material...</option>
-                  {availableMaterials.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({UNIT_LABELS[m.unit]}) — {fmt(m.unitPrice)}
-                    </option>
-                  ))}
+                  {availableMaterials.map((m) => {
+                    const effectivePrice = m.unitPrice / (m.presentationQty || 1);
+                    return (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({UNIT_LABELS[m.unit]}) — {fmt(effectivePrice)}/{UNIT_LABELS[m.unit]}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">

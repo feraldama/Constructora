@@ -5,6 +5,7 @@ export const createMaterialSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   unit: z.nativeEnum(MeasurementUnit),
   unitPrice: z.coerce.number().nonnegative("El precio no puede ser negativo"),
+  presentationQty: z.coerce.number().positive("La presentación debe ser mayor a 0").optional().default(1),
   category: z.nativeEnum(MaterialCategory).optional().default("OTHER"),
   brand: z.string().optional().nullable(),
   supplier: z.string().optional().nullable(),

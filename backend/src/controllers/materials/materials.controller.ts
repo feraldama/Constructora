@@ -14,6 +14,7 @@ function serializeMaterial(m: any) {
   return {
     ...m,
     unitPrice: Number(m.unitPrice),
+    presentationQty: Number(m.presentationQty),
   };
 }
 
@@ -60,6 +61,7 @@ export async function createMaterial(req: Request, res: Response) {
       name: body.name,
       unit: body.unit,
       unitPrice: body.unitPrice,
+      presentationQty: body.presentationQty,
       category: body.category,
       brand: body.brand,
       supplier: body.supplier,

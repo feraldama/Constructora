@@ -65,6 +65,7 @@ interface MaterialForm {
   name: string;
   unit: MeasurementUnit;
   unitPrice: number;
+  presentationQty: number;
   category: MaterialCategory;
   brand: string;
   supplier: string;
@@ -75,6 +76,7 @@ const EMPTY_FORM: MaterialForm = {
   name: "",
   unit: "UNIT",
   unitPrice: 0,
+  presentationQty: 1,
   category: "OTHER",
   brand: "",
   supplier: "",
@@ -115,6 +117,7 @@ export default function MaterialsPage() {
       name: mat.name,
       unit: mat.unit,
       unitPrice: mat.unitPrice,
+      presentationQty: mat.presentationQty,
       category: mat.category,
       brand: mat.brand ?? "",
       supplier: mat.supplier ?? "",
@@ -129,6 +132,7 @@ export default function MaterialsPage() {
       name: form.name.trim(),
       unit: form.unit,
       unitPrice: form.unitPrice,
+      presentationQty: form.presentationQty,
       category: form.category,
       brand: form.brand.trim() || null,
       supplier: form.supplier.trim() || null,
@@ -273,7 +277,9 @@ export default function MaterialsPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Presentación</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio envase</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio/unit.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Acc.</th>
@@ -296,8 +302,18 @@ export default function MaterialsPage() {
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {UNIT_LABELS[mat.unit]}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 font-semibold tabular-nums text-right whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-gray-600 tabular-nums text-right whitespace-nowrap">
+                      {mat.presentationQty > 1
+                        ? `${mat.presentationQty} ${UNIT_LABELS[mat.unit]}`
+                        : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 tabular-nums text-right whitespace-nowrap">
                       {fmt(mat.unitPrice)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-blue-700 font-semibold tabular-nums text-right whitespace-nowrap">
+                      {mat.presentationQty > 1
+                        ? fmt(mat.unitPrice / mat.presentationQty)
+                        : fmt(mat.unitPrice)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {mat.brand || <span className="text-gray-400">—</span>}
@@ -351,9 +367,9 @@ export default function MaterialsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unidad *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unidad base *</label>
               <select
                 value={form.unit}
                 onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value as MeasurementUnit }))}
@@ -363,18 +379,6 @@ export default function MaterialsPage() {
                   <option key={u} value={u}>{UNIT_LABELS[u]}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Precio unitario *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={form.unitPrice || ""}
-                onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="0.00"
-              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
@@ -387,6 +391,41 @@ export default function MaterialsPage() {
                   <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Presentación ({UNIT_LABELS[form.unit]} por envase) *</label>
+              <input
+                type="number"
+                step="any"
+                min="0.0001"
+                value={form.presentationQty || ""}
+                onChange={(e) => setForm((f) => ({ ...f, presentationQty: Number(e.target.value) }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Ej. 50 (bolsa de 50 kg)"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Cuántas {UNIT_LABELS[form.unit]} vienen en el envase de compra (1 si se compra suelto)
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio por envase *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.unitPrice || ""}
+                onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number(e.target.value) }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="0.00"
+              />
+              {form.presentationQty > 1 && form.unitPrice > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  = {fmt(form.unitPrice / form.presentationQty)} por {UNIT_LABELS[form.unit]}
+                </p>
+              )}
             </div>
           </div>
 
