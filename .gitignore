@@ -147,3 +147,8 @@ backend/uploads/
 # Claude Code — configuración local personal
 .claude/settings.local.json
 .claude-config.sh
+
+# Backups de PostgreSQL — por defecto NO se commitean (pueden contener datos
+# sensibles). Si querés versionar un dump puntual, agregalo con `git add -f`.
+backend/prisma/backups/*.dump
+backend/prisma/backups/*.sql
