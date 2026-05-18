@@ -21,6 +21,8 @@ import progressRoutes from "./routes/progress.routes.js";
 import certificateRoutes, { certificateItemsRouter } from "./routes/certificates.routes.js";
 import materialRoutes from "./routes/materials.routes.js";
 import apuRoutes from "./routes/apu.routes.js";
+import apuTemplateRoutes from "./routes/apu-templates.routes.js";
+import purchaseRoutes from "./routes/purchases.routes.js";
 import clientPaymentRoutes from "./routes/client-payments.routes.js";
 
 const app = express();
@@ -62,6 +64,8 @@ app.use("/api/certificates", certificateRoutes);
 app.use("/api", certificateItemsRouter);
 app.use("/api/materials", materialRoutes);
 app.use("/api", apuRoutes);
+app.use("/api/apu-templates", apuTemplateRoutes);
+app.use("/api/purchases", purchaseRoutes);
 app.use("/api/projects", clientPaymentRoutes);
 
 app.listen(PORT, async () => {

@@ -5,6 +5,7 @@ export interface CreateClientPaymentPayload {
   amount: number;
   paymentDate: string;
   paymentMethod?: PaymentMethod | null;
+  bank?: string | null;
   concept?: ClientPaymentConcept;
   reference?: string | null;
   notes?: string | null;

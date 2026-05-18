@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma.js";
+import { propagateMaterialPriceChange } from "../../services/apu.service.js";
 import type { CreateMaterialInput, UpdateMaterialInput } from "./materials.schema.js";
 import type { MaterialCategory } from "../../generated/prisma/enums.js";
 
@@ -97,6 +98,18 @@ export async function updateMaterial(req: Request, res: Response) {
     where: { id },
     data: body,
   });
+
+  // Si cambió el precio o la presentación, propagar a los APUs que usan
+  // este material para mantener consistencia con BudgetItem.costUnitPrice.
+  const priceChanged =
+    body.unitPrice !== undefined &&
+    Number(body.unitPrice) !== Number(existing.unitPrice);
+  const presentationChanged =
+    body.presentationQty !== undefined &&
+    Number(body.presentationQty) !== Number(existing.presentationQty);
+  if (priceChanged || presentationChanged) {
+    await propagateMaterialPriceChange(id);
+  }
 
   await prisma.activityLog.create({
     data: {

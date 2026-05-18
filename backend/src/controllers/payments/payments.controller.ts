@@ -434,6 +434,7 @@ export async function createPayment(req: Request, res: Response): Promise<void> 
             amount:        paymentAmount,
             status,
             paymentMethod: data.paymentMethod,
+            bank:          data.bank,
             description:   data.description,
             invoiceNumber: data.invoiceNumber,
             dueDate:       data.dueDate ? new Date(data.dueDate) : undefined,

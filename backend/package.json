@@ -7,7 +7,8 @@
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "import:apu": "tsx prisma/import/importApuTemplates.ts"
   },
   "keywords": [],
   "author": "",
@@ -43,6 +44,7 @@
     "prisma": "^7.6.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "xlsx": "^0.18.5"
   }
 }

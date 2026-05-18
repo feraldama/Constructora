@@ -21,7 +21,9 @@ Versión actualizada: 2026-03-31
 12. [Calendario de Obra](#12-calendario-de-obra)
 13. [Gastos Adicionales](#13-gastos-adicionales)
 14. [Catálogo de Materiales](#14-catálogo-de-materiales)
+    - [14.1 Registro de Compras](#141-registro-de-compras)
 15. [Análisis de Precios Unitarios (APU)](#15-análisis-de-precios-unitarios-apu)
+    - [15.1 Plantillas APU desde el catálogo maestro](#151-plantillas-apu-desde-el-catálogo-maestro)
 16. [Cobros del Cliente](#16-cobros-del-cliente)
 17. [Finanzas](#17-finanzas)
 18. [Reportes](#18-reportes)
@@ -696,7 +698,46 @@ Base de datos global de materiales con precios unitarios. Los materiales se comp
 - **Categoría**: filtrar por tipo de material
 - **Buscar**: por nombre del material
 
-> **Nota:** Los cambios de precio en el catálogo NO se propagan automáticamente a los APU existentes. Usar "Actualizar Precios" dentro del APU de cada partida para refrescar.
+> **Nota:** Editar manualmente el precio del catálogo recalcula automáticamente todos los APU que usan el material, en cascada hasta el subtotal de la partida y el resumen financiero del proyecto.
+
+### 14.1 Registro de Compras
+
+**Ruta:** `/purchases`
+
+Cada compra de material registrada actualiza el `unitPrice` del catálogo y propaga el nuevo costo a todas las partidas del cómputo métrico que usan ese material, recalculando subtotales y resumen financiero.
+
+#### Nueva compra
+
+1. Click en **"Nueva compra"**
+2. Completar:
+   - **Material** (obligatorio): seleccionar del catálogo. Se muestra el precio actual junto al nombre como referencia
+   - **Cantidad** y **Precio unitario** (obligatorios): el total se calcula automáticamente
+   - **Fecha** (obligatoria, default hoy)
+   - **Método de pago** (opcional): Efectivo, Transferencia, Cheque, Otro
+   - **Proveedor** (opcional)
+   - **N° factura / referencia** (opcional)
+   - **Proyecto** (opcional): asociar la compra a un proyecto específico para trazabilidad
+   - **Notas** (opcional)
+3. Click en **"Registrar compra"**
+
+Al guardar, el sistema confirma cuántas partidas del cómputo métrico vieron actualizado su precio de costo:
+
+> *"Compra registrada. Precio actualizado en 8 partidas del cómputo métrico."*
+
+#### Lógica de precio del catálogo
+
+- El catálogo siempre toma el precio de la **compra más reciente** del material (por fecha, desempate por fecha de creación).
+- Si registrás una compra con fecha retroactiva y ya existe una compra más reciente, el catálogo respeta esa compra reciente.
+- Si **editás** la cantidad o precio de la compra más reciente, el catálogo y los APU se recalculan.
+- Si **eliminás** la compra más reciente, el catálogo vuelve al precio de la compra anterior (si existe).
+
+#### Filtros
+
+- **Buscar**: por nombre de material, proveedor o n° de factura
+- **Material**: filtrar por material específico
+- **Proyecto**: filtrar por proyecto
+
+> **Tip:** Para llevar control de precios sin tener compras formales, podés registrar compras "informativas" con cantidad mínima. Lo importante es que el último `unitPrice` registrado se refleja en el catálogo.
 
 ---
 
@@ -739,6 +780,32 @@ APU modificado → costUnitPrice actualizado → costSubtotal recalculado → Bu
 ```
 
 > **Importante:** Si se edita manualmente el P.U. Costo de una partida que tiene APU, el valor manual será sobreescrito la próxima vez que se modifique el APU.
+
+### 15.1 Plantillas APU desde el catálogo maestro
+
+El sistema incluye un catálogo global de **200 plantillas APU** (32 rubros: Nivelación, Elevación, Contrapiso, Revoque, Techo, Piso, Pintura, Estructuras de H°A°, Carpintería, Instalaciones, etc.) importado del Excel maestro de la constructora. Cada plantilla contiene los consumos por unidad (m², ml, etc.) de materiales y mano de obra estandarizados para ese tipo de trabajo.
+
+#### Crear partida desde plantilla
+
+1. En **Cómputo Métrico** (`/budget/:projectId`), dentro de cualquier rubro existente, hacer click en **"Desde plantilla"** (junto al botón "Agregar partida")
+2. Se abre el selector de plantillas APU con dos paneles:
+   - **Izquierda**: lista filtrable por rubro y buscador por texto
+   - **Derecha**: detalle de la plantilla seleccionada (materiales, mano de obra, subtotales)
+3. Seleccionar la plantilla deseada
+4. Click en **"Crear partida"**
+
+La partida nueva se crea con:
+- Nombre y unidad copiados de la plantilla
+- Cantidad inicial en 0 (editar luego)
+- Líneas APU de materiales y mano de obra copiadas
+- Precios de material tomados del catálogo actual (que refleja la última compra)
+- Costo unitario calculado automáticamente
+
+#### Aplicar plantilla a una partida existente
+
+Próximamente disponible desde el panel APU de una partida. Permite reemplazar líneas APU existentes o sumar las de la plantilla.
+
+> **Datos del catálogo maestro:** 32 rubros · 200 subrubros · 330 materiales únicos. Los precios iniciales son los del Excel original — al registrar compras nuevas se actualizan automáticamente en todos los APU que los usan.
 
 ---
 

@@ -87,6 +87,7 @@ export async function createClientPayment(req: Request, res: Response) {
       amount: body.amount,
       paymentDate: new Date(body.paymentDate),
       paymentMethod: body.paymentMethod,
+      bank: body.bank,
       concept: body.concept,
       reference: body.reference,
       notes: body.notes,

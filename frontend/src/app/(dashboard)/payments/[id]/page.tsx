@@ -2,12 +2,13 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileText, Calendar, DollarSign, User, Banknote, ArrowLeftRight, FileCheck, MoreHorizontal, CreditCard, CheckCircle } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, DollarSign, User, Banknote, ArrowLeftRight, FileCheck, MoreHorizontal, CreditCard, CheckCircle, Pencil } from "lucide-react";
 import { usePayment, useUpdatePayment } from "@/hooks/usePayments";
 import { useGeneratePayment } from "@/hooks/useCertificates";
 import Badge from "@/components/ui/Badge";
 import FileUpload from "@/components/ui/FileUpload";
 import Modal from "@/components/ui/Modal";
+import BankField, { paymentMethodRequiresBank as requiresBank } from "@/components/ui/BankField";
 import type { PaymentStatus, PaymentMethod } from "@/types";
 
 const STATUS_BADGE: Record<PaymentStatus, { label: string; variant: "success" | "warning" | "danger" | "default" }> = {
@@ -52,8 +53,19 @@ export default function PaymentDetailPage({
   const [showPaidModal, setShowPaidModal] = useState(false);
   const [paidForm, setPaidForm] = useState({
     paymentMethod: "" as PaymentMethod | "",
+    bank: "",
     paidAt: new Date().toISOString().slice(0, 10),
     invoiceNumber: "",
+  });
+
+  // --- Edit-data modal state (válido también para pagos ya PAID) ---
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    paymentMethod: "" as PaymentMethod | "",
+    bank: "",
+    paidAt: "",
+    invoiceNumber: "",
+    description: "",
   });
 
   // --- Generate payment for remaining items modal ---
@@ -61,14 +73,19 @@ export default function PaymentDetailPage({
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
   async function handleConfirmPaid() {
-    if (!payment) return;
+    if (!payment || !paidForm.paymentMethod) return;
+    if (requiresBank(paidForm.paymentMethod) && !paidForm.bank.trim()) return;
     await updateMutation.mutateAsync({
       id: payment.id,
       data: {
         status: "PAID",
-        ...(paidForm.paymentMethod && { paymentMethod: paidForm.paymentMethod as PaymentMethod }),
+        paymentMethod: paidForm.paymentMethod as PaymentMethod,
         paidAt: new Date(paidForm.paidAt + "T12:00:00").toISOString(),
         ...(paidForm.invoiceNumber.trim() && { invoiceNumber: paidForm.invoiceNumber.trim() }),
+        // Banco solo aplica si el método es transferencia o cheque
+        ...(requiresBank(paidForm.paymentMethod)
+          ? { bank: paidForm.bank.trim() }
+          : { bank: null }),
       },
     });
     setShowPaidModal(false);
@@ -77,6 +94,51 @@ export default function PaymentDetailPage({
   async function handleCancel() {
     if (!payment) return;
     await updateMutation.mutateAsync({ id: payment.id, data: { status: "CANCELLED" } });
+  }
+
+  function openEditModal() {
+    if (!payment) return;
+    setEditForm({
+      paymentMethod: (payment.paymentMethod ?? "") as PaymentMethod | "",
+      bank: payment.bank ?? "",
+      paidAt: payment.paidAt ? payment.paidAt.slice(0, 10) : "",
+      invoiceNumber: payment.invoiceNumber ?? "",
+      description: payment.description ?? "",
+    });
+    setShowEditModal(true);
+  }
+
+  async function handleSaveEdit() {
+    if (!payment) return;
+    if (requiresBank(editForm.paymentMethod) && !editForm.bank.trim()) return;
+    const data: Record<string, unknown> = {};
+    if (editForm.paymentMethod !== (payment.paymentMethod ?? "")) {
+      data.paymentMethod = editForm.paymentMethod || undefined;
+    }
+    // El campo banco se setea según el método de pago final
+    const finalBank = requiresBank(editForm.paymentMethod) ? editForm.bank.trim() : null;
+    const currentBank = payment.bank ?? null;
+    if (finalBank !== currentBank) {
+      data.bank = finalBank;
+    }
+    if (
+      editForm.paidAt &&
+      editForm.paidAt !== (payment.paidAt ? payment.paidAt.slice(0, 10) : "")
+    ) {
+      data.paidAt = new Date(editForm.paidAt + "T12:00:00").toISOString();
+    }
+    if (editForm.invoiceNumber.trim() !== (payment.invoiceNumber ?? "")) {
+      data.invoiceNumber = editForm.invoiceNumber.trim() || undefined;
+    }
+    if (editForm.description.trim() !== (payment.description ?? "")) {
+      data.description = editForm.description.trim() || undefined;
+    }
+    if (Object.keys(data).length === 0) {
+      setShowEditModal(false);
+      return;
+    }
+    await updateMutation.mutateAsync({ id: payment.id, data });
+    setShowEditModal(false);
   }
 
   if (isLoading) {
@@ -126,23 +188,33 @@ export default function PaymentDetailPage({
             </p>
           </div>
 
-          {payment.status !== "PAID" && payment.status !== "CANCELLED" && (
-            <div className="flex gap-2">
+          <div className="flex gap-2">
+            {payment.status === "PAID" && (
               <button
-                onClick={handleCancel}
-                disabled={updateMutation.isPending}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={openEditModal}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancelar pago
+                <Pencil size={14} /> Editar datos
               </button>
-              <button
-                onClick={() => setShowPaidModal(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
-              >
-                Marcar como Pagado
-              </button>
-            </div>
-          )}
+            )}
+            {payment.status !== "PAID" && payment.status !== "CANCELLED" && (
+              <>
+                <button
+                  onClick={handleCancel}
+                  disabled={updateMutation.isPending}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar pago
+                </button>
+                <button
+                  onClick={() => setShowPaidModal(true)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+                >
+                  Marcar como Pagado
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -204,6 +276,9 @@ export default function PaymentDetailPage({
                   })()
                 ) : (
                   <p className="text-sm font-medium">-</p>
+                )}
+                {payment.bank && requiresBank(payment.paymentMethod) && (
+                  <p className="text-sm text-gray-700 mt-1">{payment.bank}</p>
                 )}
               </div>
             </div>
@@ -491,10 +566,19 @@ export default function PaymentDetailPage({
 
           {/* Método de pago */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Método de pago</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Método de pago <span className="text-red-500">*</span>
+            </label>
             <select
               value={paidForm.paymentMethod}
-              onChange={(e) => setPaidForm((f) => ({ ...f, paymentMethod: e.target.value as PaymentMethod | "" }))}
+              onChange={(e) =>
+                setPaidForm((f) => ({
+                  ...f,
+                  paymentMethod: e.target.value as PaymentMethod | "",
+                  // Si el nuevo método no usa banco, limpiar el campo
+                  bank: requiresBank(e.target.value as PaymentMethod) ? f.bank : "",
+                }))
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             >
               <option value="">Seleccionar...</option>
@@ -504,6 +588,13 @@ export default function PaymentDetailPage({
               <option value="OTHER">Otro</option>
             </select>
           </div>
+
+          {/* Banco (condicional) */}
+          <BankField
+            method={paidForm.paymentMethod}
+            value={paidForm.bank}
+            onChange={(v) => setPaidForm((f) => ({ ...f, bank: v }))}
+          />
 
           {/* Fecha de pago */}
           <div>
@@ -539,10 +630,106 @@ export default function PaymentDetailPage({
             </button>
             <button
               onClick={handleConfirmPaid}
-              disabled={updateMutation.isPending || !paidForm.paidAt}
+              disabled={
+                updateMutation.isPending ||
+                !paidForm.paidAt ||
+                !paidForm.paymentMethod ||
+                (requiresBank(paidForm.paymentMethod) && !paidForm.bank.trim())
+              }
               className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updateMutation.isPending ? "Procesando..." : "Confirmar pago"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Editar datos del pago (para pagos ya PAID) */}
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Editar datos del pago">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Método de pago <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={editForm.paymentMethod}
+              onChange={(e) =>
+                setEditForm((f) => ({
+                  ...f,
+                  paymentMethod: e.target.value as PaymentMethod | "",
+                  bank: requiresBank(e.target.value as PaymentMethod) ? f.bank : "",
+                }))
+              }
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="CASH">Efectivo</option>
+              <option value="BANK_TRANSFER">Transferencia bancaria</option>
+              <option value="CHECK">Cheque</option>
+              <option value="OTHER">Otro</option>
+            </select>
+          </div>
+
+          <BankField
+            method={editForm.paymentMethod}
+            value={editForm.bank}
+            onChange={(v) => setEditForm((f) => ({ ...f, bank: v }))}
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de pago</label>
+            <input
+              type="date"
+              value={editForm.paidAt}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setEditForm((f) => ({ ...f, paidAt: e.target.value }))}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              N° Factura <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={editForm.invoiceNumber}
+              onChange={(e) => setEditForm((f) => ({ ...f, invoiceNumber: e.target.value }))}
+              placeholder="Ej: 0001-00012345"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descripción <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={editForm.description}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              maxLength={500}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={
+                updateMutation.isPending ||
+                !editForm.paymentMethod ||
+                (requiresBank(editForm.paymentMethod) && !editForm.bank.trim())
+              }
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {updateMutation.isPending ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
         </div>

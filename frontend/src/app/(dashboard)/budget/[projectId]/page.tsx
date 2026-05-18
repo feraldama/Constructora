@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, useCallback, useMemo } from "react";
+import { use, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -35,6 +35,9 @@ import { useProjectProgress } from "@/hooks/useProgress";
 import { useProject } from "@/hooks/useProject";
 import ProgressEntryModal from "@/components/progress/ProgressEntryModal";
 import APUPanel from "@/components/budget/APUPanel";
+import APUTemplatePicker from "@/components/budget/APUTemplatePicker";
+import Combobox from "@/components/ui/Combobox";
+import { useAPURubros } from "@/hooks/useAPUTemplates";
 import type { BudgetItem, MeasurementUnit } from "@/types";
 import { Plus, GripVertical, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -66,6 +69,16 @@ export default function BudgetPage({
   );
 
   const categories = budgetData?.categories ?? [];
+  const { data: apuRubros } = useAPURubros();
+
+  // Rubros sugeridos para "Nueva categoría": los del catálogo APU que aún
+  // no fueron cargados como categoría en este proyecto.
+  const suggestedRubros = useMemo(() => {
+    const existing = new Set(categories.map((c) => c.name.toLowerCase().trim()));
+    return (apuRubros ?? [])
+      .filter((r) => !existing.has(r.rubro.toLowerCase().trim()))
+      .map((r) => r.rubro);
+  }, [apuRubros, categories]);
 
   // Progress data
   const { data: progressRes } = useProjectProgress(effectiveProjectId);
@@ -83,6 +96,16 @@ export default function BudgetPage({
 
   const [progressItemId, setProgressItemId] = useState<string | null>(null);
   const [apuItemId, setApuItemId] = useState<string | null>(null);
+  const [templatePickerCategoryId, setTemplatePickerCategoryId] = useState<string | null>(null);
+  const apuPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!apuItemId) return;
+    const id = requestAnimationFrame(() => {
+      apuPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [apuItemId]);
   const progressItem = useMemo(() => {
     if (!progressItemId) return null;
     for (const cat of categories) {
@@ -313,6 +336,7 @@ export default function BudgetPage({
                     progressData={progressData}
                     onOpenProgress={(itemId) => setProgressItemId(itemId)}
                     onOpenAPU={(itemId) => setApuItemId(itemId)}
+                    onAddFromTemplate={() => setTemplatePickerCategoryId(cat.id)}
                     onReorderItems={handleReorderItems}
                     categoryDragHandleProps={dragHandleProps}
                   />
@@ -325,21 +349,36 @@ export default function BudgetPage({
 
       {/* APU Panel */}
       {apuItem && (
-        <APUPanel item={apuItem} onClose={() => setApuItemId(null)} />
+        <div ref={apuPanelRef} className="scroll-mt-4">
+          <APUPanel item={apuItem} onClose={() => setApuItemId(null)} />
+        </div>
       )}
+
+      {/* Selector de plantilla APU (catálogo del Excel maestro) */}
+      <APUTemplatePicker
+        isOpen={!!templatePickerCategoryId}
+        onClose={() => setTemplatePickerCategoryId(null)}
+        categoryId={templatePickerCategoryId ?? undefined}
+      />
 
       <Modal isOpen={newCatOpen} onClose={() => setNewCatOpen(false)} title="Nueva categoría">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del rubro</label>
-            <input
-              type="text"
+            <Combobox
               value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900"
-              placeholder="Ej. Instalaciones"
+              onChange={setNewCatName}
+              options={suggestedRubros}
+              placeholder="Elegí del catálogo o escribí uno nuevo"
+              createLabel={(q) => `Crear rubro «${q}»`}
               autoFocus
             />
+            {suggestedRubros.length > 0 && (
+              <p className="mt-1 text-xs text-gray-500">
+                {suggestedRubros.length} rubro{suggestedRubros.length === 1 ? "" : "s"} disponible
+                {suggestedRubros.length === 1 ? "" : "s"} del catálogo
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-2">
             <button

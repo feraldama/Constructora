@@ -38,6 +38,8 @@ const UNITS: { value: MeasurementUnit; label: string }[] = [
   { value: "UNIT", label: "Unidad" },
   { value: "KG", label: "kg" },
   { value: "TON", label: "Ton" },
+  { value: "LITER", label: "lt" },
+  { value: "INCH", label: "pul" },
   { value: "GLOBAL", label: "Global" },
 ];
 
@@ -75,6 +77,8 @@ interface BudgetSpreadsheetProps {
   categoryDragHandleProps?: Record<string, unknown>;
   /** Callback para abrir el panel APU de un item */
   onOpenAPU?: (itemId: string) => void;
+  /** Callback para abrir el selector de plantillas APU para esta categoría */
+  onAddFromTemplate?: () => void;
 }
 
 const columnHelper = createColumnHelper<BudgetItem>();
@@ -97,6 +101,7 @@ export default function BudgetSpreadsheet({
   onReorderItems,
   categoryDragHandleProps,
   onOpenAPU,
+  onAddFromTemplate,
 }: BudgetSpreadsheetProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const debounceTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -590,13 +595,25 @@ export default function BudgetSpreadsheet({
 
       {/* Agregar partida */}
       {!readOnly && (
-        <button
-          onClick={onAddItem}
-          className="w-full px-4 py-2.5 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors border-t border-gray-100"
-        >
-          <Plus size={16} />
-          Agregar partida
-        </button>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={onAddItem}
+            className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <Plus size={16} />
+            Agregar partida
+          </button>
+          {onAddFromTemplate && (
+            <button
+              onClick={onAddFromTemplate}
+              className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-purple-700 hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors border-l border-gray-100 cursor-pointer"
+              title="Crear partida usando una plantilla del catálogo (Excel maestro)"
+            >
+              <FlaskConical size={16} />
+              Desde plantilla
+            </button>
+          )}
+        </div>
       )}
 
       {/* Atajos de teclado */}

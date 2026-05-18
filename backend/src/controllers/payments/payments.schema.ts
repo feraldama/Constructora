@@ -26,6 +26,7 @@ export const createPaymentSchema = z
     dueDate:       z.string().datetime({ message: "dueDate debe ser ISO 8601" }).optional(),
 
     paymentMethod: z.enum(paymentMethodValues).optional(),
+    bank:          z.string().max(100).optional(),
     description:   z.string().max(500).optional(),
     invoiceNumber: z.string().max(100).optional(),
 
@@ -47,6 +48,7 @@ export const updatePaymentSchema = z
     amount:        z.number().positive().optional(),
     status:        z.enum(paymentStatusValues).optional(),
     paymentMethod: z.enum(paymentMethodValues).optional(),
+    bank:          z.string().max(100).nullable().optional(),
     description:   z.string().max(500).optional(),
     invoiceNumber: z.string().max(100).optional(),
     dueDate:       z.string().datetime().optional(),

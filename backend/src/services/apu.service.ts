@@ -82,3 +82,52 @@ export function calcMaterialSubtotal(
 ): number {
   return Math.round(consumptionPerUnit * (1 + wastePercent / 100) * unitCost * 100) / 100;
 }
+
+/**
+ * Propaga un cambio de precio de un material a todos los APUs que lo usan.
+ * Actualiza BudgetItemMaterial.unitCost/subtotal y recalcula el costUnitPrice
+ * de cada BudgetItem afectado (y el BudgetSummary de cada proyecto).
+ *
+ * Se invoca tras:
+ *   - PATCH /api/materials/:id (cuando se cambia unitPrice o presentationQty)
+ *   - POST /api/purchases (precio de Material se setea al de la nueva compra)
+ *
+ * @returns número de BudgetItem distintos recalculados
+ */
+export async function propagateMaterialPriceChange(materialId: string): Promise<number> {
+  const material = await prisma.material.findUnique({
+    where: { id: materialId },
+    select: { unitPrice: true, presentationQty: true },
+  });
+  if (!material) return 0;
+
+  const unitCost = Number(material.unitPrice) / (Number(material.presentationQty) || 1);
+
+  const apuLines = await prisma.budgetItemMaterial.findMany({
+    where: { materialId },
+    select: { id: true, budgetItemId: true, consumptionPerUnit: true, wastePercent: true },
+  });
+  if (apuLines.length === 0) return 0;
+
+  // Actualizar cada línea con el nuevo unitCost y subtotal
+  await Promise.all(
+    apuLines.map((line) => {
+      const subtotal = calcMaterialSubtotal(
+        Number(line.consumptionPerUnit),
+        Number(line.wastePercent),
+        unitCost
+      );
+      return prisma.budgetItemMaterial.update({
+        where: { id: line.id },
+        data: { unitCost, subtotal },
+      });
+    })
+  );
+
+  // Recalcular cada BudgetItem afectado una sola vez
+  const itemIds = [...new Set(apuLines.map((l) => l.budgetItemId))];
+  for (const itemId of itemIds) {
+    await recalcAPU(itemId);
+  }
+  return itemIds.length;
+}

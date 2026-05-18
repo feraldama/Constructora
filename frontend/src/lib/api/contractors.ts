@@ -71,6 +71,10 @@ export interface AssignmentWithProgress {
   totalPending: number;
   remaining: number;
   paidPercent: number;
+  /** Cantidad ejecutada (suma de progress_entries de la partida). */
+  measuredQuantity: number;
+  /** measuredQuantity / assignedQuantity (cap 100). */
+  physicalPercent: number;
 }
 
 export interface PaymentsByProject {

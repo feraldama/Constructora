@@ -17,6 +17,10 @@ export interface AssignmentWithProgress {
   totalPending: number;
   remaining: number;
   paidPercent: number;
+  /** Cantidad ejecutada físicamente sobre la partida (suma de progress_entries). */
+  measuredQuantity: number;
+  /** measuredQuantity / assignedQuantity, cap 100. */
+  physicalPercent: number;
 }
 
 export interface PaymentsByProject {
@@ -219,7 +223,13 @@ export async function getContractorAssignments(
         WHERE pay.contractor_id = $1
           AND pay.budget_item_id = ca.budget_item_id
           AND pay.status IN ('PENDING', 'OVERDUE')
-      ), 0) AS total_pending
+      ), 0) AS total_pending,
+
+      COALESCE((
+        SELECT SUM(pe.quantity)
+        FROM progress_entries pe
+        WHERE pe.budget_item_id = ca.budget_item_id
+      ), 0) AS measured_quantity
 
     FROM contractor_assignments ca
     INNER JOIN budget_items bi ON bi.id = ca.budget_item_id
@@ -243,6 +253,7 @@ export async function getContractorAssignments(
     agreed_price: string;
     total_paid: string;
     total_pending: string;
+    measured_quantity: string;
   }
 
   const rows = await prisma.$queryRawUnsafe<AssignmentRow[]>(sql, ...args);
@@ -251,6 +262,8 @@ export async function getContractorAssignments(
     const agreedPrice = Number(r.agreed_price);
     const totalPaid = Number(r.total_paid);
     const totalPending = Number(r.total_pending);
+    const assignedQuantity = Number(r.assigned_quantity);
+    const measuredQuantity = Number(r.measured_quantity);
 
     return {
       id: r.id,
@@ -259,12 +272,17 @@ export async function getContractorAssignments(
       unit: r.unit,
       projectId: r.project_id,
       projectName: r.project_name,
-      assignedQuantity: Number(r.assigned_quantity),
+      assignedQuantity,
       agreedPrice,
       totalPaid,
       totalPending,
       remaining: agreedPrice - totalPaid - totalPending,
       paidPercent: agreedPrice > 0 ? Math.round((totalPaid / agreedPrice) * 100) : 0,
+      measuredQuantity,
+      physicalPercent:
+        assignedQuantity > 0
+          ? Math.min(100, Math.round((measuredQuantity / assignedQuantity) * 100))
+          : 0,
     };
   });
 }

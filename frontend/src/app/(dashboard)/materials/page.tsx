@@ -54,6 +54,8 @@ const UNIT_LABELS: Record<MeasurementUnit, string> = {
   UNIT: "unidad",
   KG: "kg",
   TON: "ton",
+  LITER: "lt",
+  INCH: "pul",
   GLOBAL: "global",
 };
 

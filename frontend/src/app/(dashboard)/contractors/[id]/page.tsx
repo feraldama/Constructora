@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useMemo, useCallback, type FormEvent } from "react";
+import { use, useState, useMemo, useCallback, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -36,6 +36,7 @@ import {
 } from "@/hooks/useAssignments";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectBudget } from "@/hooks/useProjectBudget";
+import { useAPU } from "@/hooks/useAPU";
 import type { ContractorPayload, PaymentsByProject, AssignmentWithProgress } from "@/lib/api/contractors";
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from "@/lib/api/assignments";
 import Modal from "@/components/ui/Modal";
@@ -140,12 +141,23 @@ function AssignmentsTable({
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-green-500 rounded-full transition-all"
-                      style={{ width: `${Math.min(a.paidPercent, 100)}%` }}
+                      className={`h-full rounded-full transition-all ${
+                        a.physicalPercent >= 100
+                          ? "bg-emerald-500"
+                          : a.physicalPercent > 0
+                          ? "bg-blue-500"
+                          : "bg-gray-200"
+                      }`}
+                      style={{ width: `${Math.min(a.physicalPercent, 100)}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-400 w-8 text-right">{a.paidPercent}%</span>
+                  <span className="text-xs text-gray-500 w-8 text-right">{a.physicalPercent}%</span>
                 </div>
+                {a.assignedQuantity > 0 && (
+                  <div className="text-[10px] text-gray-400 mt-0.5">
+                    {a.measuredQuantity.toLocaleString("es-AR")} / {a.assignedQuantity.toLocaleString("es-AR")} {a.unit}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-4">
                 <div className="flex items-center gap-0.5">
@@ -221,6 +233,7 @@ function AssignmentFormModal({
         name: item.name,
         categoryName: cat.name,
         quantity: item.quantity,
+        costUnitPrice: item.costUnitPrice,
       }))
     );
 
@@ -237,6 +250,28 @@ function AssignmentFormModal({
   }, [budgetData, isEdit, existingAssignments]);
 
   const selectedItem = budgetItems.find((b) => b.id === budgetItemId);
+
+  // Cargamos el APU del item seleccionado para sugerir como Precio unitario el
+  // costo de mano de obra (lo que típicamente paga el contratista). Si la
+  // partida no tiene MO definida en su APU, fallback al costUnitPrice total.
+  const { data: apuData } = useAPU(budgetItemId || undefined);
+
+  useEffect(() => {
+    if (isEdit) return;
+    if (!budgetItemId || !selectedItem) return;
+    // Sugerencia: total MO si está definida; sino, costo unitario total.
+    const labor = apuData?.totalLabor ?? 0;
+    const suggested = labor > 0 ? labor : selectedItem.costUnitPrice;
+    if (suggested > 0) {
+      setUnitPrice(String(suggested));
+    }
+    // Cantidad sugerida = cantidad presupuestada de la partida
+    if (selectedItem.quantity > 0) {
+      setAssignedQuantity(String(selectedItem.quantity));
+    }
+    // Dependemos del id de la partida y el totalLabor (que llega async)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budgetItemId, apuData?.totalLabor]);
 
   const createMutation = useCreateAssignment();
   const updateMutation = useUpdateAssignment();
@@ -334,6 +369,16 @@ function AssignmentFormModal({
           {selectedItem && (
             <p className="mt-1 text-xs text-gray-500">
               Cantidad presupuestada: {selectedItem.quantity}
+              {apuData && apuData.totalLabor > 0 && (
+                <>
+                  {" · "}
+                  M.O. APU:{" "}
+                  <span className="font-medium text-gray-700">
+                    ${apuData.totalLabor.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  </span>{" "}
+                  / unid.
+                </>
+              )}
             </p>
           )}
         </div>

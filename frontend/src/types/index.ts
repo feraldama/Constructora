@@ -1,7 +1,7 @@
 // Enums matching Prisma schema
 export type ProjectStatus = "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
 export type PaymentStatus = "PENDING" | "PAID" | "OVERDUE" | "CANCELLED";
-export type MeasurementUnit = "M2" | "M3" | "ML" | "UNIT" | "KG" | "TON" | "GLOBAL";
+export type MeasurementUnit = "M2" | "M3" | "ML" | "UNIT" | "KG" | "TON" | "LITER" | "INCH" | "GLOBAL";
 export type GlobalRole = "SUPER_ADMIN" | "ADMIN" | "USER";
 export type ProjectRole = "ADMIN" | "EDITOR" | "VIEWER";
 
@@ -59,6 +59,7 @@ export interface Payment {
   amount: number;
   status: PaymentStatus;
   paymentMethod?: PaymentMethod;
+  bank?: string | null;
   description?: string;
   invoiceNumber?: string;
   dueDate?: string;
@@ -140,10 +141,80 @@ export interface ClientPayment {
   amount: number;
   paymentDate: string;
   paymentMethod?: PaymentMethod | null;
+  bank?: string | null;
   concept: ClientPaymentConcept;
   reference?: string | null;
   notes?: string | null;
   createdAt: string;
+}
+
+// APU Templates (catálogo global de subrubros importado del Excel maestro)
+export interface APUTemplateSummary {
+  id: string;
+  rubro: string;
+  name: string;
+  unit: MeasurementUnit;
+  description?: string | null;
+  isActive: boolean;
+  materialsCount: number;
+  laborCount: number;
+}
+
+export interface APUTemplateMaterialLine {
+  id: string;
+  materialId: string;
+  material: Pick<Material, "id" | "name" | "unit" | "unitPrice" | "presentationQty" | "category">;
+  consumptionPerUnit: number;
+  wastePercent: number;
+  unitCost: number;
+  subtotal: number;
+}
+
+export interface APUTemplateLaborLine {
+  id: string;
+  description: string;
+  costPerUnit: number;
+}
+
+export interface APUTemplateDetail {
+  id: string;
+  rubro: string;
+  name: string;
+  unit: MeasurementUnit;
+  description?: string | null;
+  isActive: boolean;
+  materials: APUTemplateMaterialLine[];
+  labor: APUTemplateLaborLine[];
+  totalMaterials: number;
+  totalLabor: number;
+  totalCost: number;
+}
+
+export interface APURubroSummary {
+  rubro: string;
+  count: number;
+}
+
+// Purchases (compras de material — actualizan Material.unitPrice y cascada APU)
+export interface Purchase {
+  id: string;
+  materialId: string;
+  projectId: string | null;
+  createdById: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  supplier: string | null;
+  invoiceRef: string | null;
+  purchaseDate: string;
+  paymentMethod: PaymentMethod | null;
+  bank: string | null;
+  notes: string | null;
+  createdAt: string;
+  material?: Pick<Material, "id" | "name" | "unit">;
+  project?: Pick<Project, "id" | "name"> | null;
+  createdBy?: Pick<User, "id" | "firstName" | "lastName">;
+  affectedBudgetItems?: number;
 }
 
 // API Response

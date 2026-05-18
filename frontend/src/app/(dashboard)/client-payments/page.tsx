@@ -20,6 +20,7 @@ import {
 import type { ClientPayment, ClientPaymentConcept, PaymentMethod } from "@/types";
 import type { CreateClientPaymentPayload } from "@/lib/api/client-payments";
 import Modal from "@/components/ui/Modal";
+import BankField, { paymentMethodRequiresBank } from "@/components/ui/BankField";
 
 const CONCEPT_LABELS: Record<ClientPaymentConcept, string> = {
   ADVANCE: "Anticipo",
@@ -60,6 +61,7 @@ interface PaymentForm {
   amount: number;
   paymentDate: string;
   paymentMethod: PaymentMethod | "";
+  bank: string;
   concept: ClientPaymentConcept;
   reference: string;
   notes: string;
@@ -69,6 +71,7 @@ const EMPTY_FORM: PaymentForm = {
   amount: 0,
   paymentDate: new Date().toISOString().slice(0, 10),
   paymentMethod: "",
+  bank: "",
   concept: "PROGRESS",
   reference: "",
   notes: "",
@@ -103,6 +106,7 @@ export default function ClientPaymentsPage() {
       amount: p.amount,
       paymentDate: p.paymentDate ? p.paymentDate.slice(0, 10) : "",
       paymentMethod: p.paymentMethod ?? "",
+      bank: p.bank ?? "",
       concept: p.concept,
       reference: p.reference ?? "",
       notes: p.notes ?? "",
@@ -112,12 +116,14 @@ export default function ClientPaymentsPage() {
 
   const handleSubmit = useCallback(async () => {
     if (form.amount <= 0) return;
+    if (paymentMethodRequiresBank(form.paymentMethod) && !form.bank.trim()) return;
     const payload: CreateClientPaymentPayload = {
       amount: form.amount,
       paymentDate: form.paymentDate
         ? new Date(form.paymentDate + "T12:00:00").toISOString()
         : new Date().toISOString(),
       paymentMethod: (form.paymentMethod as PaymentMethod) || null,
+      bank: paymentMethodRequiresBank(form.paymentMethod) ? form.bank.trim() : null,
       concept: form.concept,
       reference: form.reference.trim() || null,
       notes: form.notes.trim() || null,
@@ -299,7 +305,12 @@ export default function ClientPaymentsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                      {p.paymentMethod ? METHOD_LABELS[p.paymentMethod] : <span className="text-gray-400">—</span>}
+                      <div>
+                        {p.paymentMethod ? METHOD_LABELS[p.paymentMethod] : <span className="text-gray-400">—</span>}
+                      </div>
+                      {p.bank && paymentMethodRequiresBank(p.paymentMethod) && (
+                        <div className="text-xs text-gray-400">{p.bank}</div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {p.reference || <span className="text-gray-400">—</span>}
@@ -383,7 +394,14 @@ export default function ClientPaymentsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Método de pago</label>
               <select
                 value={form.paymentMethod}
-                onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value as PaymentMethod | "" }))}
+                onChange={(e) => {
+                  const m = e.target.value as PaymentMethod | "";
+                  setForm((f) => ({
+                    ...f,
+                    paymentMethod: m,
+                    bank: paymentMethodRequiresBank(m) ? f.bank : "",
+                  }));
+                }}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="">Sin especificar</option>
@@ -393,6 +411,12 @@ export default function ClientPaymentsPage() {
               </select>
             </div>
           </div>
+
+          <BankField
+            method={form.paymentMethod}
+            value={form.bank}
+            onChange={(v) => setForm((f) => ({ ...f, bank: v }))}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Referencia</label>

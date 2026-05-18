@@ -5,6 +5,7 @@ export const createClientPaymentSchema = z.object({
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
   paymentDate: z.string().datetime({ offset: true }).or(z.string().min(1)),
   paymentMethod: z.nativeEnum(PaymentMethod).optional().nullable(),
+  bank: z.string().max(100).optional().nullable(),
   concept: z.nativeEnum(ClientPaymentConcept).optional().default("PROGRESS"),
   reference: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
