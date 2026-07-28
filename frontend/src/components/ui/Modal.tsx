@@ -26,7 +26,9 @@ export default function Modal({
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // Si un componente interno ya consumió el Escape (ej. cerrar el dropdown
+      // de un Combobox), no cerramos el modal: se perdería lo cargado.
+      if (e.key === "Escape" && !e.defaultPrevented) onClose();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
@@ -47,32 +49,37 @@ export default function Modal({
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-150 cursor-pointer"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
-      }}
-    >
+    // El overlay scrollea: si el contenido es más alto que la pantalla (mobile,
+    // formularios largos) el diálogo se recorre en lugar de quedar fuera del
+    // viewport con partes inalcanzables.
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/40 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className={cn(
-          "relative w-full max-w-lg mx-4 bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150 cursor-default",
-          className
-        )}
+        ref={overlayRef}
+        className="flex min-h-full items-center justify-center p-4 cursor-pointer"
+        onClick={(e) => {
+          if (e.target === overlayRef.current) onClose();
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        <div
+          className={cn(
+            "relative w-full max-w-lg bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150 cursor-default",
+            className
+          )}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
-        {/* Body */}
-        <div className="px-6 py-4">{children}</div>
+          {/* Body */}
+          <div className="px-6 py-4">{children}</div>
+        </div>
       </div>
     </div>
   );

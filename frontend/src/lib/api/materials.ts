@@ -10,9 +10,18 @@ export interface CreateMaterialPayload {
   brand?: string | null;
   supplier?: string | null;
   notes?: string | null;
+  /**
+   * El backend responde 409 si ya existe un material con el mismo nombre
+   * (comparado sin acentos ni mayúsculas). Con `true` se crea igualmente —
+   * caso legítimo: mismo insumo de dos proveedores.
+   */
+  allowDuplicateName?: boolean;
 }
 
-export type UpdateMaterialPayload = Partial<CreateMaterialPayload>;
+export type UpdateMaterialPayload = Partial<CreateMaterialPayload> & {
+  /** Reactivar / desactivar un material del catálogo */
+  isActive?: boolean;
+};
 
 export async function getMaterials(params?: {
   search?: string;

@@ -62,6 +62,22 @@
 - Express v5: `req.params.id` es `string | string[]`, usar helper para castear
 - Registrar acciones en `ActivityLog` al crear/editar/eliminar entidades
 
+## Tests
+- Runner: Vitest en ambos proyectos (`npm test`, `npm run test:watch`)
+- Tests unitarios junto al código: `src/**/*.test.ts` (funciones puras, schemas de Zod)
+- Integración de API en `backend/tests/*.integration.test.ts`: se saltea sola salvo que se
+  le indique contra qué instancia correr, y limpia sus datos antes y después
+  ```bash
+  # backend levantado en otro puerto para no chocar con el dev server
+  PORT=3099 npx tsx src/index.ts
+  TEST_API_URL=http://localhost:3099/api npm test
+  ```
+- Los datos de prueba usan el prefijo `ZZTEST` en nombres y emails; la limpieza va por
+  Prisma (no hay endpoints para borrar plantillas ni usuarios)
+- Al tocar cálculo de costos, parseo de números o dedupe de materiales: agregar el caso
+  al test correspondiente (`number.test.ts`, `text.test.ts`, `apu.service.test.ts`,
+  `apu-templates.schema.test.ts`, `materials.schema.test.ts`)
+
 ## Documentación
 - **Manual de usuario**: `MANUAL_USUARIO.md` en la raíz del proyecto
 - **Actualización obligatoria**: al agregar funcionalidades nuevas, crear componentes, modificar flujos existentes o cambiar la navegación, **actualizar el manual de usuario** reflejando los cambios. Incluir: descripción de la feature, cómo usarla paso a paso, campos/opciones disponibles, y restricciones/permisos. Mantener la tabla de contenidos sincronizada.

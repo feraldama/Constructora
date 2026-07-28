@@ -607,10 +607,10 @@ export default function BudgetSpreadsheet({
             <button
               onClick={onAddFromTemplate}
               className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-purple-700 hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors border-l border-gray-100 cursor-pointer"
-              title="Crear partida usando una plantilla del catálogo (Excel maestro)"
+              title="Crear partida desde una plantilla del catálogo o cargando materiales y mano de obra a mano"
             >
               <FlaskConical size={16} />
-              Desde plantilla
+              Partida con APU
             </button>
           )}
         </div>

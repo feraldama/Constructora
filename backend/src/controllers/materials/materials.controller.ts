@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../config/prisma.js";
 import { propagateMaterialPriceChange } from "../../services/apu.service.js";
+import { normalizeName } from "../../utils/text.js";
 import type { CreateMaterialInput, UpdateMaterialInput } from "./materials.schema.js";
 import type { MaterialCategory } from "../../generated/prisma/enums.js";
 
@@ -53,13 +54,42 @@ export async function getMaterial(req: Request, res: Response) {
   res.json(serializeMaterial(material));
 }
 
+/**
+ * Busca un material con el mismo nombre normalizado (sin distinguir mayúsculas,
+ * acentos ni espacios de más). El catálogo es global y alimenta todos los APU:
+ * los duplicados por diferencias de tipeo terminan en dos precios distintos
+ * para el mismo insumo.
+ */
+async function findByNormalizedName(
+  name: string,
+  excludeId?: string
+): Promise<{ id: string; name: string; isActive: boolean } | null> {
+  const target = normalizeName(name);
+  const candidates = await prisma.material.findMany({
+    select: { id: true, name: true, isActive: true },
+  });
+  return (
+    candidates.find((m) => m.id !== excludeId && normalizeName(m.name) === target) ?? null
+  );
+}
+
 /** POST /api/materials */
 export async function createMaterial(req: Request, res: Response) {
-  const body = req.body as CreateMaterialInput;
+  const { allowDuplicateName, ...body } = req.body as CreateMaterialInput;
+
+  const duplicated = await findByNormalizedName(body.name);
+  if (duplicated && !allowDuplicateName) {
+    res.status(409).json({
+      error: `Ya existe el material «${duplicated.name}»${duplicated.isActive ? "" : " (desactivado)"} en el catálogo. Usá ese, o confirmá para crear otro con el mismo nombre.`,
+      duplicateMaterialId: duplicated.id,
+      duplicateMaterialName: duplicated.name,
+    });
+    return;
+  }
 
   const material = await prisma.material.create({
     data: {
-      name: body.name,
+      name: body.name.replace(/\s+/g, " ").trim(),
       unit: body.unit,
       unitPrice: body.unitPrice,
       presentationQty: body.presentationQty,
@@ -86,7 +116,7 @@ export async function createMaterial(req: Request, res: Response) {
 /** PATCH /api/materials/:id */
 export async function updateMaterial(req: Request, res: Response) {
   const id = routeParam(req, "id");
-  const body = req.body as UpdateMaterialInput;
+  const { allowDuplicateName, ...body } = req.body as UpdateMaterialInput;
 
   const existing = await prisma.material.findUnique({ where: { id } });
   if (!existing) {
@@ -94,9 +124,25 @@ export async function updateMaterial(req: Request, res: Response) {
     return;
   }
 
+  // Renombrar hacia un nombre que ya usa otro material del catálogo
+  if (body.name !== undefined && normalizeName(body.name) !== normalizeName(existing.name)) {
+    const duplicated = await findByNormalizedName(body.name, id);
+    if (duplicated && !allowDuplicateName) {
+      res.status(409).json({
+        error: `Ya existe el material «${duplicated.name}»${duplicated.isActive ? "" : " (desactivado)"} en el catálogo. Cambiá el nombre, o confirmá para tener dos con el mismo.`,
+        duplicateMaterialId: duplicated.id,
+        duplicateMaterialName: duplicated.name,
+      });
+      return;
+    }
+  }
+
   const material = await prisma.material.update({
     where: { id },
-    data: body,
+    data: {
+      ...body,
+      ...(body.name !== undefined ? { name: body.name.replace(/\s+/g, " ").trim() } : {}),
+    },
   });
 
   // Si cambió el precio o la presentación, propagar a los APUs que usan

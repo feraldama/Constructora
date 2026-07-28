@@ -8,6 +8,7 @@ import {
   Trash2,
   Search,
   Filter,
+  RotateCcw,
 } from "lucide-react";
 import {
   useMaterials,
@@ -18,6 +19,7 @@ import {
 import type { Material, MaterialCategory, MeasurementUnit } from "@/types";
 import type { CreateMaterialPayload } from "@/lib/api/materials";
 import Modal from "@/components/ui/Modal";
+import { cn } from "@/lib/utils/cn";
 
 const CATEGORY_LABELS: Record<MaterialCategory, string> = {
   CEMENT: "Cemento",
@@ -88,13 +90,17 @@ const EMPTY_FORM: MaterialForm = {
 export default function MaterialsPage() {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<MaterialCategory | "">("");
+  const [filterStatus, setFilterStatus] = useState<"active" | "inactive" | "all">("active");
 
   const queryParams = useMemo(() => {
-    const p: any = { isActive: true };
+    const p: { isActive?: boolean; search?: string; category?: MaterialCategory } = {};
+    // "todos" omite el filtro: así los desactivados también se pueden ver y reactivar
+    if (filterStatus === "active") p.isActive = true;
+    if (filterStatus === "inactive") p.isActive = false;
     if (search.trim()) p.search = search.trim();
     if (filterCategory) p.category = filterCategory;
     return p;
-  }, [search, filterCategory]);
+  }, [search, filterCategory, filterStatus]);
 
   const { data: materials, isLoading } = useMaterials(queryParams);
   const createMut = useCreateMaterial();
@@ -106,15 +112,22 @@ export default function MaterialsPage() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [form, setForm] = useState<MaterialForm>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<Material | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  /** Se activa cuando el backend avisó nombre repetido y el usuario insiste */
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
 
   const openCreate = useCallback(() => {
     setEditingMaterial(null);
     setForm(EMPTY_FORM);
+    setFormError(null);
+    setConfirmDuplicate(false);
     setFormOpen(true);
   }, []);
 
   const openEdit = useCallback((mat: Material) => {
     setEditingMaterial(mat);
+    setFormError(null);
+    setConfirmDuplicate(false);
     setForm({
       name: mat.name,
       unit: mat.unit,
@@ -130,6 +143,7 @@ export default function MaterialsPage() {
 
   const handleSubmit = useCallback(async () => {
     if (!form.name.trim()) return;
+    setFormError(null);
     const payload: CreateMaterialPayload = {
       name: form.name.trim(),
       unit: form.unit,
@@ -139,14 +153,28 @@ export default function MaterialsPage() {
       brand: form.brand.trim() || null,
       supplier: form.supplier.trim() || null,
       notes: form.notes.trim() || null,
+      // El backend rechaza nombres repetidos salvo confirmación explícita
+      allowDuplicateName: confirmDuplicate,
     };
-    if (editingMaterial) {
-      await updateMut.mutateAsync({ id: editingMaterial.id, payload });
-    } else {
-      await createMut.mutateAsync(payload);
+    try {
+      if (editingMaterial) {
+        await updateMut.mutateAsync({ id: editingMaterial.id, payload });
+      } else {
+        await createMut.mutateAsync(payload);
+      }
+      setFormOpen(false);
+      setConfirmDuplicate(false);
+    } catch (e) {
+      const err = e as {
+        response?: { status?: number; data?: { error?: string; duplicateMaterialName?: string } };
+      };
+      if (err.response?.status === 409) {
+        // Nombre repetido: se muestra el aviso y el botón pasa a "Crear igualmente"
+        setConfirmDuplicate(true);
+      }
+      setFormError(err.response?.data?.error ?? "No se pudo guardar el material");
     }
-    setFormOpen(false);
-  }, [form, editingMaterial, createMut, updateMut]);
+  }, [form, editingMaterial, createMut, updateMut, confirmDuplicate]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -194,6 +222,7 @@ export default function MaterialsPage() {
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <select
               value={filterCategory}
+              aria-label="Filtrar por categoría"
               onChange={(e) => setFilterCategory(e.target.value as MaterialCategory | "")}
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
             >
@@ -203,6 +232,20 @@ export default function MaterialsPage() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[170px]">
+          <label className="text-xs font-medium text-gray-500">Estado</label>
+          <select
+            value={filterStatus}
+            aria-label="Estado"
+            onChange={(e) => setFilterStatus(e.target.value as "active" | "inactive" | "all")}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+          >
+            <option value="active">Activos</option>
+            <option value="inactive">Desactivados</option>
+            <option value="all">Todos</option>
+          </select>
         </div>
 
         <div className="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[220px]">
@@ -289,9 +332,20 @@ export default function MaterialsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {materials.map((mat) => (
-                  <tr key={mat.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={mat.id}
+                    className={cn(
+                      "hover:bg-gray-50 transition-colors",
+                      !mat.isActive && "bg-gray-50/60 text-gray-400"
+                    )}
+                  >
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                       {mat.name}
+                      {!mat.isActive && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                          Desactivado
+                        </span>
+                      )}
                       {mat.notes && (
                         <span className="block text-xs text-gray-400 font-normal truncate max-w-[200px]">{mat.notes}</span>
                       )}
@@ -333,9 +387,25 @@ export default function MaterialsPage() {
                         >
                           <Pencil size={15} />
                         </button>
+                        {!mat.isActive && (
+                          <button
+                            type="button"
+                            title="Reactivar en el catálogo"
+                            disabled={updateMut.isPending}
+                            onClick={() =>
+                              void updateMut.mutateAsync({
+                                id: mat.id,
+                                payload: { isActive: true },
+                              })
+                            }
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 cursor-pointer disabled:opacity-50"
+                          >
+                            <RotateCcw size={15} />
+                          </button>
+                        )}
                         <button
                           type="button"
-                          title="Eliminar"
+                          title={mat.isActive ? "Eliminar" : "Eliminar definitivamente"}
                           onClick={() => setDeleteTarget(mat)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         >
@@ -465,7 +535,20 @@ export default function MaterialsPage() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          {formError && (
+            <div
+              className={cn(
+                "rounded-lg border px-3 py-2 text-sm",
+                confirmDuplicate
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-red-200 bg-red-50 text-red-700"
+              )}
+            >
+              {formError}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={() => setFormOpen(false)}
@@ -477,9 +560,20 @@ export default function MaterialsPage() {
               type="button"
               disabled={!form.name.trim() || isSaving}
               onClick={() => void handleSubmit()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className={cn(
+                "rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50",
+                confirmDuplicate ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"
+              )}
             >
-              {isSaving ? "Guardando..." : editingMaterial ? "Guardar cambios" : "Crear material"}
+              {isSaving
+                ? "Guardando..."
+                : confirmDuplicate
+                  ? editingMaterial
+                    ? "Guardar igualmente"
+                    : "Crear igualmente"
+                  : editingMaterial
+                    ? "Guardar cambios"
+                    : "Crear material"}
             </button>
           </div>
         </div>

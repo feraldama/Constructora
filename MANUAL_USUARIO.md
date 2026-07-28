@@ -24,6 +24,7 @@ Versión actualizada: 2026-03-31
     - [14.1 Registro de Compras](#141-registro-de-compras)
 15. [Análisis de Precios Unitarios (APU)](#15-análisis-de-precios-unitarios-apu)
     - [15.1 Plantillas APU desde el catálogo maestro](#151-plantillas-apu-desde-el-catálogo-maestro)
+    - [15.2 Carga manual de un subrubro](#152-carga-manual-de-un-subrubro)
 16. [Cobros del Cliente](#16-cobros-del-cliente)
 17. [Finanzas](#17-finanzas)
 18. [Reportes](#18-reportes)
@@ -271,6 +272,8 @@ Proyecto
 5. En la cabecera de cada rubro se muestran los totales de costo y venta
 6. En la cabecera de la página se muestran los totales generales del proyecto
 7. La diferencia entre venta y costo es el **margen de ganancia**, visible en la sección de Finanzas
+
+> **Partidas con APU:** el botón **"Partida con APU"** (al lado de "Agregar partida") crea la partida con su análisis de precios ya cargado, sea **desde una plantilla** del catálogo maestro o con **carga manual** del subrubro (materiales + mano de obra). Ver sección 15.
 
 ### Edición inline
 
@@ -688,15 +691,33 @@ Base de datos global de materiales con precios unitarios. Los materiales se comp
 
 > **Ejemplo:** Cemento en bolsa de 50 kg a $57.000 → Unidad: kg, Presentación: 50, Precio envase: $57.000. El APU usará $1.140/kg para calcular costos.
 
+#### Aviso de material repetido
+
+Si el nombre ya existe en el catálogo, el sistema avisa antes de crearlo — la comparación ignora mayúsculas, acentos y espacios de más, así que "cemento portland" y "Cemento Pórtland" cuentan como el mismo. Hay dos caminos:
+
+- **Es el mismo material**: cancelar y usar el que ya está (así el APU no queda con dos precios para un mismo insumo)
+- **Son distintos** (ej. el mismo insumo de dos proveedores, diferenciados por Marca/Proveedor): el botón pasa a **"Crear igualmente"** y confirma la creación
+
+El mismo aviso aparece al renombrar un material existente hacia un nombre ya usado.
+
 ### Editar / Eliminar
 
 - **Editar**: click en el ícono de lápiz en la fila del material
 - **Eliminar**: click en el ícono de papelera. Si el material está en uso en algún APU, se desactiva en lugar de eliminarse
+- **Reactivación automática**: si un material desactivado se vuelve a usar en una carga manual de APU, se reactiva solo, conservando su precio y presentación
 
 ### Filtros
 
 - **Categoría**: filtrar por tipo de material
+- **Estado**: **Activos** (por defecto), **Desactivados** o **Todos** — los desactivados se muestran atenuados y con el badge *"Desactivado"*
 - **Buscar**: por nombre del material
+
+### Reactivar un material desactivado
+
+1. En **Estado** elegir *Desactivados* (o *Todos*)
+2. En la fila del material, click en el ícono de flecha circular (**"Reactivar en el catálogo"**)
+
+Vuelve a estar disponible en los buscadores de APU y compras, conservando su precio, presentación y categoría. También se reactiva solo si se lo usa en una carga manual de APU (ver sección 15.2).
 
 > **Nota:** Editar manualmente el precio del catálogo recalcula automáticamente todos los APU que usan el material, en cascada hasta el subtotal de la partida y el resumen financiero del proyecto.
 
@@ -787,12 +808,13 @@ El sistema incluye un catálogo global de **200 plantillas APU** (32 rubros: Niv
 
 #### Crear partida desde plantilla
 
-1. En **Cómputo Métrico** (`/budget/:projectId`), dentro de cualquier rubro existente, hacer click en **"Desde plantilla"** (junto al botón "Agregar partida")
-2. Se abre el selector de plantillas APU con dos paneles:
+1. En **Cómputo Métrico** (`/budget/:projectId`), dentro de cualquier rubro existente, hacer click en **"Partida con APU"** (junto al botón "Agregar partida")
+2. Se abre el diálogo **Agregar partida** con dos pestañas: **"Desde plantilla"** (activa por defecto) y **"Carga manual"**
+3. En **"Desde plantilla"** hay dos paneles:
    - **Izquierda**: lista filtrable por rubro y buscador por texto
    - **Derecha**: detalle de la plantilla seleccionada (materiales, mano de obra, subtotales)
-3. Seleccionar la plantilla deseada
-4. Click en **"Crear partida"**
+4. Seleccionar la plantilla deseada
+5. Click en **"Crear partida"**
 
 La partida nueva se crea con:
 - Nombre y unidad copiados de la plantilla
@@ -801,11 +823,144 @@ La partida nueva se crea con:
 - Precios de material tomados del catálogo actual (que refleja la última compra)
 - Costo unitario calculado automáticamente
 
-#### Aplicar plantilla a una partida existente
+**Permisos:** hay que ser miembro del proyecto (igual que para la carga manual).
 
-Próximamente disponible desde el panel APU de una partida. Permite reemplazar líneas APU existentes o sumar las de la plantilla.
+#### Cargar el APU de una partida existente
+
+Desde el **panel APU** de cualquier partida (ícono 🧪 en su fila), el botón **"Cargar APU"** abre el mismo diálogo con las dos pestañas:
+
+- **Desde plantilla**: copia las líneas de la plantilla elegida
+- **Carga manual**: se cargan materiales y mano de obra a mano o pegando desde Excel
+
+En este modo el nombre y la unidad son los de la partida (no se editan) y aparece la opción **"Reemplazar las líneas APU existentes"**:
+
+- **Sin marcar**: las líneas nuevas se suman a las que ya tiene; si un material ya estaba, se actualiza con el consumo nuevo
+- **Marcada**: se borran todas las líneas actuales antes de cargar las nuevas
+
+#### Corregir, desactivar o eliminar una plantilla
+
+En el diálogo **"Desde plantilla"**, al seleccionar una plantilla aparecen sus acciones de mantenimiento:
+
+| Acción | Qué hace |
+|--------|----------|
+| **Editar plantilla** | Abre el editor: rubro, nombre, unidad, descripción y la composición completa (agregar/quitar materiales, cambiar consumos y desperdicios, y la mano de obra) |
+| **Desactivar / Reactivar** | La saca (o devuelve) del listado de plantillas disponibles, sin borrarla |
+| **Eliminar** | La borra del catálogo, con confirmación previa |
+
+> **Las partidas ya creadas no se tocan.** Al aplicar una plantilla, la partida se queda con su **propia copia** de las líneas: corregir, desactivar o eliminar la plantilla no modifica ningún presupuesto existente.
+
+En el editor, los materiales se eligen del catálogo (si falta alguno, cargalo primero en **Materiales**). No puede haber dos plantillas con el mismo nombre dentro del mismo rubro.
 
 > **Datos del catálogo maestro:** 32 rubros · 200 subrubros · 330 materiales únicos. Los precios iniciales son los del Excel original — al registrar compras nuevas se actualizan automáticamente en todos los APU que los usan.
+
+### 15.2 Carga manual de un subrubro
+
+Cuando el subrubro que necesitás no está en el catálogo de plantillas, se puede cargar completo a mano (materiales + mano de obra) sin salir del Cómputo Métrico.
+
+**Acceso:** **Cómputo Métrico** → botón **"Partida con APU"** de un rubro → pestaña **"Carga manual"**.
+
+#### Pasos
+
+1. **Datos del subrubro**: nombre, unidad (m², m³, ml, unidad, kg, ton, lt, pul, global) y cantidad del cómputo
+2. **Materiales** — se pueden cargar de tres formas:
+   - **Pegando desde Excel** (la más rápida para un subrubro completo, ver más abajo)
+   - Botón **"Agregar material"**, una fila por insumo
+   - **Enter** en el campo de consumo o desperdicio: agrega la fila siguiente y deja el cursor en el buscador de insumo, para cargar de corrido sin usar el mouse
+
+   Campos de cada fila:
+   - **Insumo**: buscador del catálogo de materiales. Se puede escribir libremente
+   - **Consumo / unidad**: cantidad de material por unidad de la partida
+   - **Desp. %**: porcentaje de desperdicio, entre 0 y 100 (opcional, 0 por defecto)
+   - **Subtotal**: se calcula en vivo con el precio vigente del catálogo
+3. **Mano de obra** — botón "Agregar mano de obra": descripción (ej. "Oficial carpintero") y costo por unidad. **Enter** en el costo agrega otra línea
+4. Revisar el bloque de totales (materiales, mano de obra, costo unitario y costo total según la cantidad)
+5. Click en **"Crear partida"**
+
+#### Pegar los materiales desde Excel
+
+La forma más rápida de cargar un subrubro entero: copiar las filas en la planilla y pegarlas en el formulario.
+
+**Dos maneras de abrirlo:**
+- Pegar directamente (Ctrl+V) sobre el campo **Insumo** de cualquier fila: si el contenido tiene varias filas, el sistema abre solo el panel de pegado con el texto cargado
+- Botón **"Pegar desde Excel"** en la cabecera de Materiales, y pegar en el cuadro de texto
+
+**Formato esperado** — una fila por línea, columnas separadas por tabulación (lo que produce Excel al copiar) o por punto y coma:
+
+| Columna | Contenido | Obligatoria |
+|---------|-----------|-------------|
+| 1 | Insumo o concepto de mano de obra | Sí |
+| 2 | Consumo por unidad de la partida | No |
+| 3 | Desperdicio % (0 a 100) | No |
+| 4 | Precio del envase (materiales nuevos) o costo (mano de obra) | No |
+
+**Se puede pegar el subrubro completo, con la mano de obra incluida.** La vista previa muestra cada fila con una columna **"Cargar como"**:
+
+| Destino | Cuándo se elige solo | Qué hace |
+|---------|---------------------|----------|
+| **Material** | Por defecto | Línea de material del APU; si el nombre no está en el catálogo, queda como alta rápida |
+| **Mano de obra** | Nombres como "Mano de obra", "MO…", "Oficial…", "Ayudante", "Jornal", "Capataz", "Contratista…", "Colocación…" | Línea de mano de obra, tomando el costo de la columna de precio (o de consumo si esa está vacía) |
+| **Ignorar** | Filas cuyo insumo ya está cargado en el formulario (se marcan *"ya en la lista"*) | La fila se descarta |
+
+El destino sugerido **siempre se puede cambiar** en el selector de cada fila: ante la duda el sistema elige Material, porque dar de alta mano de obra como material ensuciaría el catálogo global.
+
+La vista previa también indica el **origen** de cada material (catálogo / nuevo) y el resumen (ej. *"8 filas · 6 como material · 2 como mano de obra · encabezado descartado"*). La fila de encabezado de la planilla se detecta y descarta sola. Con **"Agregar N filas"** se cargan al formulario, donde se pueden seguir editando.
+
+> **Ejemplo** (pegado desde Excel):
+> ```
+> Insumo	Consumo	Desp.	Precio
+> cal triturada	2,5	5
+> Cemento Portland	10	3
+> Membrana asfáltica	1,2	10	39.000
+> Mano de obra			15.000
+> Oficial albañil			20.000
+> ```
+> Las dos primeras se enlazan al catálogo con su precio vigente; la membrana, si no existe, queda lista como material nuevo con el precio indicado; las dos últimas van directo a la sección de mano de obra.
+
+#### Materiales que no están en el catálogo
+
+Si el nombre tipeado en **Insumo** no existe en el catálogo, el buscador ofrece **"Crear material «…»"** y, al salir del campo, se despliega un bloque verde para dar de alta el material en el momento:
+
+| Campo | Descripción |
+|-------|-------------|
+| Unidad | Unidad de medida del material |
+| Precio del envase | Precio de compra de la presentación |
+| Cant. por envase | Unidades que trae el envase (ej. bolsa de 50 kg → 50) |
+| Categoría | Cemento, Hierro/Acero, Madera, Áridos, etc. |
+
+El material se crea en el catálogo global (sección **Materiales**) al guardar la partida — todo en una sola operación: si algo falla, no queda ni la partida ni materiales sueltos.
+
+> **No se duplican materiales:** si el nombre tipeado ya existe en el catálogo se reutiliza ese material, aunque esté escrito con otras mayúsculas, acentos o espacios ("cemento portland" ≡ "Cemento Pórtland"). Si el material existía pero estaba **desactivado**, se reutiliza y se reactiva (avisándolo en la fila), conservando su precio y presentación.
+
+#### Cómo se leen los números
+
+Los campos numéricos aceptan la notación local: **coma decimal y punto de miles**.
+
+| Se tipea | Se interpreta |
+|----------|---------------|
+| `39.000` | 39.000 |
+| `39.000,50` | 39.000,50 |
+| `0,654` / `0.654` | 0,654 |
+| `12,5` / `12.5` | 12,5 |
+
+Los totales del formulario se recalculan en vivo, así que siempre se puede verificar el valor interpretado antes de guardar. Además, si en Consumo o Desperdicio se escribe algo como `1.500`, la fila avisa en ámbar que se leyó **1.500** (mil quinientos) y recuerda usar coma para decimales.
+
+#### Guardar como plantilla reutilizable
+
+Marcando **"Guardar como plantilla reutilizable"** e indicando el **rubro** (se precarga con el nombre del rubro del presupuesto, y se puede elegir otro del catálogo o escribir uno nuevo), la composición queda guardada en el catálogo de plantillas APU y aparece luego en la pestaña **"Desde plantilla"** para cualquier proyecto.
+
+> **Restricción:** no puede haber dos plantillas con el mismo nombre dentro de un mismo rubro. Si el nombre ya existe, el sistema avisa y no crea nada: cambiar el nombre o desmarcar la opción.
+
+#### Resultado
+
+- Partida creada en el rubro con la cantidad indicada
+- Líneas APU de materiales (con consumo, desperdicio y precio del catálogo) y de mano de obra
+- **P.U. Costo** calculado a partir del APU
+- **P.U. Venta** completado automáticamente con el margen por defecto (costo + 30%), editable después
+- Se registra la acción en el historial de actividad del proyecto
+
+**Validaciones:** el nombre es obligatorio, hace falta al menos un material o una línea de mano de obra, el consumo de cada material debe ser mayor a 0, los materiales no pueden repetirse y los materiales nuevos requieren precio.
+
+**Permisos:** hay que ser miembro del proyecto.
 
 ---
 

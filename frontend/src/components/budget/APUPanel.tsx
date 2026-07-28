@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Package,
   Wrench,
+  FlaskConical,
 } from "lucide-react";
 import {
   useAPU,
@@ -19,12 +20,9 @@ import {
   useRefreshAPUPrices,
 } from "@/hooks/useAPU";
 import { useMaterials } from "@/hooks/useMaterials";
-import type { BudgetItem, Material, MeasurementUnit } from "@/types";
-
-/** Parse a user-typed decimal that may use comma or dot as separator */
-function parseDecimal(raw: string): number {
-  return Number(raw.replace(",", "."));
-}
+import APUTemplatePicker from "@/components/budget/APUTemplatePicker";
+import { parseDecimal, formatMoney as fmt } from "@/lib/utils/number";
+import type { BudgetItem, MeasurementUnit } from "@/types";
 
 const UNIT_LABELS: Record<MeasurementUnit, string> = {
   M2: "m²",
@@ -37,10 +35,6 @@ const UNIT_LABELS: Record<MeasurementUnit, string> = {
   INCH: "pul",
   GLOBAL: "global",
 };
-
-function fmt(n: number): string {
-  return "$" + n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
 interface APUPanelProps {
   item: BudgetItem;
@@ -64,6 +58,9 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
   const [newMaterialId, setNewMaterialId] = useState("");
   const [newConsumption, setNewConsumption] = useState("");
   const [newWaste, setNewWaste] = useState("");
+
+  // Cargar un APU completo: plantilla del catálogo o composición manual
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // Add labor form
   const [showAddLabor, setShowAddLabor] = useState(false);
@@ -122,7 +119,16 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
             {item.name} — {UNIT_LABELS[item.unit]}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 hover:text-purple-900 bg-white border border-purple-200 rounded-lg px-3 py-1.5 hover:bg-purple-50 transition-colors"
+            title="Cargar una plantilla del catálogo o una composición manual en esta partida"
+          >
+            <FlaskConical size={13} />
+            Cargar APU
+          </button>
           <button
             type="button"
             onClick={() => void refreshPrices.mutateAsync()}
@@ -252,7 +258,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
             </div>
           ) : (
             <p className="text-xs text-gray-400 italic py-2">
-              Sin materiales en el análisis. Hacé click en "Agregar" para comenzar.
+              Sin materiales en el análisis. Hacé click en &quot;Agregar&quot; para comenzar.
             </p>
           )}
 
@@ -487,6 +493,14 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
           </div>
         )}
       </div>
+
+      {/* Cargar el APU de esta partida desde una plantilla o a mano */}
+      <APUTemplatePicker
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        budgetItemId={item.id}
+        existingItem={{ name: item.name, unit: item.unit }}
+      />
     </div>
   );
 }

@@ -96,7 +96,10 @@ export default function BudgetPage({
 
   const [progressItemId, setProgressItemId] = useState<string | null>(null);
   const [apuItemId, setApuItemId] = useState<string | null>(null);
-  const [templatePickerCategoryId, setTemplatePickerCategoryId] = useState<string | null>(null);
+  const [templatePickerCategory, setTemplatePickerCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const apuPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -336,7 +339,9 @@ export default function BudgetPage({
                     progressData={progressData}
                     onOpenProgress={(itemId) => setProgressItemId(itemId)}
                     onOpenAPU={(itemId) => setApuItemId(itemId)}
-                    onAddFromTemplate={() => setTemplatePickerCategoryId(cat.id)}
+                    onAddFromTemplate={() =>
+                      setTemplatePickerCategory({ id: cat.id, name: cat.name })
+                    }
                     onReorderItems={handleReorderItems}
                     categoryDragHandleProps={dragHandleProps}
                   />
@@ -354,11 +359,13 @@ export default function BudgetPage({
         </div>
       )}
 
-      {/* Selector de plantilla APU (catálogo del Excel maestro) */}
+      {/* Agregar partida: plantilla del catálogo APU o carga manual del subrubro */}
       <APUTemplatePicker
-        isOpen={!!templatePickerCategoryId}
-        onClose={() => setTemplatePickerCategoryId(null)}
-        categoryId={templatePickerCategoryId ?? undefined}
+        isOpen={!!templatePickerCategory}
+        onClose={() => setTemplatePickerCategory(null)}
+        categoryId={templatePickerCategory?.id}
+        categoryName={templatePickerCategory?.name}
+        onApplied={(itemId) => setApuItemId(itemId)}
       />
 
       <Modal isOpen={newCatOpen} onClose={() => setNewCatOpen(false)} title="Nueva categoría">

@@ -1,13 +1,17 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,6 +28,10 @@ interface ComboboxProps {
   className?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  /** Se dispara cuando el input pierde el foco (el valor ya quedó decidido) */
+  onBlur?: () => void;
+  /** Permite interceptar un pegado (ej. varias filas copiadas de una planilla) */
+  onPaste?: (e: ClipboardEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -43,10 +51,21 @@ export default function Combobox({
   className,
   autoFocus,
   disabled,
+  onBlur,
+  onPaste,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
   const [highlight, setHighlight] = useState(0);
+  /** Posición del listbox: se renderiza en portal para que no lo recorte
+   *  ningún contenedor con overflow (modales con scroll, tablas, etc.). */
+  const [menuRect, setMenuRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    maxHeight: number;
+    placement: "bottom" | "top";
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -57,13 +76,42 @@ export default function Combobox({
     setQuery(value);
   }, [value]);
 
-  // Cerrar al hacer click afuera
+  const updateMenuRect = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - 8;
+    const above = r.top - 8;
+    const openUp = below < 180 && above > below;
+    setMenuRect({
+      left: r.left,
+      top: openUp ? r.top : r.bottom,
+      width: r.width,
+      maxHeight: Math.min(256, Math.max(120, openUp ? above : below)),
+      placement: openUp ? "top" : "bottom",
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updateMenuRect();
+    // Reposicionar mientras se scrollea/redimensiona (capture: también scrolls internos)
+    window.addEventListener("scroll", updateMenuRect, true);
+    window.addEventListener("resize", updateMenuRect);
+    return () => {
+      window.removeEventListener("scroll", updateMenuRect, true);
+      window.removeEventListener("resize", updateMenuRect);
+    };
+  }, [open, updateMenuRect]);
+
+  // Cerrar al hacer click afuera (el listbox vive en un portal, se chequea aparte)
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      const insideInput = rootRef.current?.contains(target);
+      const insideMenu = listRef.current?.contains(target);
+      if (!insideInput && !insideMenu) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -122,7 +170,11 @@ export default function Combobox({
       }
     } else if (e.key === "Escape") {
       if (open) {
+        // React 19 escucha en `document`, igual que el Modal contenedor: con
+        // stopPropagation() no alcanza (no corta otros listeners del mismo
+        // nodo), así que además marcamos el evento como consumido.
         e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
         setOpen(false);
       }
     } else if (e.key === "Tab") {
@@ -147,6 +199,13 @@ export default function Combobox({
             if (!open) setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onBlur={() => onBlur?.()}
+          onPaste={(e) => {
+            onPaste?.(e);
+            // Si el consumidor se quedó con el pegado (ej. varias filas de una
+            // planilla), cerramos la lista: lo que sigue pasa fuera del campo.
+            if (e.defaultPrevented) setOpen(false);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus={autoFocus}
@@ -170,12 +229,21 @@ export default function Combobox({
         </button>
       </div>
 
-      {open && (
+      {open && menuRect && createPortal(
         <ul
           ref={listRef}
           id={listboxId}
           role="listbox"
-          className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 py-1 text-sm"
+          style={{
+            position: "fixed",
+            left: menuRect.left,
+            width: menuRect.width,
+            maxHeight: menuRect.maxHeight,
+            ...(menuRect.placement === "bottom"
+              ? { top: menuRect.top + 4 }
+              : { bottom: window.innerHeight - menuRect.top + 4 }),
+          }}
+          className="z-[60] overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 py-1 text-sm"
         >
           {filtered.length === 0 && !showCreateOption && (
             <li className="px-3 py-2 text-gray-400">{emptyLabel}</li>
@@ -185,7 +253,9 @@ export default function Combobox({
             const isHighlighted = idx === highlight;
             return (
               <li
-                key={opt}
+                // El catálogo puede tener nombres repetidos (mismo insumo de dos
+                // proveedores): la key lleva el índice para no colisionar.
+                key={`${opt}-${idx}`}
                 role="option"
                 aria-selected={isSelected}
                 data-idx={idx}
@@ -231,7 +301,8 @@ export default function Combobox({
               <span className="truncate">{createLabel(query.trim())}</span>
             </li>
           )}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   );
