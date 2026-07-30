@@ -525,7 +525,7 @@ export default function ManualAPUForm({
               onChange={(e) => setName(e.target.value)}
               disabled={!!budgetItemId}
               placeholder="Ej. Marco recto 0,70 p/ puerta"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none disabled:bg-gray-50 disabled:text-gray-500"
             />
           </div>
           <div className="sm:col-span-2">
@@ -553,7 +553,7 @@ export default function ManualAPUForm({
                         value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm tabular-nums text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm tabular-nums text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
               />
             </div>
           )}
@@ -570,7 +570,7 @@ export default function ManualAPUForm({
               <button
                 type="button"
                 onClick={() => setPasteOpen((o) => !o)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
               >
                 <ClipboardPaste size={14} />
                 Pegar desde Excel
@@ -578,7 +578,7 @@ export default function ManualAPUForm({
               <button
                 type="button"
                 onClick={addMaterialRow}
-                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
               >
                 <Plus size={14} />
                 Agregar material
@@ -589,7 +589,7 @@ export default function ManualAPUForm({
           {/* ─── Pegado masivo desde una planilla ─── */}
           {pasteOpen && (
             <div className="mb-2 rounded-lg border border-blue-200 bg-blue-50/60 p-3 space-y-2">
-              <p className="text-[11px] text-blue-900">
+              <p className="text-xs text-blue-900">
                 Copiá las filas del Excel y pegalas acá — se puede incluir la mano de obra: cada fila lleva su destino y se puede cambiar. Una fila por línea, columnas
                 separadas por tabulación:{" "}
                 <strong>Insumo</strong> · <strong>Consumo</strong> · Desperdicio % (opcional)
@@ -602,11 +602,11 @@ export default function ManualAPUForm({
                 autoFocus
                 aria-label="Filas copiadas de la planilla"
                 placeholder={"Cemento Portland\t10\t5\nArena lavada\t0,25"}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
               />
 
               {parsedPaste.lines.length > 0 && (
-                <div className="max-h-44 overflow-y-auto rounded-lg border border-blue-100 bg-white">
+                <div className="max-h-44 overflow-y-auto overflow-x-auto rounded-lg border border-blue-100 bg-white">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr className="text-gray-500">
@@ -628,7 +628,7 @@ export default function ManualAPUForm({
                             <td className="px-2 py-1 text-gray-900">
                               {line.name}
                               {yaCargado && (
-                                <span className="ml-1 text-[10px] text-amber-700">(ya en la lista)</span>
+                                <span className="ml-1 text-xs text-amber-700">(ya en la lista)</span>
                               )}
                             </td>
                             <td className="px-2 py-1">
@@ -675,7 +675,7 @@ export default function ManualAPUForm({
               )}
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <span className="text-[11px] text-blue-900">
+                <span className="text-xs text-blue-900">
                   {parsedPaste.lines.length === 0
                     ? "Todavía no se reconocieron filas."
                     : `${parsedPaste.lines.length} fila${parsedPaste.lines.length === 1 ? "" : "s"} · ${pasteCounts.materiales} como material · ${pasteCounts.mo} como mano de obra${
@@ -699,7 +699,7 @@ export default function ManualAPUForm({
                     type="button"
                     disabled={pasteCounts.materiales + pasteCounts.mo === 0}
                     onClick={applyPaste}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                   >
                     Agregar {pasteCounts.materiales + pasteCounts.mo || ""} fila
                     {pasteCounts.materiales + pasteCounts.mo === 1 ? "" : "s"}
@@ -721,7 +721,7 @@ export default function ManualAPUForm({
                 >
                   <div className="flex flex-col sm:flex-row sm:items-end gap-2">
                     <div className="flex-1 min-w-0">
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
                         Insumo
                       </label>
                       <Combobox
@@ -754,7 +754,7 @@ export default function ManualAPUForm({
                       />
                     </div>
                     <div className="w-full sm:w-28">
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
                         Consumo / {UNIT_LABELS[unit]}
                       </label>
                       <input
@@ -765,11 +765,11 @@ export default function ManualAPUForm({
                         onChange={(e) => patchMaterial(row.key, { consumption: e.target.value })}
                         onKeyDown={handleRowEnter}
                         placeholder="Ej. 12,5"
-                        className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                       />
                     </div>
                     <div className="w-full sm:w-20">
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
                         Desp. %
                       </label>
                       <input
@@ -780,11 +780,11 @@ export default function ManualAPUForm({
                         onChange={(e) => patchMaterial(row.key, { waste: e.target.value })}
                         onKeyDown={handleRowEnter}
                         placeholder="0"
-                        className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                       />
                     </div>
                     <div className="w-full sm:w-28 sm:text-right">
-                      <span className="block text-[11px] font-medium text-gray-500 mb-1">
+                      <span className="block text-xs font-medium text-gray-500 mb-1">
                         Subtotal
                       </span>
                       <span className="block px-2 py-2 text-sm font-medium text-gray-900 tabular-nums">
@@ -804,7 +804,7 @@ export default function ManualAPUForm({
                   </div>
 
                   {(readAsThousands(row.consumption) || readAsThousands(row.waste)) && (
-                    <p className="text-[11px] text-amber-700">
+                    <p className="text-xs text-amber-700">
                       Ojo: {readAsThousands(row.consumption) ? "el consumo" : "el desperdicio"} se
                       leyó como{" "}
                       <strong>
@@ -819,13 +819,13 @@ export default function ManualAPUForm({
                   )}
 
                   {linked && (
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Catálogo · {fmt(unitCost)} por {UNIT_LABELS[linked.unit]}
                     </p>
                   )}
 
                   {linked && !linked.isActive && (
-                    <p className="text-[11px] text-amber-700 flex items-start gap-1.5">
+                    <p className="text-xs text-amber-700 flex items-start gap-1.5">
                       <RotateCcw size={13} className="mt-px shrink-0" />
                       «{linked.name}» está desactivado en el catálogo: se reutiliza y se
                       reactiva al guardar (no se crea un duplicado).
@@ -835,13 +835,13 @@ export default function ManualAPUForm({
                   {/* Alta rápida cuando el insumo no está en el catálogo */}
                   {isNew && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 space-y-2">
-                      <p className="text-[11px] text-emerald-800 flex items-start gap-1.5">
+                      <p className="text-xs text-emerald-800 flex items-start gap-1.5">
                         <Info size={13} className="mt-px shrink-0" />
                         «{row.query.trim()}» no está en el catálogo: se va a crear con estos datos.
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Unidad
                           </label>
                           <select
@@ -861,7 +861,7 @@ export default function ManualAPUForm({
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Precio del envase
                           </label>
                           <input
@@ -875,7 +875,7 @@ export default function ManualAPUForm({
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Cant. por envase
                           </label>
                           <input
@@ -891,7 +891,7 @@ export default function ManualAPUForm({
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Categoría
                           </label>
                           <select
@@ -911,7 +911,7 @@ export default function ManualAPUForm({
                           </select>
                         </div>
                       </div>
-                      <p className="text-[11px] text-emerald-800">
+                      <p className="text-xs text-emerald-800">
                         Precio unitario resultante: <strong>{fmt(unitCost)}</strong> por{" "}
                         {UNIT_LABELS[row.newUnit]}
                       </p>
@@ -938,7 +938,7 @@ export default function ManualAPUForm({
             <button
               type="button"
               onClick={addLaborRow}
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+              className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
             >
               <Plus size={14} />
               Agregar mano de obra
@@ -952,7 +952,7 @@ export default function ManualAPUForm({
                 className="flex flex-col sm:flex-row sm:items-end gap-2 rounded-lg border border-gray-200 bg-amber-50/40 p-2.5"
               >
                 <div className="flex-1 min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
                     Descripción
                   </label>
                   <input
@@ -968,11 +968,11 @@ export default function ManualAPUForm({
                     autoFocus={row.key === autoFocusKey}
                     aria-label="Descripción de la mano de obra"
                     placeholder="Ej. Oficial carpintero"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                   />
                 </div>
                 <div className="w-full sm:w-32">
-                  <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
                     Costo / {UNIT_LABELS[unit]}
                   </label>
                   <input
@@ -991,7 +991,7 @@ export default function ManualAPUForm({
                     }}
                     aria-label="Costo de la mano de obra por unidad"
                     placeholder="0,00"
-                    className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                   />
                 </div>
                 <button
@@ -1081,7 +1081,7 @@ export default function ManualAPUForm({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -1098,7 +1098,7 @@ export default function ManualAPUForm({
           type="button"
           disabled={saving}
           onClick={() => void handleSubmit()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 inline-flex items-center gap-2"
         >
           {saving && <Loader2 className="animate-spin" size={14} />}
           {budgetItemId ? "Cargar APU en la partida" : "Crear partida"}

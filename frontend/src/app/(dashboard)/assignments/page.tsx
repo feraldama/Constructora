@@ -184,11 +184,11 @@ export default function AssignmentsPage() {
                   Asignaciones por partida
                 </h3>
                 <div className="flex gap-2 text-xs">
-                  <button type="button" onClick={expandAll} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                  <button type="button" onClick={expandAll} className="text-accent hover:text-accent-hover cursor-pointer">
                     Expandir todo
                   </button>
                   <span className="text-gray-300">|</span>
-                  <button type="button" onClick={() => setExpandedCategories(new Set())} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                  <button type="button" onClick={() => setExpandedCategories(new Set())} className="text-accent hover:text-accent-hover cursor-pointer">
                     Colapsar todo
                   </button>
                 </div>
@@ -377,7 +377,7 @@ function ItemCategoryGroup({
                     {item.quantity} {item.unit}
                   </span>
                   {unassigned && (
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700">
+                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
                       Sin asignar
                     </span>
                   )}
@@ -444,7 +444,7 @@ function ContractorRow({
       <td className="py-3 px-3">
         <Link
           href={`/contractors/${c.contractorId}`}
-          className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors inline-flex cursor-pointer"
+          className="touch-hit p-1.5 text-gray-400 hover:text-accent rounded transition-colors inline-flex cursor-pointer"
           title="Ver detalle"
         >
           <ExternalLink size={15} />

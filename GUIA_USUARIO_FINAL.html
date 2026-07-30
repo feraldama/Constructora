@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de Uso — BuildControl</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   BuildControl — Guía de Uso
+   Hoja de estilos optimizada para impresión / exportación a PDF
+   ═══════════════════════════════════════════════════════════ */
+
+@page {
+  size: A4;
+  margin: 18mm 16mm 20mm 16mm;
+}
+
+:root {
+  --ink:      #1a1f27;
+  --ink-soft: #4a5462;
+  --ink-mute: #737f8d;
+  --rule:     #d8dee6;
+  --rule-lt:  #eaeef3;
+  --brand:    #14539a;
+  --brand-lt: #eef4fb;
+  --accent:   #b4530a;
+  --ok:       #1c6b3c;
+  --warn:     #8a6100;
+  --bad:      #a3242b;
+  --neutral:  #5c6773;
+  --bg-soft:  #f6f8fa;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 10.5pt;
+  line-height: 1.58;
+  color: var(--ink);
+  background: #fff;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Contenedor: en pantalla simula una hoja; en print desaparece ── */
+.page {
+  max-width: 178mm;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ═══ Tipografía ═══ */
+
+h1, h2, h3, h4 {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.25;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+h2 {
+  font-size: 16pt;
+  margin: 0 0 14pt;
+  padding-bottom: 7pt;
+  border-bottom: 2.5pt solid var(--brand);
+  letter-spacing: -0.01em;
+}
+
+h2 .num {
+  display: inline-block;
+  min-width: 26pt;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 12.5pt;
+  margin: 20pt 0 7pt;
+  color: var(--brand);
+  letter-spacing: -0.005em;
+}
+
+h4 {
+  font-size: 9pt;
+  margin: 14pt 0 5pt;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+p { margin: 0 0 8pt; }
+
+strong { font-weight: 700; color: var(--ink); }
+em     { font-style: italic; }
+
+a { color: var(--brand); text-decoration: none; border-bottom: 0.5pt solid #a9c4e2; }
+
+code, .mono {
+  font-family: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  font-size: 0.87em;
+  background: var(--bg-soft);
+  border: 0.5pt solid var(--rule-lt);
+  border-radius: 2pt;
+  padding: 0.5pt 3pt;
+}
+
+/* ═══ Listas ═══ */
+
+ul, ol { margin: 0 0 9pt; padding-left: 17pt; }
+li { margin-bottom: 3.5pt; }
+li > ul, li > ol { margin-top: 3.5pt; margin-bottom: 2pt; }
+ol { padding-left: 19pt; }
+ol li::marker { font-weight: 700; color: var(--brand); }
+
+/* Lista de pasos numerados destacada */
+ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 22pt;
+  margin-bottom: 6pt;
+}
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.5pt;
+  width: 15pt;
+  height: 15pt;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 50%;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 15pt;
+  text-align: center;
+}
+
+/* ═══ Tablas ═══ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10pt 0 13pt;
+  font-family: "Segoe UI", -apple-system, Helvetica, Arial, sans-serif;
+  font-size: 9pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+thead { display: table-header-group; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+
+th {
+  background: var(--brand-lt);
+  color: var(--brand);
+  font-weight: 600;
+  text-align: left;
+  padding: 5pt 7pt;
+  border-bottom: 1.2pt solid var(--brand);
+  font-size: 8.5pt;
+  letter-spacing: 0.02em;
+}
+
+td {
+  padding: 5pt 7pt;
+  border-bottom: 0.5pt solid var(--rule-lt);
+  vertical-align: top;
+}
+
+tbody tr:nth-child(even) td { background: #fafbfc; }
+
+th.c, td.c { text-align: center; }
+table.perms td.c { font-weight: 600; }
+table.perms td.yes { color: var(--ok); }
+table.perms td.no  { color: var(--ink-mute); }
+table.perms th:first-child, table.perms td:first-child { width: 46%; }
+
+/* Tablas grandes que sí pueden partirse entre páginas */
+table.long { break-inside: auto; page-break-inside: auto; }
+
+/* ═══ Callouts ═══ */
+
+.note {
+  margin: 11pt 0;
+  padding: 8pt 11pt;
+  background: var(--brand-lt);
+  border-left: 3pt solid var(--brand);
+  border-radius: 0 3pt 3pt 0;
+  font-size: 10pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.note > :last-child { margin-bottom: 0; }
+.note .lbl {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brand);
+  display: block;
+  margin-bottom: 3pt;
+}
+
+.note.warn { background: #fdf6e8; border-left-color: var(--warn); }
+.note.warn .lbl { color: var(--warn); }
+.note.tip  { background: #eef7f1; border-left-color: var(--ok); }
+.note.tip .lbl { color: var(--ok); }
+.note.key  { background: #fdf1ef; border-left-color: var(--bad); }
+.note.key .lbl { color: var(--bad); }
+
+/* Ejemplo con datos */
+.example {
+  margin: 10pt 0;
+  padding: 9pt 12pt;
+  background: var(--bg-soft);
+  border: 0.5pt solid var(--rule);
+  border-radius: 3pt;
+  font-size: 9.5pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.example > :last-child { margin-bottom: 0; }
+.example ul { margin-bottom: 4pt; }
+
+/* ═══ Diagramas de flujo ═══ */
+
+.flow {
+  margin: 11pt 0 13pt;
+  padding: 10pt 12pt;
+  background: var(--bg-soft);
+  border: 0.5pt solid var(--rule);
+  border-radius: 3pt;
+  font-family: "Cascadia Mono", Consolas, Menlo, monospace;
+  font-size: 8.5pt;
+  line-height: 1.75;
+  white-space: pre;
+  overflow-x: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  color: var(--ink-soft);
+}
+.flow b { color: var(--brand); font-weight: 700; }
+
+/* Cadena horizontal destacada */
+.chain {
+  margin: 11pt 0;
+  padding: 10pt;
+  text-align: center;
+  background: var(--brand-lt);
+  border: 0.5pt solid #bcd3ea;
+  border-radius: 3pt;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: var(--brand);
+  break-inside: avoid;
+}
+.chain .arrow { color: #7ba3cc; font-weight: 400; margin: 0 3pt; }
+
+/* ═══ Badges de estado ═══ */
+
+.badge {
+  display: inline-block;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 1pt 5pt;
+  border-radius: 8pt;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.b-warn { background: #fbf0d0; color: #7a5600; }
+.b-ok   { background: #d6ecdd; color: #14572f; }
+.b-bad  { background: #f9dcdd; color: #8c1d23; }
+.b-gray { background: #e6e9ed; color: #4a5462; }
+.b-info { background: #d9e6f5; color: #10437c; }
+
+/* ═══ Portada ═══ */
+
+.cover {
+  height: 247mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  break-after: page;
+  page-break-after: always;
+}
+
+.cover .kicker {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 9pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--brand);
+  margin-bottom: 10mm;
+}
+.cover h1 {
+  font-size: 40pt;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  margin: 0 0 4mm;
+  line-height: 1.05;
+}
+.cover h1 b { font-weight: 700; display: block; }
+.cover .sub {
+  font-size: 13pt;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 12mm;
+  max-width: 120mm;
+}
+.cover .rule {
+  width: 40mm;
+  height: 2.5pt;
+  background: var(--brand);
+  margin-bottom: 12mm;
+}
+.cover .lead {
+  font-size: 10.5pt;
+  color: var(--ink-soft);
+  max-width: 125mm;
+  margin-bottom: 18mm;
+}
+.cover .meta {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 9pt;
+  color: var(--ink-mute);
+  border-top: 0.5pt solid var(--rule);
+  padding-top: 5mm;
+}
+.cover .meta div { margin-bottom: 2pt; }
+.cover .meta b { color: var(--ink-soft); font-weight: 600; }
+
+/* ═══ Índice ═══ */
+
+.toc { break-after: page; page-break-after: always; }
+.toc h2 { border-bottom-width: 2.5pt; }
+.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+.toc li {
+  counter-increment: toc;
+  display: flex;
+  align-items: baseline;
+  gap: 5pt;
+  padding: 4.5pt 0;
+  border-bottom: 0.5pt dotted var(--rule);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 10pt;
+  margin: 0;
+}
+.toc li .n {
+  color: var(--brand);
+  font-weight: 700;
+  min-width: 16pt;
+  font-size: 9pt;
+}
+.toc li a { border: none; color: var(--ink); flex: 1; }
+.toc li .d { color: var(--ink-mute); font-size: 8.5pt; font-style: italic; }
+
+/* ═══ Secciones ═══ */
+
+section.chapter {
+  break-before: page;
+  page-break-before: always;
+}
+section.chapter:first-of-type { break-before: auto; page-break-before: auto; }
+
+/* Evitar títulos huérfanos al pie de página */
+h2, h3 { orphans: 3; widows: 3; }
+p, li { orphans: 2; widows: 2; }
+
+/* ═══ Cierre ═══ */
+
+.closing {
+  margin-top: 16pt;
+  padding-top: 9pt;
+  border-top: 0.5pt solid var(--rule);
+  font-size: 9.5pt;
+  color: var(--ink-soft);
+}
+
+/* ═══ Banner solo pantalla ═══ */
+
+.screen-only {
+  background: #10314f;
+  color: #dce8f4;
+  padding: 11pt 14pt;
+  border-radius: 4pt;
+  margin-bottom: 14mm;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.5;
+}
+.screen-only b { color: #fff; }
+.screen-only kbd {
+  background: #24506f;
+  border: 0.5pt solid #3d6b8d;
+  border-radius: 2pt;
+  padding: 0.5pt 4pt;
+  font-family: Consolas, monospace;
+  font-size: 8.5pt;
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AJUSTES DE IMPRESIÓN
+   ═══════════════════════════════════════════════════════════ */
+
+@media print {
+  .screen-only { display: none !important; }
+  body { font-size: 10pt; }
+  .page { max-width: none; }
+  a { color: var(--ink); border-bottom: none; }
+  /* Forzar impresión de fondos (el usuario debe activar
+     "Gráficos de fondo" en el diálogo de impresión) */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media screen {
+  body { background: #eceff3; padding: 8mm 4mm; }
+  .page {
+    background: #fff;
+    padding: 16mm 15mm;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 8px 30px rgba(0,0,0,.08);
+    border-radius: 3px;
+  }
+  .cover { height: auto; padding: 14mm 0 20mm; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══════════════════ BANNER (solo pantalla) ══════════════════ -->
+<div class="screen-only">
+  <b>Para exportar a PDF:</b> abrí este archivo en Chrome o Edge y presioná <kbd>Ctrl</kbd> + <kbd>P</kbd>.
+  En el diálogo elegí <b>Destino: Guardar como PDF</b>, <b>Tamaño: A4</b>, <b>Márgenes: predeterminados</b>
+  y activá <b>«Gráficos de fondo»</b> (en «Más configuraciones») para que se impriman los colores de las
+  tablas y los recuadros. Desactivá «Encabezados y pies de página» si no querés la URL en cada hoja.
+  Este aviso no aparece en el PDF.
+</div>
+
+<!-- ══════════════════ PORTADA ══════════════════ -->
+<div class="cover">
+  <div class="kicker">BuildControl · Gestión de Obras</div>
+  <h1>Guía de <b>Uso</b></h1>
+  <div class="sub">Para quien usa el sistema todos los días</div>
+  <div class="rule"></div>
+  <div class="lead">
+    Esta guía está organizada por <strong>lo que necesitás hacer</strong>, no por pantallas:
+    flujos de trabajo completos, guía según tu rol, recetas rápidas y solución de los problemas
+    más frecuentes. Para el detalle exacto de cada campo y cada botón, consultá el
+    <strong>Manual de Usuario</strong>.
+  </div>
+  <div class="meta">
+    <div><b>Documento:</b> Guía de Uso para el usuario final</div>
+    <div><b>Sistema:</b> BuildControl — Sistema de Gestión de Obras de Construcción</div>
+    <div><b>Versión:</b> Julio 2026</div>
+    <div><b>Complementa a:</b> Manual de Usuario (referencia completa, pantalla por pantalla)</div>
+  </div>
+</div>
+
+<!-- ══════════════════ ÍNDICE ══════════════════ -->
+<div class="toc">
+  <h2>Contenido</h2>
+  <ol>
+    <li><span class="n">1</span><a href="#s1">Qué hace BuildControl</a><span class="d">las 4 preguntas que responde</span></li>
+    <li><span class="n">2</span><a href="#s2">Diez palabras que tenés que entender</a><span class="d">glosario esencial</span></li>
+    <li><span class="n">3</span><a href="#s3">Tus primeros 10 minutos</a><span class="d">entrar y ubicarse</span></li>
+    <li><span class="n">4</span><a href="#s4">Empezá acá según tu rol</a><span class="d">4 perfiles de usuario</span></li>
+    <li><span class="n">5</span><a href="#s5">Flujo A — Arrancar una obra nueva</a><span class="d">5 pasos en orden</span></li>
+    <li><span class="n">6</span><a href="#s6">Flujo B — Cargar el presupuesto con precios reales</a><span class="d">catálogo, APU y compras</span></li>
+    <li><span class="n">7</span><a href="#s7">Flujo C — Contratar y repartir el trabajo</a><span class="d">control de asignaciones</span></li>
+    <li><span class="n">8</span><a href="#s8">Flujo D — El ciclo del mes: medir, certificar, pagar</a><span class="d">el corazón del sistema</span></li>
+    <li><span class="n">9</span><a href="#s9">Flujo E — La plata que entra y la que sale</a><span class="d">cobros, pagos, gastos, compras</span></li>
+    <li><span class="n">10</span><a href="#s10">Flujo F — Controlar que la obra no se desvíe</a><span class="d">qué mirar y cada cuánto</span></li>
+    <li><span class="n">11</span><a href="#s11">Recetas rápidas: «cómo hago para…»</a><span class="d">tabla de consulta</span></li>
+    <li><span class="n">12</span><a href="#s12">Cómo leer los números</a><span class="d">indicadores que se malinterpretan</span></li>
+    <li><span class="n">13</span><a href="#s13">Problemas comunes y qué hacer</a><span class="d">solución de fallas</span></li>
+    <li><span class="n">14</span><a href="#s14">Errores que cuestan caro</a><span class="d">qué evitar</span></li>
+    <li><span class="n">15</span><a href="#s15">Referencia rápida</a><span class="d">atajos, estados y permisos</span></li>
+  </ol>
+</div>
+
+<!-- ══════════════════ 1 ══════════════════ -->
+<section class="chapter" id="s1">
+<h2><span class="num">1</span>Qué hace BuildControl</h2>
+
+<p>BuildControl responde cuatro preguntas que en una obra normalmente se contestan con planillas
+sueltas y memoria:</p>
+
+<table>
+<thead><tr><th style="width:52%">Pregunta</th><th>Dónde te la contesta</th></tr></thead>
+<tbody>
+<tr><td>¿Cuánto va a costar y cuánto voy a ganar?</td><td>Cómputo Métrico + Finanzas</td></tr>
+<tr><td>¿Cuánto se ejecutó realmente hasta hoy?</td><td>Avance físico + Certificaciones</td></tr>
+<tr><td>¿A quién le debo, cuánto y desde cuándo?</td><td>Pagos + Deudas</td></tr>
+<tr><td>¿Me estoy pasando del presupuesto?</td><td>Finanzas → Variación</td></tr>
+</tbody>
+</table>
+
+<p>La idea central: <strong>cargás el presupuesto una vez, y todo lo demás cuelga de ahí.</strong>
+Los contratistas se asignan a partidas del presupuesto, las certificaciones salen de esas
+asignaciones, los pagos salen de las certificaciones, y los desvíos se calculan solos.</p>
+
+<div class="note key">
+<span class="lbl">Importante</span>
+Si el presupuesto está mal cargado, todo lo demás va a estar mal. Vale la pena tomarse el tiempo.
+</div>
+</section>
+
+<!-- ══════════════════ 2 ══════════════════ -->
+<section class="chapter" id="s2">
+<h2><span class="num">2</span>Diez palabras que tenés que entender</h2>
+
+<p>Sin esto el sistema no se entiende. Con esto, se entiende casi solo.</p>
+
+<p><strong>Proyecto</strong> — Una obra. Todo en el sistema pertenece a un proyecto, excepto el
+catálogo de materiales y los contratistas, que se comparten entre todas las obras.</p>
+
+<p><strong>Rubro</strong> — Un capítulo del presupuesto: «Mampostería», «Instalaciones Sanitarias»,
+«Pintura». Sirve para agrupar.</p>
+
+<p><strong>Partida</strong> — La línea concreta del presupuesto: <em>«Revoque interior a la cal —
+m² — 320 — $45.000»</em>. Es la unidad básica de todo el sistema. Todo se cuelga de la partida.</p>
+
+<p><strong>P.U. Costo vs P.U. Venta</strong> — Lo que te cuesta hacer un m² y lo que le cobrás al
+cliente por ese m². La diferencia es tu ganancia. <strong>Cargá las dos</strong>: si solo cargás
+una, Finanzas no te va a poder mostrar margen.</p>
+
+<p><strong>APU (Análisis de Precios Unitarios)</strong> — El desglose de <em>por qué</em> un m² de
+revoque cuesta $45.000: tantos kg de cemento, tantas horas de oficial, etc. Si cargás el APU, el
+sistema calcula el P.U. Costo por vos — y lo recalcula solo cuando cambia el precio de un
+material.</p>
+
+<p><strong>Asignación</strong> — El compromiso con un contratista: <em>«a Pérez le doy 200 de los
+320 m² de revoque por $8.500.000»</em>. Es lo que convierte un presupuesto en un contrato.</p>
+
+<p><strong>Avance físico</strong> — Cuánto se ejecutó de verdad, medido en obra. Se carga como
+mediciones parciales (hoy 40 m², la semana que viene 55 m²) y el sistema acumula.</p>
+
+<p><strong>Certificación</strong> — El documento formal del mes: «en este período Pérez ejecutó
+esto, por este monto». Pasa por un circuito de aprobación y es lo que habilita el pago.</p>
+
+<p><strong>Pago</strong> — La orden de pago a un contratista. Nace pendiente, se marca como pagada,
+y si se pasa la fecha de vencimiento el sistema la marca vencida sola.</p>
+
+<p><strong>Cobro</strong> — Plata que entra del cliente: anticipos, cobros por avance, pago final.</p>
+
+<div class="chain">
+Partida <span class="arrow">→</span> Asignación <span class="arrow">→</span> Avance físico
+<span class="arrow">→</span> Certificación <span class="arrow">→</span> Pago
+</div>
+
+<div class="note">
+<span class="lbl">La cadena completa</span>
+Cada eslabón se alimenta del anterior. Si te salteás uno, el siguiente te va a pedir datos a mano.
+</div>
+</section>
+
+<!-- ══════════════════ 3 ══════════════════ -->
+<section class="chapter" id="s3">
+<h2><span class="num">3</span>Tus primeros 10 minutos</h2>
+
+<h3>Entrar</h3>
+<ol class="steps">
+<li>Abrí la aplicación e iniciá sesión con tu email y contraseña.</li>
+<li>Si todavía no tenés cuenta, usá <strong>Registrarse</strong> — o pedile a un administrador que
+te dé acceso.</li>
+</ol>
+
+<h3>Elegir el proyecto activo — lo más importante de toda la interfaz</h3>
+
+<p>Arriba a la izquierda, debajo del logo, hay un selector que dice <strong>«Proyecto
+activo»</strong>.</p>
+
+<div class="note key">
+<span class="lbl">Leelo dos veces</span>
+<strong>Casi todas las pantallas muestran únicamente los datos del proyecto que está seleccionado
+ahí.</strong> Si abrís Pagos y no ves nada, o ves pagos que no esperabas: mirá primero ese
+selector. Es la causa número uno de confusión de los usuarios nuevos.
+</div>
+
+<p>Las únicas excepciones, que muestran todo junto sin importar el selector, son:</p>
+<ul>
+<li><strong>Materiales</strong> y <strong>Compras</strong> — el catálogo es global</li>
+<li><strong>Contratistas</strong> — se comparten entre obras</li>
+<li><strong>Proyectos</strong> — la lista de todas tus obras</li>
+<li><strong>Vista general</strong> del Dashboard — compara todas tus obras entre sí</li>
+</ul>
+
+<h3>Moverse</h3>
+
+<p>El menú de la izquierda está ordenado más o menos en el orden en que vas a usar las cosas:
+primero planificar (Proyectos, Cómputo Métrico), después contratar (Contratistas, Asignaciones),
+después ejecutar (Pagos, Certificaciones, Calendario), después registrar (Gastos, Materiales,
+Compras, Cobros) y al final analizar (Finanzas, Reportes).</p>
+
+<p>En celular el menú está detrás del botón de hamburguesa arriba a la izquierda. Toda la
+aplicación funciona en celular y tablet — útil para cargar mediciones parado en la obra.</p>
+
+<p>La campanita de <strong>Notificaciones</strong> con el número rojo son cosas que requieren tu
+atención: pagos por vencer, certificaciones esperando aprobación.</p>
+</section>
+
+<!-- ══════════════════ 4 ══════════════════ -->
+<section class="chapter" id="s4">
+<h2><span class="num">4</span>Empezá acá según tu rol</h2>
+
+<h3>Sos dueño, gerente o director de obra</h3>
+<p>Tu pantalla de todos los días es el <strong>Dashboard</strong>, y una vez por semana
+<strong>Finanzas → Variación</strong>.</p>
+<ul>
+<li><strong>Dashboard</strong> te dice: cuánto pagué, cuánto debo, cuánto está vencido, y qué
+porcentaje de la obra está hecho.</li>
+<li><strong>Vista general</strong> (botón arriba a la derecha del Dashboard) te compara todas tus
+obras en una tabla, con el margen de ganancia de cada una.</li>
+<li><strong>Finanzas → Variación</strong> te dice, partida por partida, dónde te estás pasando de
+presupuesto. Es el reporte que más plata salva.</li>
+<li><strong>Finanzas → Alertas</strong> te ordena las deudas vencidas por gravedad.</li>
+</ul>
+<p>Lo que cargás vos: proyectos, presupuesto inicial, aprobación de certificaciones.</p>
+
+<h3>Sos jefe de obra o capataz</h3>
+<p>Tu tarea principal es <strong>cargar el avance físico</strong>, y conviene hacerlo desde el
+celular en la obra.</p>
+<ol class="steps">
+<li>Menú → <strong>Cómputo Métrico</strong></li>
+<li>Buscá la partida que medís</li>
+<li>Tocá la <strong>barra de avance</strong> de esa partida</li>
+<li>Cargá la cantidad ejecutada, la fecha y una nota si hace falta</li>
+<li><strong>Registrar avance</strong></li>
+</ol>
+<p>Hacelo seguido — cada semana es mejor que cada mes. Las mediciones se acumulan, así que cargás
+solo lo nuevo, no el total.</p>
+<p>También vas a usar el <strong>Calendario</strong> para ver qué se vence, y
+<strong>Certificaciones</strong> para cargar las cantidades del período.</p>
+
+<h3>Sos administración, compras o contabilidad</h3>
+<p>Tus pantallas son <strong>Pagos</strong>, <strong>Cobros</strong>, <strong>Compras</strong> y
+<strong>Gastos</strong>.</p>
+<ul>
+<li>Cada factura de material que entra → <strong>Compras</strong>. Esto mantiene los precios al día solo.</li>
+<li>Cada gasto que no es contratista ni material → <strong>Gastos</strong>.</li>
+<li>Cada peso que entra del cliente → <strong>Cobros</strong>.</li>
+<li>Cada pago a contratista → <strong>Pagos</strong>, y cuando se paga,
+<strong>marcarlo como pagado</strong> con método, fecha y número de factura.</li>
+</ul>
+<p>Subí los comprobantes al detalle de cada pago. Cuando alguien pregunte «¿esto se pagó?», la
+respuesta y el respaldo están en el mismo lugar.</p>
+
+<h3>Solo necesitás mirar</h3>
+<p>Si tenés rol <strong>Lector</strong> en un proyecto, ves todo pero no podés modificar nada. Los
+botones de crear y editar simplemente no aparecen. Podés exportar a Excel y PDF sin problema.</p>
+</section>
+
+<!-- ══════════════════ 5 ══════════════════ -->
+<section class="chapter" id="s5">
+<h2><span class="num">5</span>Flujo A — Arrancar una obra nueva</h2>
+
+<p>El orden importa. Si te salteás pasos, después tenés que volver.</p>
+
+<div class="flow"><b>1.</b> Crear el proyecto
+<b>2.</b> Cargar rubros y partidas          ← el trabajo grande
+<b>3.</b> Cargar contratistas
+<b>4.</b> Asignar partidas a contratistas
+<b>5.</b> Sumar al equipo a quien corresponda</div>
+
+<h3>Paso 1 — Crear el proyecto</h3>
+<p>Menú → <strong>Proyectos</strong> → <strong>Nuevo proyecto</strong>.</p>
+<p>Nombre y estado son lo mínimo. Cargá también dirección y presupuesto inicial si los tenés — el
+presupuesto inicial es solo referencia, el número real va a salir del cómputo métrico.</p>
+<p>Estados disponibles: <strong>Planificación</strong>, <strong>En progreso</strong>,
+<strong>Pausado</strong>, <strong>Completado</strong>, <strong>Cancelado</strong>. Arrancá en
+Planificación y pasalo a En progreso cuando la obra empiece de verdad.</p>
+<p>Quien crea el proyecto queda automáticamente como <strong>Admin</strong> de ese proyecto.</p>
+
+<h3>Paso 2 — Cargar rubros y partidas</h3>
+<p>Menú → <strong>Cómputo Métrico</strong>. Funciona como una planilla de cálculo: hacés clic en
+una celda, escribís, y se guarda solo.</p>
+<ol class="steps">
+<li><strong>Nueva categoría</strong> → nombre del rubro («Movimiento de suelos»)</li>
+<li>Dentro del rubro, <strong>Agregar partida</strong> al pie de la tabla</li>
+<li>Completá la fila: Descripción, Unidad, Cantidad, <strong>P.U. Costo</strong>,
+<strong>P.U. Venta</strong></li>
+</ol>
+<p>Los subtotales de costo y venta se calculan solos, se suman por rubro y se suman por proyecto.</p>
+
+<p><strong>Movete con el teclado, no con el mouse</strong> — es varias veces más rápido:</p>
+<table>
+<thead><tr><th style="width:32%">Tecla</th><th>Hace</th></tr></thead>
+<tbody>
+<tr><td><code>Tab</code></td><td>Siguiente celda</td></tr>
+<tr><td><code>Shift+Tab</code></td><td>Celda anterior</td></tr>
+<tr><td><code>Enter</code></td><td>Confirma y baja a la fila siguiente</td></tr>
+<tr><td><code>Esc</code></td><td>Cancela lo que estabas escribiendo</td></tr>
+<tr><td><code>Flechas</code></td><td>Navegar entre celdas</td></tr>
+</tbody>
+</table>
+
+<p>Otras cosas útiles acá:</p>
+<ul>
+<li><strong>Duplicar</strong> una partida (ícono de copia) cuando tenés varias parecidas</li>
+<li>Arrastrar el ícono <strong>☰</strong> para reordenar rubros o partidas</li>
+<li><strong>Partida con APU</strong> si querés que el sistema calcule el costo en vez de tipearlo
+(ver Flujo B)</li>
+</ul>
+
+<h3>Paso 3 — Cargar contratistas</h3>
+<p>Menú → <strong>Contratistas</strong> → <strong>Nuevo contratista</strong>.</p>
+<p>Solo el nombre es obligatorio, pero cargá RUC/CUIT, teléfono y email — después los vas a
+necesitar y nadie se acuerda dónde estaban.</p>
+<p>Los contratistas son <strong>globales</strong>: los cargás una vez y los usás en todas las obras.
+El detalle de cada uno te muestra cuánto le debés sumando todos los proyectos.</p>
+<p>Subí contratos y seguros a la zona de <strong>Documentación adjunta</strong> del contratista.</p>
+
+<h3>Paso 4 — Asignar partidas</h3>
+<p>Acá es donde el presupuesto se convierte en compromisos. Desde el detalle del contratista →
+<strong>Asignar partida</strong>:</p>
+<ul>
+<li><strong>Partida</strong>: qué va a hacer</li>
+<li><strong>Cantidad asignada</strong>: cuánto de esa partida (podés repartir una partida entre dos
+contratistas)</li>
+<li><strong>Precio acordado</strong>: el monto total pactado con él por ese trabajo</li>
+</ul>
+<p>Dos reglas que el sistema te va a hacer cumplir:</p>
+<ul>
+<li>No podés asignar más cantidad que la presupuestada en la partida</li>
+<li>Un contratista no puede estar asignado dos veces a la misma partida</li>
+</ul>
+
+<div class="note tip">
+<span class="lbl">Ahí está el negocio</span>
+<strong>El precio acordado no tiene que coincidir con tu presupuesto.</strong> Si presupuestaste el
+revoque a $45.000/m² y lo contrataste a $42.000/m², ganás la diferencia. Finanzas → Variación te
+muestra esa brecha en cada partida.
+</div>
+
+<p>Revisá <strong>Asignaciones</strong> al terminar: las partidas que quedaron sin contratista
+aparecen con un <span class="badge b-warn">Sin asignar</span>. Es tu checklist de lo que falta
+contratar.</p>
+
+<h3>Paso 5 — Sumar al equipo</h3>
+<p>Menú → <strong>Equipo</strong> → agregá a los usuarios que tienen que ver esta obra, con su rol:</p>
+<ul>
+<li><strong>Admin</strong> — todo, incluso gestionar miembros y borrar el proyecto</li>
+<li><strong>Editor</strong> — cargar y editar datos, aprobar certificaciones; no gestiona miembros</li>
+<li><strong>Lector</strong> — solo mirar y exportar</li>
+</ul>
+</section>
+
+<!-- ══════════════════ 6 ══════════════════ -->
+<section class="chapter" id="s6">
+<h2><span class="num">6</span>Flujo B — Cargar el presupuesto con precios reales</h2>
+
+<p>Este flujo es opcional pero es el que hace que el sistema valga la pena. La diferencia:</p>
+<ul>
+<li><strong>Sin APU</strong>: escribís «$45.000/m²» a mano. Cuando el cemento aumenta, tenés que
+recalcular todo a mano y probablemente no lo hagas.</li>
+<li><strong>Con APU</strong>: cargás qué lleva un m² de revoque. Cuando registrás una compra de
+cemento más caro, <strong>el sistema recalcula solo</strong> el costo de todas las partidas que
+usan cemento, los subtotales y el margen del proyecto.</li>
+</ul>
+
+<h3>Primero: el catálogo de materiales</h3>
+<p>Menú → <strong>Materiales</strong> → <strong>Nuevo material</strong>.</p>
+<p>El único campo que confunde a todo el mundo es <strong>Presentación</strong>, así que va con
+ejemplo:</p>
+
+<div class="example">
+<p>El cemento se vende en bolsas de 50&nbsp;kg a $57.000 la bolsa.</p>
+<ul>
+<li><strong>Unidad base:</strong> <code>kg</code> ← la unidad en la que lo vas a consumir en el APU</li>
+<li><strong>Presentación:</strong> <code>50</code> ← cuántas unidades base trae el envase</li>
+<li><strong>Precio por envase:</strong> <code>57.000</code> ← lo que pagás por la bolsa entera</li>
+</ul>
+<p>El sistema calcula solo: <strong>$1.140/kg</strong>. Ese es el precio que usa el APU.</p>
+</div>
+
+<p>Si un material se vende por unidad suelta, la Presentación es <code>1</code>.</p>
+
+<p>El sistema te avisa si el nombre ya existe, ignorando mayúsculas, acentos y espacios de más
+(«cemento portland» y «Cemento Pórtland» son el mismo material para el sistema). Si de verdad son
+distintos — el mismo insumo de dos proveedores — podés crearlo igualmente y diferenciarlos por
+Marca y Proveedor.</p>
+
+<h3>Después: el APU de la partida</h3>
+<p>En el Cómputo Métrico, ícono de <strong>matraz (🧪)</strong> en la fila de la partida. Cargás:</p>
+<ul>
+<li><strong>Materiales</strong>: cuánto de cada material lleva <strong>una unidad</strong> de la
+partida (para 1 m² de revoque, no para los 320 m²)</li>
+<li><strong>Mano de obra</strong>: las horas o jornales por unidad, con su costo</li>
+</ul>
+<p>El costo unitario se calcula y sube a la partida, al subtotal del rubro, al total del proyecto y
+al margen en Finanzas. En cascada, solo.</p>
+<p>También podés crear la partida ya con su APU cargado usando <strong>Partida con APU</strong> en
+el Cómputo Métrico: te deja elegir una <strong>plantilla</strong> del catálogo maestro o cargar el
+subrubro a mano.</p>
+
+<h3>Y después: mantener los precios al día</h3>
+<p>Menú → <strong>Compras</strong> → <strong>Nueva compra</strong>, cada vez que entra una factura
+de material.</p>
+<p>Al guardar, el sistema te confirma el efecto:</p>
+<div class="example"><em>«Compra registrada. Precio actualizado en 8 partidas del cómputo métrico.»</em></div>
+
+<p>Cómo funciona el precio del catálogo, en corto:</p>
+<ul>
+<li>El catálogo toma siempre el precio de la <strong>compra más reciente por fecha</strong></li>
+<li>Si cargás una compra con fecha retroactiva y ya hay una más nueva, el catálogo respeta la más
+nueva</li>
+<li>Si editás o borrás la compra más reciente, todo se recalcula (al borrarla vuelve al precio
+anterior)</li>
+</ul>
+
+<div class="note tip">
+<span class="lbl">Truco</span>
+Si querés seguir los precios de mercado sin tener facturas, cargá compras «informativas» con
+cantidad mínima. Lo único que importa para el catálogo es el último precio.
+</div>
+</section>
+
+<!-- ══════════════════ 7 ══════════════════ -->
+<section class="chapter" id="s7">
+<h2><span class="num">7</span>Flujo C — Contratar y repartir el trabajo</h2>
+
+<p>La carga inicial está en el <strong>Paso 4 del Flujo A</strong>. Lo que agregamos acá es cómo
+<strong>controlar</strong> las asignaciones una vez que la obra está en marcha.</p>
+
+<p>Menú → <strong>Asignaciones</strong>. Arriba tenés cuánto comprometiste en total, cuánto pagaste,
+cuántos contratistas activos y cuánta deuda vencida. Y dos formas de mirar lo mismo:</p>
+
+<h3>Por partida — ¿está todo el presupuesto contratado?</h3>
+<p>Agrupado por rubro, con presupuestado, contratado, pagado, pendiente y varianza. Las partidas sin
+contratista salen marcadas en amarillo. Usá esta vista cuando estás cerrando contrataciones.</p>
+
+<h3>Por contratista — ¿cómo vengo con cada uno?</h3>
+<p>Cuánto le acordé, cuánto le pagué, cuánto le queda, cuánto está vencido, con barra de ejecución.
+Usá esta vista antes de una reunión con un contratista.</p>
+
+<div class="note warn">
+<span class="lbl">Atención</span>
+No vas a poder borrar una asignación que ya tenga pagos pendientes o pagados. Si la relación se
+cortó, cancelá los pagos primero.
+</div>
+</section>
+
+<!-- ══════════════════ 8 ══════════════════ -->
+<section class="chapter" id="s8">
+<h2><span class="num">8</span>Flujo D — El ciclo del mes: medir, certificar, pagar</h2>
+
+<p>Este es el flujo que vas a repetir todos los meses de la obra. Es el corazón del sistema.</p>
+
+<div class="flow"><b>Durante el mes</b>    →  Cargar mediciones de avance físico
+<b>Fin del mes</b>       →  Crear certificación del período
+                  →  Cargar cantidades ejecutadas
+                  →  Enviar
+<b>Aprobación</b>        →  Aprobar (o rechazar con motivo)
+                  →  Generar pago
+<b>Pago</b>              →  Marcar como pagado + adjuntar comprobante</div>
+
+<h3>Durante el mes: medir</h3>
+<p>Cómputo Métrico → clic en la barra de <strong>Avance</strong> de la partida → cargá cantidad,
+fecha y notas → <strong>Registrar avance</strong>.</p>
+<p>Cargás <strong>solo lo nuevo del período</strong>, no el acumulado. El modal te muestra
+presupuestado, medido y restante, más el historial completo de mediciones con quién cargó cada una.</p>
+<p>Esto alimenta el anillo de <strong>Avance de Obra</strong> del Dashboard, que está ponderado por
+valor: una partida de $100.000 al 50% pesa más que una de $1.000 al 100%. Es decir, el porcentaje
+que ves refleja plata ejecutada, no cantidad de partidas terminadas.</p>
+
+<h3>Fin del mes: certificar</h3>
+<p>Menú → <strong>Certificaciones</strong> → <strong>Nueva certificación</strong>. Elegís
+contratista y el período (desde / hasta).</p>
+
+<div class="note">
+<span class="lbl">Por qué importaban las asignaciones</span>
+El sistema <strong>genera solo una línea por cada partida asignada a ese contratista</strong>. No
+las cargás a mano.
+</div>
+
+<p>En el detalle, la tabla te muestra por cada partida:</p>
+<table>
+<thead><tr><th style="width:26%">Columna</th><th>Qué es</th></tr></thead>
+<tbody>
+<tr><td><strong>Anterior</strong></td><td>Lo ya certificado en certificaciones aprobadas previas</td></tr>
+<tr><td><strong>Actual</strong></td><td>Lo que certificás en este período — <strong>esto es lo único que editás</strong></td></tr>
+<tr><td><strong>Acumulado</strong></td><td>Anterior + Actual</td></tr>
+<tr><td><strong>Monto</strong></td><td>Actual × precio unitario</td></tr>
+</tbody>
+</table>
+<p>Llenás la columna <strong>Actual</strong> y el total se recalcula. Estando en
+<span class="badge b-gray">Borrador</span> podés editar libremente.</p>
+
+<h3>Aprobar</h3>
+<p>Con al menos una cantidad mayor a cero, <strong>Enviar</strong>. Ahí queda congelada — ya no se
+edita.</p>
+<p>Un usuario con rol <strong>Admin</strong> o <strong>Editor</strong> del proyecto puede:</p>
+<ul>
+<li><strong>Aprobar</strong> → queda firme y habilita generar el pago</li>
+<li><strong>Rechazar</strong> → hay que escribir el motivo, que queda visible en un banner rojo. El
+contratista o quien la cargó usa <strong>Corregir y reenviar</strong>, vuelve a Borrador, arregla y
+manda de nuevo.</li>
+</ul>
+
+<h3>Generar el pago</h3>
+<p>Desde una certificación <span class="badge b-ok">Aprobada</span> → <strong>Generar pago</strong>.
+Dos opciones:</p>
+<ul>
+<li><strong>Certificado completo</strong> — un solo pago pendiente por el total</li>
+<li><strong>Por partidas</strong> — elegís partidas con checkbox y sale un pago por cada una</li>
+</ul>
+<p>La segunda opción sirve cuando pagás en tandas. Las partidas que ya tienen pago generado quedan
+deshabilitadas con la etiqueta «Pago generado», así que no podés pagar dos veces lo mismo. Si ya
+hubo pagos parciales, el sistema te obliga a usar el modo por partidas para el resto.</p>
+<p>Podés bajar la certificación en <strong>PDF</strong> (botón azul) o imprimirla (ícono de
+impresora) — sale como documento formal, sin menús.</p>
+
+<h3>Pagar</h3>
+<p>Menú → <strong>Pagos</strong>. El pago nació en estado <span class="badge b-warn">Pendiente</span>.
+Cuando se paga de verdad:</p>
+<ul>
+<li>En la lista: ícono de <strong>check verde</strong></li>
+<li>En el detalle: botón <strong>Marcar como Pagado</strong></li>
+</ul>
+<p>Se abre un modal para completar método de pago, fecha (no puede ser futura) y número de factura.
+Después entrá al detalle del pago y <strong>subí el comprobante</strong> en la zona de adjuntos.</p>
+
+<p>Los estados y cómo se mueven:</p>
+<table>
+<thead><tr><th style="width:24%">Estado</th><th>Significa</th></tr></thead>
+<tbody>
+<tr><td><span class="badge b-warn">Pendiente</span></td><td>Registrado, sin pagar</td></tr>
+<tr><td><span class="badge b-ok">Pagado</span></td><td>Listo (estado final)</td></tr>
+<tr><td><span class="badge b-bad">Vencido</span></td><td>Se pasó la fecha de vencimiento</td></tr>
+<tr><td><span class="badge b-gray">Cancelado</span></td><td>Anulado (estado final)</td></tr>
+</tbody>
+</table>
+
+<div class="note key">
+<span class="lbl">No te olvides de esto</span>
+El paso a <strong>Vencido</strong> es automático: un proceso revisa las fechas y marca los pagos
+vencidos solo. Pero <strong>tenés que cargar la fecha de vencimiento</strong> al crear el pago:
+si no la cargás, nunca va a aparecer como vencido, ni en el Calendario, ni en las alertas.
+</div>
+
+<p>La pestaña <strong>Deudas</strong> te da el resumen por contratista: acordado, pagado y saldo.</p>
+</section>
+
+<!-- ══════════════════ 9 ══════════════════ -->
+<section class="chapter" id="s9">
+<h2><span class="num">9</span>Flujo E — La plata que entra y la que sale</h2>
+
+<p>Tres cosas distintas, tres lugares distintos. La confusión más común es mezclarlas.</p>
+
+<table>
+<thead><tr><th style="width:34%">Qué registrás</th><th style="width:22%">Dónde</th><th>Ejemplo</th></tr></thead>
+<tbody>
+<tr><td>Plata que <strong>entra</strong> del cliente</td><td><strong>Cobros</strong></td><td>Anticipo del 30%</td></tr>
+<tr><td>Plata que sale a un <strong>contratista</strong></td><td><strong>Pagos</strong></td><td>Certificado de albañilería</td></tr>
+<tr><td>Plata que sale por <strong>otra cosa</strong></td><td><strong>Gastos</strong></td><td>Permiso municipal, alquiler de bomba</td></tr>
+<tr><td><strong>Compra de material</strong></td><td><strong>Compras</strong></td><td>200 bolsas de cemento</td></tr>
+</tbody>
+</table>
+
+<h3>Cobros</h3>
+<p>Menú → <strong>Cobros</strong> → <strong>Nuevo cobro</strong>. Monto, fecha, concepto
+(<strong>Anticipo</strong>, <strong>Avance</strong>, <strong>Final</strong>,
+<strong>Liberación de retención</strong>, <strong>Otro</strong>), método y referencia.</p>
+<p>Arriba ves total presupuestado (la suma de venta del cómputo métrico), total cobrado y saldo
+pendiente del cliente. Cada cobro impacta directo en el flujo de caja de Finanzas.</p>
+
+<h3>Gastos</h3>
+<p>Menú → <strong>Gastos</strong> → <strong>Nuevo gasto</strong>. Descripción, cantidad, precio
+unitario (el total se calcula), tipo (<strong>Materiales</strong>, <strong>Equipamiento</strong>,
+<strong>Gastos generales</strong>, <strong>Permisos</strong>, <strong>Otros</strong>) y fecha.</p>
+
+<div class="note key">
+<span class="lbl">Esto cambia todo</span>
+<strong>Vinculá el gasto a una partida cuando corresponda.</strong> El campo Partida es opcional,
+pero si lo llenás, ese gasto se cuenta como ejecución de esa partida en el análisis de Variación.
+Es la diferencia entre «gasté $2.000.000 en algo» y «esta partida me está saliendo más caro de lo
+que presupuesté».
+</div>
+
+<h3>Compras</h3>
+<p>Ya cubierto en el <strong>Flujo B</strong>. Lo importante: una compra no es solo un registro
+contable, <strong>actualiza el precio del catálogo y recalcula tus costos</strong>.</p>
+</section>
+
+<!-- ══════════════════ 10 ══════════════════ -->
+<section class="chapter" id="s10">
+<h2><span class="num">10</span>Flujo F — Controlar que la obra no se desvíe</h2>
+
+<h3>Todos los días: Dashboard</h3>
+<p>Cuatro tarjetas — <strong>Total Pagado</strong>, <strong>Pendiente</strong>,
+<strong>Vencido</strong>, <strong>Ejecución</strong> — más:</p>
+<ul>
+<li>Banners de alerta si hay pagos vencidos (rojo) o que vencen en 7 días (amarillo)</li>
+<li><strong>Presupuesto vs Ejecutado</strong>: verde = pagado, amarillo = comprometido, gris = libre</li>
+<li><strong>Avance de Obra</strong>: el anillo ponderado por valor</li>
+<li>Últimos 5 pagos y últimos 10 movimientos del proyecto</li>
+</ul>
+
+<h3>Todas las semanas: Finanzas → Variación</h3>
+<p><strong>Este es el reporte que hay que mirar.</strong> Compara, línea por línea, lo presupuestado
+contra lo que realmente pasó.</p>
+<p>Arriba: costo presupuestado, comprometido (lo que asignaste), ejecutado (lo que pagaste) y la
+variación total. Después tres tarjetas que cuentan partidas <strong>sobre presupuesto</strong>,
+<strong>en línea</strong> y <strong>bajo presupuesto</strong> — y si hacés clic en una, la tabla se
+filtra.</p>
+<p>La tabla se expande por rubro y muestra por partida: presupuestado, comprometido, pagado,
+pendiente, certificado, variación en $ y en %, más el avance físico medido.</p>
+<p>Los colores: <span class="badge b-bad">rojo</span> = te pasaste más del 5%,
+<span class="badge b-ok">verde</span> = en línea, <span class="badge b-info">azul</span> = por
+debajo.</p>
+
+<div class="note tip">
+<span class="lbl">Cómo leerlo bien</span>
+Una partida en rojo al 20% de avance físico es una alarma seria — vas a gastar mucho más de lo
+previsto. Una partida en rojo al 100% de avance ya es un hecho consumado: sirve para presupuestar
+mejor la próxima obra, no para corregir esta. <strong>Mirá siempre variación y avance físico
+juntos.</strong>
+</div>
+
+<h3>Todos los meses: el resto de Finanzas</h3>
+<ul>
+<li><strong>Resumen</strong> — ingresos estimados, costos, gastos, ganancia bruta, margen %, cobros
+del cliente, saldo pendiente y flujo de caja. Con torta de gastos por tipo y tabla de margen por
+partida. Botón <strong>Exportar Excel</strong>.</li>
+<li><strong>Flujo de Caja</strong> — barras por mes: pagado, programado y predicho, con línea de
+acumulado.</li>
+<li><strong>Predicciones</strong> — proyección de pagos futuros por contratista según su historial.
+La confianza es <strong>Alta</strong> con 3+ pagos previos, <strong>Media</strong> con 1-2,
+<strong>Ninguna</strong> sin historial. Tomalo como orientación, no como compromiso.</li>
+<li><strong>Alertas</strong> — deudas vencidas ordenadas: <strong>Crítica</strong> (+30 días),
+<strong>Alta</strong> (15-30), <strong>Media</strong> (1-15).</li>
+</ul>
+
+<h3>Cuando necesitás mostrarlo</h3>
+<p><strong>Reportes</strong> para el informe consolidado del proyecto, exportable.
+<strong>Actividad</strong> para la auditoría: quién hizo qué y cuándo, filtrable y exportable —
+útil cuando algo cambió y nadie sabe quién lo tocó.</p>
+<p><strong>Calendario</strong> para la vista del mes: vencimientos de pago, pagos hechos, cierres de
+certificación e hitos del proyecto, cada uno con su color. Clic en un día para ver el detalle en el
+panel derecho.</p>
+</section>
+
+<!-- ══════════════════ 11 ══════════════════ -->
+<section class="chapter" id="s11">
+<h2><span class="num">11</span>Recetas rápidas: «cómo hago para…»</h2>
+
+<table class="long">
+<thead><tr><th style="width:42%">Quiero…</th><th>Camino</th></tr></thead>
+<tbody>
+<tr><td>Cargar avance de obra</td><td>Cómputo Métrico → clic en la barra de <strong>Avance</strong> de la partida</td></tr>
+<tr><td>Ver cuánto le debo a un contratista</td><td>Contratistas → clic en el contratista (suma todas las obras)</td></tr>
+<tr><td>Ver todas mis deudas</td><td>Pagos → pestaña <strong>Deudas</strong></td></tr>
+<tr><td>Saber qué falta contratar</td><td>Asignaciones → vista <strong>Por partida</strong> → badges amarillos</td></tr>
+<tr><td>Actualizar el precio de un material</td><td>Compras → <strong>Nueva compra</strong> (mejor que editar el catálogo a mano)</td></tr>
+<tr><td>Repartir una partida entre dos contratistas</td><td>Dos asignaciones a la misma partida, cada una con su cantidad</td></tr>
+<tr><td>Corregir una certificación enviada</td><td>Solo si fue rechazada → <strong>Corregir y reenviar</strong></td></tr>
+<tr><td>Anular un pago</td><td>Detalle del pago → <strong>Cancelar</strong> (no se borra, queda como Cancelado)</td></tr>
+<tr><td>Sacar el PDF de una certificación</td><td>Detalle de la certificación → botón <strong>PDF</strong></td></tr>
+<tr><td>Llevar los números a Excel</td><td>Finanzas → <strong>Exportar Excel</strong>, o Reportes</td></tr>
+<tr><td>Ver todas mis obras juntas</td><td>Dashboard → <strong>Vista general</strong></td></tr>
+<tr><td>Recuperar un material borrado</td><td>Materiales → filtro Estado <strong>Desactivados</strong> → ícono de flecha circular</td></tr>
+<tr><td>Dar acceso a alguien a una obra</td><td>Equipo → agregar miembro con su rol</td></tr>
+<tr><td>Cambiar mi contraseña</td><td>Configuración</td></tr>
+<tr><td>Imprimir cualquier pantalla</td><td><code>Ctrl+P</code> — sale limpio, sin menús</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ══════════════════ 12 ══════════════════ -->
+<section class="chapter" id="s12">
+<h2><span class="num">12</span>Cómo leer los números</h2>
+
+<p>Los indicadores que más se malinterpretan:</p>
+
+<p><strong>Ejecución (%)</strong> — Plata pagada sobre presupuesto. Es un porcentaje
+<strong>financiero</strong>, no de obra.</p>
+
+<p><strong>Avance de Obra (%)</strong> — Obra ejecutada según las mediciones, ponderada por el valor
+de cada partida. Es un porcentaje <strong>físico</strong>.</p>
+
+<div class="note">
+<span class="lbl">Que no coincidan es información valiosa</span>
+<ul style="margin-bottom:0">
+<li><strong>Ejecución muy por encima del avance</strong> → pagaste más de lo que se ejecutó. Estás
+financiando a los contratistas, o hay sobrecostos.</li>
+<li><strong>Avance muy por encima de la ejecución</strong> → se trabajó y no se pagó. Vas a tener
+una salida de caja fuerte pronto: mirá el flujo de caja.</li>
+</ul>
+</div>
+
+<p><strong>Comprometido</strong> — Lo que asignaste a contratistas, pagado o no. Es plata que ya no
+es tuya aunque siga en la cuenta.</p>
+
+<p><strong>Ganancia bruta</strong> — Ingresos de venta menos costos de partidas menos gastos
+adicionales. No descuenta estructura, impuestos ni financieros: no es tu ganancia real.</p>
+
+<p><strong>Flujo de caja</strong> — Cobros menos pagos a contratistas menos gastos. Positivo =
+superávit. Podés tener margen excelente y flujo de caja negativo al mismo tiempo; son cosas
+distintas y las dos importan.</p>
+
+<p><strong>Certificado vs Pagado</strong> — Certificado es lo que reconociste como ejecutado. Pagado
+es lo que efectivamente salió. La diferencia es tu deuda con los contratistas.</p>
+</section>
+
+<!-- ══════════════════ 13 ══════════════════ -->
+<section class="chapter" id="s13">
+<h2><span class="num">13</span>Problemas comunes y qué hacer</h2>
+
+<table class="long">
+<thead><tr><th style="width:40%">Síntoma</th><th>Qué hacer</th></tr></thead>
+<tbody>
+<tr><td>No veo ningún dato / veo datos de otra obra</td><td>Selector <strong>Proyecto activo</strong> en el sidebar. Es esto el 90% de las veces.</td></tr>
+<tr><td>No aparece el botón de crear/editar</td><td>Tu rol en ese proyecto es <strong>Lector</strong>. Pedile a un Admin del proyecto que te cambie el rol en Equipo.</td></tr>
+<tr><td>La certificación no me deja editar cantidades</td><td>Solo se edita en estado <strong>Borrador</strong>. Si ya la enviaste, hay que rechazarla para que vuelva a Borrador.</td></tr>
+<tr><td>La certificación salió vacía / sin partidas</td><td>Las líneas se generan desde las <strong>asignaciones</strong> de ese contratista en ese proyecto. Si no tiene partidas asignadas, no hay nada que certificar. Andá a Asignaciones primero.</td></tr>
+<tr><td>No puedo borrar una partida / un rubro / una asignación</td><td>Tiene pagos activos (pendientes o pagados) colgando. Cancelá o resolvé los pagos primero. Es una protección para no romper la trazabilidad.</td></tr>
+<tr><td>No puedo borrar un proyecto</td><td>Solo se borra si está completamente vacío: sin pagos, contratistas, partidas ni adjuntos. Si la obra ya existió, pasala a <strong>Completado</strong> o <strong>Cancelado</strong> en vez de borrarla.</td></tr>
+<tr><td>Un pago no aparece como vencido aunque pasó la fecha</td><td>Verificá que el pago tenga <strong>fecha de vencimiento</strong> cargada. Sin esa fecha nunca vence.</td></tr>
+<tr><td>El precio de un material no se actualizó con mi compra</td><td>Existe una compra <strong>con fecha posterior</strong> a la tuya. El catálogo respeta siempre la compra más reciente por fecha.</td></tr>
+<tr><td>El costo de la partida no cambió al cambiar el APU</td><td>El recálculo es automático: recargá la página. Si el costo estaba escrito a mano y la partida no tiene APU, no hay nada que recalcular.</td></tr>
+<tr><td>Los totales del presupuesto no cierran con lo que esperaba</td><td>Revisá que las partidas tengan <strong>P.U. Venta</strong> cargado, no solo costo. Los ingresos estimados y el margen salen de la venta.</td></tr>
+<tr><td>Cargué dos veces el mismo material con distinto nombre</td><td>Desactivá uno (papelera — se desactiva en vez de borrarse si está en uso) y usá el otro. Para evitarlo, prestale atención al aviso de material repetido.</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ══════════════════ 14 ══════════════════ -->
+<section class="chapter" id="s14">
+<h2><span class="num">14</span>Errores que cuestan caro</h2>
+
+<p><strong>Cargar solo P.U. Costo y no P.U. Venta.</strong> Sin precio de venta el sistema no puede
+calcular margen, ni ingresos estimados, ni saldo del cliente. Es la mitad del valor de la
+herramienta apagada.</p>
+
+<p><strong>No cargar fecha de vencimiento en los pagos.</strong> Sin fecha no hay vencimiento
+automático, no hay alerta, no hay evento en el calendario. El módulo de deudas queda decorativo.</p>
+
+<p><strong>Medir el avance una vez por mes.</strong> Los desvíos se detectan tarde, cuando ya no se
+pueden corregir. Semanal es el mínimo razonable.</p>
+
+<p><strong>Saltear las asignaciones y crear pagos sueltos.</strong> Funciona, pero perdés el control
+de comprometido vs pagado, y las certificaciones te van a salir vacías.</p>
+
+<p><strong>Cargar gastos sin vincularlos a la partida.</strong> El análisis de Variación no ve esos
+gastos y te va a decir que estás en presupuesto cuando no lo estás.</p>
+
+<p><strong>Editar el precio del catálogo a mano en vez de registrar la compra.</strong> Funciona
+igual, pero perdés el historial de precios y la trazabilidad de la factura.</p>
+
+<p><strong>Confundir Presentación con Cantidad.</strong> Presentación es cuántas unidades base trae
+el envase (50 por bolsa de cemento), no cuántas bolsas compraste. Si lo cargás mal, todos los APU
+que usen ese material quedan mal por un factor de 50.</p>
+</section>
+
+<!-- ══════════════════ 15 ══════════════════ -->
+<section class="chapter" id="s15">
+<h2><span class="num">15</span>Referencia rápida</h2>
+
+<h3>Teclado en el Cómputo Métrico</h3>
+<p><code>Tab</code> siguiente celda · <code>Shift+Tab</code> anterior · <code>Enter</code> confirma
+y baja · <code>Esc</code> cancela · <code>Flechas</code> navegar · <strong>☰</strong> arrastrar
+para reordenar</p>
+
+<h3>Estados</h3>
+<div class="flow"><b>Proyecto</b>       Planificación → En progreso → Pausado / Completado / Cancelado
+
+<b>Pago</b>           Pendiente → Pagado
+               Pendiente → Vencido   (automático)
+               Pendiente / Vencido → Cancelado
+               Vencido → Pagado      (pago atrasado)
+
+<b>Certificación</b>   Borrador → Enviada → Aprobada → genera pago
+               Enviada → Rechazada → Borrador  (corregir y reenviar)</div>
+
+<h3>Permisos por proyecto</h3>
+<table class="perms">
+<thead><tr><th></th><th class="c">Admin</th><th class="c">Editor</th><th class="c">Lector</th></tr></thead>
+<tbody>
+<tr><td>Ver datos del proyecto</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c yes">Sí</td></tr>
+<tr><td>Crear/editar partidas</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+<tr><td>Crear/editar pagos</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+<tr><td>Crear/editar certificaciones</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+<tr><td>Aprobar/rechazar certificaciones</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+<tr><td>Gestionar miembros</td><td class="c yes">Sí</td><td class="c no">No</td><td class="c no">No</td></tr>
+<tr><td>Eliminar proyecto</td><td class="c yes">Sí</td><td class="c no">No</td><td class="c no">No</td></tr>
+</tbody>
+</table>
+
+<h3>Permisos globales del sistema</h3>
+<table class="perms">
+<thead><tr><th></th><th class="c">Super Admin</th><th class="c">Admin</th><th class="c">Usuario</th></tr></thead>
+<tbody>
+<tr><td>Ver/gestionar usuarios</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+<tr><td>Cambiar roles globales</td><td class="c yes">Sí</td><td class="c no">No</td><td class="c no">No</td></tr>
+<tr><td>Activar/desactivar usuarios</td><td class="c yes">Sí</td><td class="c no">No</td><td class="c no">No</td></tr>
+<tr><td>Crear proyectos</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c yes">Sí</td></tr>
+</tbody>
+</table>
+
+<p>Tu rol <strong>global</strong> define qué podés hacer en el sistema; tu rol <strong>por
+proyecto</strong> define qué podés hacer en cada obra. Podés ser Admin en una obra y Lector en otra.</p>
+
+<h3>Qué ignora el selector de proyecto activo</h3>
+<p>Materiales · Compras · Contratistas · Proyectos · Dashboard → Vista general</p>
+
+<div class="closing">
+<p><strong>Dónde seguir.</strong> El <strong>Manual de Usuario</strong>
+(<code>MANUAL_USUARIO.md</code>) es la referencia completa, pantalla por pantalla y campo por campo.
+Andá ahí cuando necesites el detalle exacto de una función.</p>
+<p>Para problemas o sugerencias, contactá al administrador del sistema.</p>
+</div>
+</section>
+
+</div>
+</body>
+</html>

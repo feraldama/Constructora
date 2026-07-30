@@ -96,7 +96,7 @@ export default function CertificatesPage() {
           type="button"
           onClick={() => { setFormError(""); setCreateOpen(true); }}
           disabled={!projectId}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 shadow-sm shrink-0 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover shadow-sm shrink-0 disabled:opacity-50"
         >
           <Plus size={18} />
           Nueva certificación
@@ -246,7 +246,7 @@ export default function CertificatesPage() {
             />
           </div>
           {formError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{formError}</p>
+            <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{formError}</p>
           )}
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setCreateOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -256,7 +256,7 @@ export default function CertificatesPage() {
               type="button"
               disabled={!formContractorId || createMut.isPending}
               onClick={() => void handleCreate()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {createMut.isPending ? "Creando..." : "Crear certificación"}
             </button>

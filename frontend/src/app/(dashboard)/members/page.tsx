@@ -125,7 +125,7 @@ export default function MembersPage() {
               setAddOpen(true);
             }}
             disabled={!projectId}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors shadow-sm shrink-0 disabled:opacity-50"
           >
             <Plus size={18} />
             Agregar miembro
@@ -187,7 +187,7 @@ export default function MembersPage() {
                           void handleRoleChange(member.id, e.target.value as ProjectRole)
                         }
                         disabled={updateRoleMut.isPending}
-                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50"
+                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-ring focus:ring-2 focus:ring-ring outline-none disabled:opacity-50"
                       >
                         <option value="ADMIN">Administrador</option>
                         <option value="EDITOR">Editor</option>
@@ -210,7 +210,7 @@ export default function MembersPage() {
                           setRemoveError("");
                           setRemoveTarget(member);
                         }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -254,7 +254,7 @@ export default function MembersPage() {
             </select>
           </div>
           {addError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
               {addError}
             </p>
           )}
@@ -270,7 +270,7 @@ export default function MembersPage() {
               type="button"
               disabled={!addEmail.trim() || addMut.isPending}
               onClick={() => void handleAdd()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {addMut.isPending ? "Agregando..." : "Agregar"}
             </button>
@@ -292,7 +292,7 @@ export default function MembersPage() {
               </strong> ({removeTarget.user.email}) del proyecto?
             </p>
             {removeError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {removeError}
               </p>
             )}

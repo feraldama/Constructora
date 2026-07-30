@@ -290,7 +290,7 @@ export default function BudgetPage({
           <button
             type="button"
             onClick={() => setNewCatOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover shadow-sm"
           >
             <Plus size={18} />
             Nueva categoría
@@ -399,7 +399,7 @@ export default function BudgetPage({
               type="button"
               disabled={!newCatName.trim() || createCat.isPending}
               onClick={submitNewCategory}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {createCat.isPending ? "Creando…" : "Crear"}
             </button>

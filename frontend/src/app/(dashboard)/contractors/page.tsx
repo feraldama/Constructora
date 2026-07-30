@@ -147,7 +147,7 @@ export default function ContractorsPage() {
                 e.stopPropagation();
                 setEditTarget(info.row.original);
               }}
-              className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              className="touch-hit p-1.5 rounded-md text-gray-400 hover:text-accent hover:bg-accent-tint transition-colors"
               title="Editar"
             >
               <Pencil size={16} />
@@ -157,7 +157,7 @@ export default function ContractorsPage() {
                 e.stopPropagation();
                 setDeleteTarget(info.row.original);
               }}
-              className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="touch-hit p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
               title="Eliminar"
             >
               <Trash2 size={16} />
@@ -191,7 +191,7 @@ export default function ContractorsPage() {
         </div>
         <button
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors shadow-sm shrink-0"
         >
           <Plus size={18} />
           Nuevo Contratista
@@ -211,7 +211,7 @@ export default function ContractorsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none transition-colors"
           />
         </div>
 
@@ -263,7 +263,7 @@ export default function ContractorsPage() {
             {!search && (
               <button
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover transition-colors"
               >
                 <Plus size={16} />
                 Nuevo Contratista

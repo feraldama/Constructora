@@ -265,7 +265,7 @@ export default function BudgetSpreadsheet({
             className={cn(
               "w-full px-2 py-2 bg-white rounded-sm text-sm cursor-pointer outline-none",
               "text-gray-900",
-              "hover:bg-blue-50 focus:bg-blue-50 focus:ring-2 focus:ring-blue-300",
+              "hover:bg-blue-50 focus:bg-blue-50 focus:ring-2 focus:ring-ring",
               readOnly && "pointer-events-none text-gray-500 bg-gray-50"
             )}
           >
@@ -394,7 +394,7 @@ export default function BudgetSpreadsheet({
                         {pct}%
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-0.5 tabular-nums">
+                    <p className="text-xs text-gray-400 mt-0.5 tabular-nums">
                       {measured} / {item.quantity}
                     </p>
                   </div>
@@ -416,7 +416,7 @@ export default function BudgetSpreadsheet({
                   {onOpenAPU && (
                     <button
                       onClick={() => onOpenAPU(info.row.original.id)}
-                      className="p-1.5 text-gray-400 hover:text-purple-600 rounded transition-colors cursor-pointer"
+                      className="touch-hit p-1.5 text-gray-400 hover:text-purple-600 rounded transition-colors cursor-pointer"
                       title="Análisis de Precios (APU)"
                     >
                       <FlaskConical size={15} />
@@ -424,14 +424,14 @@ export default function BudgetSpreadsheet({
                   )}
                   <button
                     onClick={() => onDuplicateItem(info.row.original.id)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-accent rounded transition-colors"
                     title="Duplicar partida"
                   >
                     <Copy size={15} />
                   </button>
                   <button
                     onClick={() => onDeleteItem(info.row.original.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
                     title="Eliminar partida"
                   >
                     <Trash2 size={15} />
@@ -598,7 +598,7 @@ export default function BudgetSpreadsheet({
         <div className="flex border-t border-gray-100">
           <button
             onClick={onAddItem}
-            className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-accent hover:bg-accent-tint flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Plus size={16} />
             Agregar partida
@@ -618,11 +618,11 @@ export default function BudgetSpreadsheet({
 
       {/* Atajos de teclado */}
       {!readOnly && items.length > 0 && (
-        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex flex-wrap gap-4 text-[11px] text-gray-600">
-          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Tab</kbd> / <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Shift+Tab</kbd> navegar celdas</span>
-          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Enter</kbd> confirmar y bajar</span>
-          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Esc</kbd> cancelar edicion</span>
-          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">↑↓←→</kbd> navegar</span>
+        <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-100 flex flex-wrap gap-4 text-xs text-gray-600">
+          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Tab</kbd> / <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Shift+Tab</kbd> navegar celdas</span>
+          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Enter</kbd> confirmar y bajar</span>
+          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Esc</kbd> cancelar edicion</span>
+          <span><kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">↑↓←→</kbd> navegar</span>
           <span><GripVertical size={11} className="inline" /> arrastrar para reordenar</span>
         </div>
       )}

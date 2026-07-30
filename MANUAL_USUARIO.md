@@ -3,6 +3,11 @@
 **Sistema de Gestión de Obras de Construcción**
 Versión actualizada: 2026-03-31
 
+> **¿Recién empezás?** Este documento es la **referencia completa**, pantalla por pantalla y campo
+> por campo. Si lo que buscás es aprender a usar el sistema en el orden en que se trabaja, empezá
+> por la **[Guía de Uso](GUIA_USUARIO_FINAL.md)**: flujos de trabajo, guía por rol, recetas rápidas
+> y solución de problemas comunes.
+
 ---
 
 ## Tabla de Contenidos

@@ -236,7 +236,7 @@ export default function FinancePage() {
               onClick={() => setTab(t.key)}
               className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 tab === t.key
-                  ? "border-blue-600 text-blue-600"
+                  ? "border-accent text-accent"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -895,7 +895,7 @@ function VarianceTab({
             <button
               type="button"
               onClick={expandAll}
-              className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+              className="text-xs text-accent hover:text-accent-hover cursor-pointer"
             >
               Expandir todo
             </button>
@@ -903,7 +903,7 @@ function VarianceTab({
             <button
               type="button"
               onClick={collapseAll}
-              className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+              className="text-xs text-accent hover:text-accent-hover cursor-pointer"
             >
               Colapsar todo
             </button>
@@ -990,7 +990,7 @@ function CategoryRow({
             {cat.categoryName}
             <span className="text-xs text-gray-400 font-normal">({cat.itemCount} partidas)</span>
             {cat.overCount > 0 && (
-              <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+              <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
                 {cat.overCount} sobre
               </span>
             )}
@@ -1040,7 +1040,7 @@ function CategoryRow({
               </td>
               <td className="py-2 px-3 text-center">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${s.bg} ${s.text}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${s.bg} ${s.text}`}
                   title={s.label}
                 >
                   <Icon size={12} />

@@ -133,7 +133,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
             type="button"
             onClick={() => void refreshPrices.mutateAsync()}
             disabled={refreshPrices.isPending || !apu?.materials.length}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 bg-white border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover bg-white border border-accent/30 rounded-lg px-3 py-1.5 hover:bg-accent-tint disabled:opacity-50 transition-colors"
             title="Actualizar precios desde el catálogo"
           >
             <RefreshCw size={13} className={refreshPrices.isPending ? "animate-spin" : ""} />
@@ -161,7 +161,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
               type="button"
               onClick={() => setShowAddMaterial(true)}
               disabled={availableMaterials.length === 0}
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover disabled:opacity-50"
             >
               <Plus size={14} />
               Agregar
@@ -204,7 +204,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                               });
                             }
                           }}
-                          className="w-20 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-blue-400 focus:ring-1 focus:ring-blue-300 outline-none"
+                          className="w-20 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                         />
                       </td>
                       <td className="py-1.5 px-2 text-right">
@@ -221,7 +221,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                               });
                             }
                           }}
-                          className="w-16 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-blue-400 focus:ring-1 focus:ring-blue-300 outline-none"
+                          className="w-16 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                         />
                       </td>
                       <td className="py-1.5 px-2 text-right tabular-nums text-gray-600">
@@ -321,7 +321,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                   type="button"
                   disabled={!newMaterialId || parseDecimal(newConsumption) <= 0 || addMaterial.isPending}
                   onClick={() => void handleAddMaterial()}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                 >
                   {addMaterial.isPending ? "Agregando..." : "Agregar"}
                 </button>
@@ -340,7 +340,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
             <button
               type="button"
               onClick={() => setShowAddLabor(true)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+              className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
             >
               <Plus size={14} />
               Agregar
@@ -373,7 +373,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                               });
                             }
                           }}
-                          className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-300 outline-none"
+                          className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                         />
                       </td>
                       <td className="py-1.5 px-2 text-right">
@@ -390,7 +390,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                               });
                             }
                           }}
-                          className="w-24 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-blue-400 focus:ring-1 focus:ring-blue-300 outline-none"
+                          className="w-24 text-right rounded border border-gray-200 px-2 py-1 text-sm tabular-nums focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                         />
                       </td>
                       <td className="py-1.5 px-1">
@@ -465,7 +465,7 @@ export default function APUPanel({ item, onClose }: APUPanelProps) {
                   type="button"
                   disabled={!newLaborDesc.trim() || addLabor.isPending}
                   onClick={() => void handleAddLabor()}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                 >
                   {addLabor.isPending ? "Agregando..." : "Agregar"}
                 </button>

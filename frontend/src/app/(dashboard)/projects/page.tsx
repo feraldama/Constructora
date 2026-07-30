@@ -189,7 +189,7 @@ export default function ProjectsPage() {
                 e.stopPropagation();
                 openEdit(info.row.original);
               }}
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:text-accent hover:bg-accent-tint"
             >
               <Pencil size={15} />
             </button>
@@ -232,7 +232,7 @@ export default function ProjectsPage() {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors shadow-sm shrink-0"
         >
           <Plus size={18} />
           Nuevo proyecto
@@ -249,7 +249,7 @@ export default function ProjectsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nombre..."
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
         />
       </div>
 
@@ -278,7 +278,7 @@ export default function ProjectsPage() {
               <button
                 type="button"
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
               >
                 <Plus size={16} />
                 Nuevo proyecto
@@ -339,7 +339,7 @@ export default function ProjectsPage() {
               Las categorías vacías del cómputo se borran junto con el proyecto.
             </p>
             {deleteError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {deleteError}
               </p>
             )}
@@ -422,7 +422,7 @@ export default function ProjectsPage() {
               type="button"
               disabled={!formName.trim() || createMutation.isPending}
               onClick={() => void handleCreate()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {createMutation.isPending ? "Guardando…" : "Crear"}
             </button>
@@ -520,7 +520,7 @@ export default function ProjectsPage() {
                 type="button"
                 disabled={!editForm.name?.trim() || updateMutation.isPending}
                 onClick={() => void handleEdit()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
               >
                 {updateMutation.isPending ? "Guardando…" : "Guardar cambios"}
               </button>

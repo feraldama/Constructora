@@ -129,19 +129,19 @@ export default function ProgressEntryModal({
 
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-[11px] text-gray-500">Presupuestado</p>
+              <p className="text-xs text-gray-500">Presupuestado</p>
               <p className="text-sm font-semibold text-gray-900 tabular-nums">
                 {budgeted} {unitLabel}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-500">Medido</p>
+              <p className="text-xs text-gray-500">Medido</p>
               <p className="text-sm font-semibold text-blue-600 tabular-nums">
                 {cumulative} {unitLabel}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-500">Restante</p>
+              <p className="text-xs text-gray-500">Restante</p>
               <p className="text-sm font-semibold text-gray-600 tabular-nums">
                 {remaining} {unitLabel}
               </p>
@@ -166,7 +166,7 @@ export default function ProgressEntryModal({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0.00"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring outline-none"
               />
             </div>
             <div>
@@ -175,7 +175,7 @@ export default function ProgressEntryModal({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring outline-none"
               />
             </div>
             <div>
@@ -185,13 +185,13 @@ export default function ProgressEntryModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Opcional"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring outline-none"
               />
             </div>
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -200,7 +200,7 @@ export default function ProgressEntryModal({
             type="button"
             onClick={() => void handleSubmit()}
             disabled={createMut.isPending || !quantity}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             <Plus size={16} />
             {createMut.isPending ? "Registrando..." : "Registrar avance"}
@@ -240,11 +240,11 @@ export default function ProgressEntryModal({
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-xs text-gray-400">
                         {entry.recordedBy.firstName} {entry.recordedBy.lastName}
                       </span>
                       {entry.notes && (
-                        <span className="text-[11px] text-gray-500 truncate">
+                        <span className="text-xs text-gray-500 truncate">
                           — {entry.notes}
                         </span>
                       )}
@@ -254,7 +254,7 @@ export default function ProgressEntryModal({
                     type="button"
                     onClick={() => handleDelete(entry.id)}
                     disabled={deleteMut.isPending}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded opacity-0 group-hover:opacity-100 transition-all"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-red-600 rounded opacity-0 group-hover:opacity-100 transition-all"
                     title="Eliminar"
                   >
                     <Trash2 size={14} />

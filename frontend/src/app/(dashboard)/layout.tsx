@@ -98,7 +98,7 @@ export default function DashboardLayout({
                   <p className="text-sm font-medium text-gray-900 leading-tight">
                     {user.firstName} {user.lastName}
                   </p>
-                  <p className="text-[11px] text-gray-500 leading-tight">{user.email}</p>
+                  <p className="text-xs text-gray-500 leading-tight">{user.email}</p>
                 </div>
                 <ChevronDown
                   size={16}

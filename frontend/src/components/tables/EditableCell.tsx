@@ -191,7 +191,7 @@ export default function EditableCell({
       }}
       className={cn(
         "px-3 py-2 cursor-cell rounded-sm text-sm tabular-nums transition-colors text-gray-900",
-        "hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300",
+        "hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-ring",
         isEmpty && "text-gray-500 italic",
         className
       )}

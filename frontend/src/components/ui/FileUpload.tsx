@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
   FileText,
@@ -74,6 +74,16 @@ export default function FileUpload({
   const [isDragOver, setIsDragOver] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+
+  // escape-routes (skill §1): el preview debe cerrarse con Escape, igual que Modal
+  useEffect(() => {
+    if (!previewAttachment) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) setPreviewAttachment(null);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [previewAttachment]);
 
   const { data: attachments = [], isLoading } = useAttachments(entityType, entityId);
   const uploadMutation = useUploadAttachments();
@@ -269,7 +279,7 @@ export default function FileUpload({
                   {canPreview && (
                     <button
                       onClick={() => setPreviewAttachment(att)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors cursor-pointer"
+                      className="touch-hit p-1.5 text-gray-400 hover:text-accent rounded transition-colors cursor-pointer"
                       title="Vista previa"
                     >
                       <Eye size={15} />
@@ -279,7 +289,7 @@ export default function FileUpload({
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-accent rounded transition-colors"
                     title="Descargar"
                   >
                     <Download size={15} />
@@ -288,7 +298,7 @@ export default function FileUpload({
                     <button
                       onClick={() => handleDelete(att.id)}
                       disabled={deleteMutation.isPending}
-                      className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                      className="touch-hit p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
                       title="Eliminar"
                     >
                       <Trash2 size={15} />
@@ -307,7 +317,7 @@ export default function FileUpload({
 
       {/* Error */}
       {uploadMutation.isError && (
-        <p className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-red-600">
           Error al subir: {(uploadMutation.error as Error)?.message ?? "Error desconocido"}
         </p>
       )}
@@ -315,7 +325,7 @@ export default function FileUpload({
       {/* Preview Modal */}
       {previewAttachment && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer"
           onClick={() => setPreviewAttachment(null)}
         >
           <div
@@ -342,7 +352,7 @@ export default function FileUpload({
                   href={getFileUrl(previewAttachment)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="touch-hit p-2 text-gray-500 hover:text-accent rounded-lg hover:bg-gray-100 transition-colors"
                   title="Abrir en nueva pestaña"
                 >
                   <Maximize2 size={16} />
@@ -350,14 +360,14 @@ export default function FileUpload({
                 <a
                   href={getFileUrl(previewAttachment)}
                   download
-                  className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="touch-hit p-2 text-gray-500 hover:text-accent rounded-lg hover:bg-gray-100 transition-colors"
                   title="Descargar"
                 >
                   <Download size={16} />
                 </a>
                 <button
                   onClick={() => setPreviewAttachment(null)}
-                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="touch-hit p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                   title="Cerrar"
                 >
                   <X size={16} />

@@ -207,7 +207,7 @@ export default function MaterialsPage() {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors shadow-sm shrink-0"
         >
           <Plus size={18} />
           Nuevo material
@@ -224,7 +224,7 @@ export default function MaterialsPage() {
               value={filterCategory}
               aria-label="Filtrar por categoría"
               onChange={(e) => setFilterCategory(e.target.value as MaterialCategory | "")}
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             >
               <option value="">Todas las categorías</option>
               {(Object.keys(CATEGORY_LABELS) as MaterialCategory[]).map((c) => (
@@ -240,7 +240,7 @@ export default function MaterialsPage() {
             value={filterStatus}
             aria-label="Estado"
             onChange={(e) => setFilterStatus(e.target.value as "active" | "inactive" | "all")}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
           >
             <option value="active">Activos</option>
             <option value="inactive">Desactivados</option>
@@ -257,7 +257,7 @@ export default function MaterialsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Nombre del material..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function MaterialsPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
               >
                 <Plus size={16} />
                 Nuevo material
@@ -342,7 +342,7 @@ export default function MaterialsPage() {
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                       {mat.name}
                       {!mat.isActive && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
                           Desactivado
                         </span>
                       )}
@@ -383,7 +383,7 @@ export default function MaterialsPage() {
                           type="button"
                           title="Editar"
                           onClick={() => openEdit(mat)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-accent hover:bg-accent-tint cursor-pointer"
                         >
                           <Pencil size={15} />
                         </button>
@@ -398,7 +398,7 @@ export default function MaterialsPage() {
                                 payload: { isActive: true },
                               })
                             }
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 cursor-pointer disabled:opacity-50"
+                            className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 cursor-pointer disabled:opacity-50"
                           >
                             <RotateCcw size={15} />
                           </button>
@@ -407,7 +407,7 @@ export default function MaterialsPage() {
                           type="button"
                           title={mat.isActive ? "Eliminar" : "Eliminar definitivamente"}
                           onClick={() => setDeleteTarget(mat)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -536,7 +536,7 @@ export default function MaterialsPage() {
           </div>
 
           {formError && (
-            <div
+            <div role="alert"
               className={cn(
                 "rounded-lg border px-3 py-2 text-sm",
                 confirmDuplicate
@@ -562,7 +562,7 @@ export default function MaterialsPage() {
               onClick={() => void handleSubmit()}
               className={cn(
                 "rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50",
-                confirmDuplicate ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"
+                confirmDuplicate ? "bg-amber-600 hover:bg-amber-700" : "bg-accent hover:bg-accent-hover"
               )}
             >
               {isSaving

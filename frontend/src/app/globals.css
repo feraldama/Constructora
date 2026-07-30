@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+/* Design system — ver design-system/buildcontrol/MASTER.md
+   Neutrales "Construction/Architecture" (gris industrial) + acento azul #0369A1,
+   que el skill lista como "blue CTA" en su fila B2B Service.
+   Este bloque va inmediatamente después del @import: Turbopack ignora en dev un
+   @theme que venga después de @theme inline, y las utilidades no se generan. */
+@theme {
+  --color-canvas: #f8fafc;
+  --color-ink: #334155;
+
+  --color-primary: #0f172a;
+  --color-on-primary: #ffffff;
+  --color-secondary: #64748b;
+
+  /* #0369A1 con texto blanco = 5.93:1 (WCAG AA). No necesita variante corregida
+     como sí la necesitaba el naranja del skill. */
+  --color-accent: #0369a1;
+  --color-accent-hover: #075985;
+  --color-accent-tint: #f0f9ff;
+  --color-on-accent: #ffffff;
+
+  --color-card: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+
+  --color-border: #e2e8f0;
+  /* 3.46:1 sobre blanco — WCAG 1.4.11 pide 3:1 para el borde de un campo.
+     slate-400 (#94A3B8) da 2.56:1 y no alcanza. */
+  --color-border-input: #7c8ba1;
+  --color-ring: #0369a1;
+
+  --color-destructive: #dc2626;
+  --color-destructive-strong: #b91c1c;
+  --color-destructive-tint: #fef2f2;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -17,7 +52,27 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Geist ya se carga vía next/font en layout.tsx; el Arial que había acá la
+     descartaba y toda la app renderizaba en Arial. Pairing "Minimal Swiss"
+     del skill (MASTER.md §4). */
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Checklist del skill: respetar prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *:not([data-spinner]),
+  *:not([data-spinner])::before,
+  *:not([data-spinner])::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Los spinners de carga siguen girando (más lento): congelarlos deja al usuario
+     sin señal de que algo está en curso. */
+  [data-spinner] {
+    animation-duration: 1.5s !important;
+  }
 }
 
 /* Todos los elementos interactivos deben mostrar cursor pointer */
@@ -25,6 +80,31 @@ button,
 select,
 [role="button"] {
   cursor: pointer;
+}
+
+/* touch-target-size (skill §2): amplía el área táctil de los botones-icono
+   compactos de las tablas a ≥44px sin cambiar su tamaño visual — equivalente
+   al hitSlop nativo que el propio skill sugiere ("extend hit area beyond
+   visual bounds if needed"). El ::after de ±8px lleva un botón de 28px a 44px. */
+.touch-hit {
+  position: relative;
+}
+.touch-hit::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+/* tap-delay (skill §2): touch-action manipulation elimina el retardo de ~300ms
+   que algunos navegadores móviles aplican esperando un doble tap */
+button,
+select,
+a,
+[role="button"],
+input,
+textarea,
+label {
+  touch-action: manipulation;
 }
 button:disabled,
 select:disabled {

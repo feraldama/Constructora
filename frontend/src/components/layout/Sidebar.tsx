@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -63,6 +64,16 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+
+  // escape-routes (skill §1): el drawer mobile debe cerrarse con Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen, onClose]);
   const { data: unreadCount } = useUnreadCount();
   const { user } = useAuth();
   const { projectId, projects, isLoading: loadingProjects, setProjectId } = useProject();
@@ -89,7 +100,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Selector de proyecto global */}
         <div className="mt-4">
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Proyecto activo
           </label>
           {loadingProjects ? (
@@ -100,7 +111,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <select
               value={projectId ?? ""}
               onChange={(e) => setProjectId(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none truncate"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none truncate"
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -158,7 +169,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {isGlobalAdmin && (
           <>
             <div className="pt-4 pb-1 px-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Admin</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Admin</p>
             </div>
             {adminNav.map((item) => {
               const isActive = pathname?.startsWith(item.href);
@@ -184,7 +195,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Bottom section */}
         <div className="pt-4 pb-1 px-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Cuenta</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Cuenta</p>
         </div>
         {bottomNav.map((item) => {
           const isActive = pathname?.startsWith(item.href);

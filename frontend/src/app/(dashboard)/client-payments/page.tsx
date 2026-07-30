@@ -218,7 +218,7 @@ export default function ClientPaymentsPage() {
             <select
               value={filterConcept}
               onChange={(e) => setFilterConcept(e.target.value as ClientPaymentConcept | "")}
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             >
               <option value="">Todos los conceptos</option>
               {(Object.keys(CONCEPT_LABELS) as ClientPaymentConcept[]).map((c) => (
@@ -237,7 +237,7 @@ export default function ClientPaymentsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Referencia o notas..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function ClientPaymentsPage() {
                           type="button"
                           title="Editar"
                           onClick={() => openEdit(p)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-accent hover:bg-accent-tint cursor-pointer"
                         >
                           <Pencil size={15} />
                         </button>
@@ -332,7 +332,7 @@ export default function ClientPaymentsPage() {
                           type="button"
                           title="Eliminar"
                           onClick={() => setDeleteTarget(p)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         >
                           <Trash2 size={15} />
                         </button>

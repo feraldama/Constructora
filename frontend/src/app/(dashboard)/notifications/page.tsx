@@ -132,7 +132,7 @@ function NotificationItem({
                 e.stopPropagation();
                 onMarkRead(notification.id);
               }}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-accent hover:text-accent-hover font-medium"
             >
               Marcar como leida
             </button>
@@ -195,7 +195,7 @@ export default function NotificationsPage() {
             <button
               onClick={() => markAllMutation.mutate()}
               disabled={markAllMutation.isPending}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-accent bg-white border border-accent/30 rounded-lg hover:bg-accent-tint disabled:opacity-50"
             >
               <CheckCheck size={16} />
               Marcar todas como leidas

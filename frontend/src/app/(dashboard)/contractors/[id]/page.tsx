@@ -154,7 +154,7 @@ function AssignmentsTable({
                   <span className="text-xs text-gray-500 w-8 text-right">{a.physicalPercent}%</span>
                 </div>
                 {a.assignedQuantity > 0 && (
-                  <div className="text-[10px] text-gray-400 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     {a.measuredQuantity.toLocaleString("es-AR")} / {a.assignedQuantity.toLocaleString("es-AR")} {a.unit}
                   </div>
                 )}
@@ -163,14 +163,14 @@ function AssignmentsTable({
                 <div className="flex items-center gap-0.5">
                   <button
                     onClick={() => onEdit(a)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-accent rounded transition-colors"
                     title="Editar asignación"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => onDelete(a)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
                     title="Eliminar asignación"
                   >
                     <Trash2 size={14} />
@@ -188,7 +188,7 @@ function AssignmentsTable({
 // ─── Formulario de asignación ────────────────────────────────────────
 
 function inputCls(extra = "") {
-  return `w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${extra}`;
+  return `w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ring focus:border-ring ${extra}`;
 }
 
 function AssignmentFormModal({
@@ -319,7 +319,7 @@ function AssignmentFormModal({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {formError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {formError}
         </div>
       )}
@@ -461,7 +461,7 @@ function AssignmentFormModal({
         <button
           type="submit"
           disabled={isSaving}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg hover:bg-accent-hover disabled:opacity-50"
         >
           {isSaving ? "Guardando..." : isEdit ? "Guardar cambios" : "Asignar partida"}
         </button>
@@ -598,7 +598,7 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
       <div className="text-center py-12">
         <HardHat size={40} className="mx-auto text-gray-300 mb-3" />
         <p className="text-gray-500">Contratista no encontrado</p>
-        <button onClick={() => router.push("/contractors")} className="mt-3 text-sm text-blue-600">Volver</button>
+        <button onClick={() => router.push("/contractors")} className="mt-3 text-sm text-accent">Volver</button>
       </div>
     );
   }
@@ -730,7 +730,7 @@ export default function ContractorDetailPage({ params }: { params: Promise<{ id:
           </div>
           <button
             onClick={() => { setEditingAssignment(null); setAssignModalOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent/30 rounded-lg hover:bg-accent-tint transition-colors"
           >
             <Plus size={16} />
             Asignar partida

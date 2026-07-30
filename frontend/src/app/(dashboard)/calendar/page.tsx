@@ -113,14 +113,14 @@ export default function CalendarPage() {
         <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Month navigation */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-            <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer">
-              <ChevronLeft size={20} />
+            <button onClick={prevMonth} aria-label="Mes anterior" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer">
+              <ChevronLeft size={20} aria-hidden="true" />
             </button>
             <h2 className="text-lg font-semibold text-gray-900">
               {MONTHS[month]} {year}
             </h2>
-            <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer">
-              <ChevronRight size={20} />
+            <button onClick={nextMonth} aria-label="Mes siguiente" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer">
+              <ChevronRight size={20} aria-hidden="true" />
             </button>
           </div>
 
@@ -152,7 +152,7 @@ export default function CalendarPage() {
                   <span
                     className={`inline-flex items-center justify-center w-7 h-7 text-sm rounded-full ${
                       isToday
-                        ? "bg-blue-600 text-white font-bold"
+                        ? "bg-accent text-white font-bold"
                         : day.isCurrentMonth
                         ? "text-gray-900"
                         : "text-gray-300"
@@ -166,7 +166,7 @@ export default function CalendarPage() {
                     {dayEvents.slice(0, 3).map((ev) => (
                       <div
                         key={ev.id}
-                        className="text-[10px] leading-tight px-1.5 py-0.5 rounded truncate text-white font-medium"
+                        className="text-xs leading-tight px-1.5 py-0.5 rounded truncate text-white font-medium"
                         style={{ backgroundColor: ev.color }}
                         title={ev.title}
                       >
@@ -175,7 +175,7 @@ export default function CalendarPage() {
                       </div>
                     ))}
                     {dayEvents.length > 3 && (
-                      <p className="text-[10px] text-gray-400 px-1">+{dayEvents.length - 3} más</p>
+                      <p className="text-xs text-gray-400 px-1">+{dayEvents.length - 3} más</p>
                     )}
                   </div>
                 </div>
@@ -241,14 +241,14 @@ function EventCard({ event, showDate }: { event: CalendarEvent; showDate?: boole
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-900 truncate">{event.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[11px] text-gray-400">{TYPE_LABEL[event.type] ?? event.type}</span>
+          <span className="text-xs text-gray-400">{TYPE_LABEL[event.type] ?? event.type}</span>
           {showDate && (
-            <span className="text-[11px] text-gray-400">
+            <span className="text-xs text-gray-400">
               {new Date(event.date).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
             </span>
           )}
           {event.meta?.amount != null && (
-            <span className="text-[11px] font-medium text-gray-600">{fmt(event.meta.amount as number)}</span>
+            <span className="text-xs font-medium text-gray-600">{fmt(event.meta.amount as number)}</span>
           )}
         </div>
       </div>

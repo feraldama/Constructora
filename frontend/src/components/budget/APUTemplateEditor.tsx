@@ -245,7 +245,7 @@ export default function APUTemplateEditor({
             value={name}
             onChange={(e) => setName(e.target.value)}
             aria-label="Nombre de la plantilla"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
@@ -273,7 +273,7 @@ export default function APUTemplateEditor({
             onChange={(e) => setDescription(e.target.value)}
             aria-label="Descripción de la plantilla"
             placeholder="Detalle o aclaración del subrubro"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
           />
         </div>
       </div>
@@ -307,7 +307,7 @@ export default function APUTemplateEditor({
               className="flex flex-col sm:flex-row sm:items-end gap-2 rounded-lg border border-gray-200 bg-gray-50/60 p-2.5"
             >
               <div className="flex-1 min-w-0">
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">Insumo</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Insumo</label>
                 <Combobox
                   value={row.name}
                   onChange={(v) => {
@@ -321,7 +321,7 @@ export default function APUTemplateEditor({
                 />
               </div>
               <div className="w-full sm:w-28">
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
                   Consumo / {UNIT_LABELS[unit]}
                 </label>
                 <input
@@ -330,11 +330,11 @@ export default function APUTemplateEditor({
                   aria-label="Consumo de la plantilla"
                   value={row.consumption}
                   onChange={(e) => patchRow(row.key, { consumption: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               </div>
               <div className="w-full sm:w-20">
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">Desp. %</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Desp. %</label>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -342,11 +342,11 @@ export default function APUTemplateEditor({
                   value={row.waste}
                   onChange={(e) => patchRow(row.key, { waste: e.target.value })}
                   placeholder="0"
-                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               </div>
               <div className="w-full sm:w-28 sm:text-right">
-                <span className="block text-[11px] font-medium text-gray-500 mb-1">Subtotal</span>
+                <span className="block text-xs font-medium text-gray-500 mb-1">Subtotal</span>
                 <span className="block px-2 py-2 text-sm font-medium text-gray-900 tabular-nums">
                   {fmt(subtotalOf(row))}
                 </span>
@@ -379,7 +379,7 @@ export default function APUTemplateEditor({
             onClick={() =>
               setLaborRows((rows) => [...rows, { key: nextKey(), description: "", cost: "" }])
             }
-            className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+            className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
           >
             <Plus size={14} />
             Agregar mano de obra
@@ -393,7 +393,7 @@ export default function APUTemplateEditor({
               className="flex flex-col sm:flex-row sm:items-end gap-2 rounded-lg border border-gray-200 bg-amber-50/40 p-2.5"
             >
               <div className="flex-1 min-w-0">
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
                   Descripción
                 </label>
                 <input
@@ -407,11 +407,11 @@ export default function APUTemplateEditor({
                       )
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               </div>
               <div className="w-full sm:w-32">
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">
                   Costo / {UNIT_LABELS[unit]}
                 </label>
                 <input
@@ -424,7 +424,7 @@ export default function APUTemplateEditor({
                       rows.map((r) => (r.key === row.key ? { ...r, cost: e.target.value } : r))
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm text-right tabular-nums focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               </div>
               <button
@@ -461,13 +461,13 @@ export default function APUTemplateEditor({
         </div>
       </div>
 
-      <p className="text-[11px] text-gray-500">
+      <p className="text-xs text-gray-500">
         Corregir la plantilla no cambia las partidas ya creadas con ella: al aplicarse, cada
         partida se queda con su propia copia de las líneas.
       </p>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -484,7 +484,7 @@ export default function APUTemplateEditor({
           type="button"
           disabled={updateMut.isPending}
           onClick={() => void handleSave()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 inline-flex items-center gap-2"
         >
           {updateMut.isPending && <Loader2 className="animate-spin" size={14} />}
           Guardar plantilla

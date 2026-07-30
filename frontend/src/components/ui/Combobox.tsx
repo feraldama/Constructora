@@ -210,7 +210,7 @@ export default function Combobox({
           placeholder={placeholder}
           autoFocus={autoFocus}
           disabled={disabled}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
         />
         <button
           type="button"

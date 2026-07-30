@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+            className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring outline-none"
           />
         </div>
         <select
@@ -208,7 +208,7 @@ export default function AdminUsersPage() {
                             onChange={(e) =>
                               setRoleTarget({ user: u, role: e.target.value as GlobalRole })
                             }
-                            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                           >
                             <option value="SUPER_ADMIN">Super Admin</option>
                             <option value="ADMIN">Administrador</option>
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
                 type="button"
                 disabled={rolesMut.isPending}
                 onClick={() => void handleRoleChange(roleTarget.user.id, roleTarget.role)}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
               >
                 {rolesMut.isPending ? "Guardando..." : "Confirmar"}
               </button>

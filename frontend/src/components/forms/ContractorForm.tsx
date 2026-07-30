@@ -53,7 +53,7 @@ export default function ContractorForm({
   }
 
   const inputClass =
-    "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500";
+    "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500";
 
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
@@ -174,7 +174,7 @@ export default function ContractorForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {isLoading && (
             <svg

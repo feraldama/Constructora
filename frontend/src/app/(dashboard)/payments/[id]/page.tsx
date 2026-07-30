@@ -154,7 +154,7 @@ export default function PaymentDetailPage({
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Pago no encontrado</p>
-        <button onClick={() => router.push("/payments")} className="mt-3 text-blue-600 text-sm">
+        <button onClick={() => router.push("/payments")} className="mt-3 text-accent text-sm">
           Volver a pagos
         </button>
       </div>
@@ -579,7 +579,7 @@ export default function PaymentDetailPage({
                   bank: requiresBank(e.target.value as PaymentMethod) ? f.bank : "",
                 }))
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             >
               <option value="">Seleccionar...</option>
               <option value="CASH">Efectivo</option>
@@ -604,7 +604,7 @@ export default function PaymentDetailPage({
               value={paidForm.paidAt}
               max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => setPaidForm((f) => ({ ...f, paidAt: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -616,7 +616,7 @@ export default function PaymentDetailPage({
               value={paidForm.invoiceNumber}
               onChange={(e) => setPaidForm((f) => ({ ...f, invoiceNumber: e.target.value }))}
               placeholder="Ej: 0001-00012345"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -660,7 +660,7 @@ export default function PaymentDetailPage({
                   bank: requiresBank(e.target.value as PaymentMethod) ? f.bank : "",
                 }))
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             >
               <option value="">Seleccionar...</option>
               <option value="CASH">Efectivo</option>
@@ -683,7 +683,7 @@ export default function PaymentDetailPage({
               value={editForm.paidAt}
               max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => setEditForm((f) => ({ ...f, paidAt: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -696,7 +696,7 @@ export default function PaymentDetailPage({
               value={editForm.invoiceNumber}
               onChange={(e) => setEditForm((f) => ({ ...f, invoiceNumber: e.target.value }))}
               placeholder="Ej: 0001-00012345"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -709,7 +709,7 @@ export default function PaymentDetailPage({
               value={editForm.description}
               onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
               maxLength={500}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -727,7 +727,7 @@ export default function PaymentDetailPage({
                 !editForm.paymentMethod ||
                 (requiresBank(editForm.paymentMethod) && !editForm.bank.trim())
               }
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updateMutation.isPending ? "Guardando..." : "Guardar cambios"}
             </button>

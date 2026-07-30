@@ -155,7 +155,7 @@ export default function ActivityPage() {
           <select
             value={filterProjectId}
             onChange={(e) => setFilterProjectId(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
           >
             <option value="">Todos los proyectos</option>
             {projects.map((p) => (
@@ -262,17 +262,19 @@ export default function ActivityPage() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="p-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-white disabled:opacity-40"
+                aria-label="Página anterior"
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-white disabled:opacity-40"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
                 disabled={page >= pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="p-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-white disabled:opacity-40"
+                aria-label="Página siguiente"
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-white disabled:opacity-40"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
           </div>

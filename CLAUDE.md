@@ -1,5 +1,33 @@
 # Reglas del Proyecto — BuildControl
 
+## Diseño UI/UX — autoridad
+- **El skill `ui-ux-pro-max` manda en todas las decisiones de UI/UX del proyecto**:
+  estructura de páginas, componentes, color, tipografía, espaciado, layout,
+  accesibilidad, animación y visualización de datos
+- Instalado en `.claude/skills/ui-ux-pro-max/`. Requiere Python 3
+  (`python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <dominio>`)
+- **Antes de crear o modificar cualquier pantalla o componente visible**: consultar el
+  skill y aplicar lo que devuelva. No diseñar "a ojo"
+- **Fuente de verdad**: `design-system/buildcontrol/MASTER.md` — leerlo primero. Contiene
+  la paleta, tipografía y densidad ya resueltas. Solo volver a correr `--design-system`
+  si aparece un tipo de pantalla que no cubre
+- Overrides por página en `design-system/buildcontrol/pages/<pagina>.md`
+- Stack a pasarle al skill: `--stack nextjs`
+
+### Orden de precedencia cuando hay conflicto
+1. **Accesibilidad medida** (WCAG AA: 4.5:1 texto, 3:1 componentes) — gana siempre,
+   incluso sobre el skill. La paleta del skill falla en tres puntos y ya está corregida
+   en MASTER.md §3; usar los tokens corregidos, no los crudos del CSV
+2. **Reglas de este archivo** (Responsive, Interactividad) — son restricciones duras
+3. **Recomendación del skill** — manda en todo lo demás
+4. Preferencia estética propia — último
+
+### El skill se equivoca en un caso conocido
+Queries con `construction` / `architecture` devuelven estilo *Exaggerated Minimalism*
+(pensado para portfolios y moda, con tipografía de 12rem). Es colisión de keyword.
+Detalle y alternativa correcta en MASTER.md §7. Si un resultado se ve fuera de tema,
+reintentar con `--domain` explícito antes de aplicarlo — nunca inventar la salida.
+
 ## General
 - Monorepo con dos carpetas: `frontend/` y `backend/`
 - Todo el código en TypeScript
@@ -79,5 +107,6 @@
   `apu-templates.schema.test.ts`, `materials.schema.test.ts`)
 
 ## Documentación
-- **Manual de usuario**: `MANUAL_USUARIO.md` en la raíz del proyecto
+- **Manual de usuario** (referencia completa, pantalla por pantalla): `MANUAL_USUARIO.md` en la raíz
+- **Guía de uso** (orientada a tareas y flujos de trabajo, para el usuario final): `GUIA_USUARIO_FINAL.md` en la raíz
 - **Actualización obligatoria**: al agregar funcionalidades nuevas, crear componentes, modificar flujos existentes o cambiar la navegación, **actualizar el manual de usuario** reflejando los cambios. Incluir: descripción de la feature, cómo usarla paso a paso, campos/opciones disponibles, y restricciones/permisos. Mantener la tabla de contenidos sincronizada.

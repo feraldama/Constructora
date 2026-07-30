@@ -288,7 +288,7 @@ export default function APUTemplatePicker({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar subrubro..."
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                 />
               </div>
               <select
@@ -360,7 +360,7 @@ export default function APUTemplatePicker({
                     <div className="text-sm font-medium text-gray-900">
                       {detail.name}
                       {!detail.isActive && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
                           Desactivada
                         </span>
                       )}
@@ -376,7 +376,7 @@ export default function APUTemplatePicker({
                     <button
                       type="button"
                       onClick={() => setEditing(true)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover"
                     >
                       <Pencil size={13} />
                       Editar plantilla
@@ -406,12 +406,12 @@ export default function APUTemplatePicker({
                   </div>
 
                   {templateError && (
-                    <p className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-red-700">
+                    <p role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
                       {templateError}
                     </p>
                   )}
                 </div>
-                <div className="max-h-72 overflow-y-auto">
+                <div className="max-h-72 overflow-y-auto overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr className="text-gray-500 uppercase tracking-wide">
@@ -426,7 +426,7 @@ export default function APUTemplatePicker({
                         <tr key={m.id}>
                           <td className="px-3 py-1.5">
                             <div className="text-gray-900">{m.material.name}</div>
-                            <div className="text-[10px] text-gray-400">{m.material.unit}</div>
+                            <div className="text-xs text-gray-400">{m.material.unit}</div>
                           </td>
                           <td className="px-2 py-1.5 text-right tabular-nums text-gray-700">
                             {m.consumptionPerUnit.toLocaleString("es-AR")}
@@ -443,7 +443,7 @@ export default function APUTemplatePicker({
                         <tr key={l.id} className="bg-amber-50/40">
                           <td className="px-3 py-1.5">
                             <div className="text-gray-900">{l.description}</div>
-                            <div className="text-[10px] text-amber-700">Mano de Obra</div>
+                            <div className="text-xs text-amber-700">Mano de Obra</div>
                           </td>
                           <td className="px-2 py-1.5 text-right text-gray-400">—</td>
                           <td className="px-2 py-1.5 text-right text-gray-400">—</td>
@@ -495,7 +495,7 @@ export default function APUTemplatePicker({
             type="button"
             disabled={!selectedId || applyMut.isPending}
             onClick={handleApply}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 inline-flex items-center gap-2"
           >
             {applyMut.isPending && <Loader2 className="animate-spin" size={14} />}
             {budgetItemId ? "Aplicar a la partida" : "Crear partida"}

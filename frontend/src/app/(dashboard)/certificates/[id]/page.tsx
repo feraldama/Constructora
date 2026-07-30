@@ -116,7 +116,7 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Certificación no encontrada</p>
-        <button onClick={() => router.push("/certificates")} className="mt-3 text-blue-600 text-sm cursor-pointer">
+        <button onClick={() => router.push("/certificates")} className="mt-3 text-accent text-sm cursor-pointer">
           Volver a certificaciones
         </button>
       </div>
@@ -156,16 +156,17 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
                 <button
                   onClick={() => void handleAction(() => submitMut.mutateAsync(id))}
                   disabled={submitMut.isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                 >
                   <Send size={16} />
                   {submitMut.isPending ? "Enviando..." : "Enviar"}
                 </button>
                 <button
                   onClick={() => setDeleteOpen(true)}
+                  aria-label="Eliminar certificado"
                   className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} aria-hidden="true" />
                 </button>
               </>
             )}
@@ -205,7 +206,7 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
               <button
                 onClick={() => void handleAction(() => resubmitMut.mutateAsync(id))}
                 disabled={resubmitMut.isPending}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
               >
                 <RefreshCw size={16} />
                 {resubmitMut.isPending ? "Reenviando..." : "Corregir y reenviar"}
@@ -232,7 +233,7 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
 
       {/* Error */}
       {actionError && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div role="alert" className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           <AlertTriangle size={16} /> {actionError}
         </div>
       )}
@@ -318,7 +319,7 @@ export default function CertificateDetailPage({ params }: { params: Promise<{ id
                         min="0"
                         defaultValue={item.currentQuantity}
                         onBlur={(e) => void handleItemChange(item.id, e.target.value)}
-                        className="w-24 text-right rounded border border-gray-300 px-2 py-1 text-sm tabular-nums focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="w-24 text-right rounded border border-gray-300 px-2 py-1 text-sm tabular-nums focus:border-ring focus:ring-2 focus:ring-ring outline-none"
                       />
                     ) : (
                       <span className="tabular-nums font-semibold text-gray-900">

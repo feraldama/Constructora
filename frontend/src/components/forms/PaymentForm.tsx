@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { Payment, PaymentStatus } from "@/types";
 import type {
   CreatePaymentPayload,
@@ -140,13 +141,15 @@ function FinancialContextPanel({
       </dl>
 
       {ctx.estaComprometidoEnExceso && (
-        <p className="text-xs text-red-600 font-medium">
-          ⚠ Los compromisos superan el monto acordado. Revisá los pagos pendientes.
+        <p role="alert" className="flex items-center gap-1.5 text-xs text-red-600 font-medium">
+          <AlertTriangle size={14} className="shrink-0" aria-hidden="true" />
+          Los compromisos superan el monto acordado. Revisá los pagos pendientes.
         </p>
       )}
       {ctx.estaPagoCompleto && !ctx.estaComprometidoEnExceso && (
-        <p className="text-xs text-green-600 font-medium">
-          ✓ Esta asignación está completamente saldada.
+        <p className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+          <CheckCircle2 size={14} className="shrink-0" aria-hidden="true" />
+          Esta asignación está completamente saldada.
         </p>
       )}
     </div>
@@ -160,7 +163,7 @@ function todayISO() {
 }
 
 function inputCls(extra = "") {
-  return `w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${extra}`;
+  return `w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ring focus:border-ring ${extra}`;
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -294,7 +297,7 @@ export default function PaymentForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Error de servidor */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
         </div>
       )}
@@ -553,7 +556,7 @@ export default function PaymentForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading
             ? "Guardando..."

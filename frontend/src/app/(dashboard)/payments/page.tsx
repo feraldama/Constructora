@@ -201,7 +201,7 @@ export default function PaymentsPage() {
             <div className="flex gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); router.push(`/payments/${payment.id}`); }}
-                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                className="touch-hit p-1.5 text-gray-400 hover:text-accent transition-colors"
                 title="Ver detalle"
               >
                 <Eye size={16} />
@@ -211,21 +211,21 @@ export default function PaymentsPage() {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleMarkPaid(payment); }}
                     disabled={updateMutation.isPending}
-                    className="p-1.5 text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Marcar como pagado"
                   >
                     <CheckCircle size={16} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingPayment(payment); }}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-accent transition-colors"
                     title="Editar"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeletingPayment(payment); }}
-                    className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                    className="touch-hit p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                     title="Eliminar"
                   >
                     <Trash2 size={16} />
@@ -303,7 +303,7 @@ export default function PaymentsPage() {
         </div>
         <button
           onClick={() => { setFormError(""); setShowCreate(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0"
+          className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover transition-colors shrink-0"
         >
           <Plus size={18} />
           Nuevo Pago
@@ -354,7 +354,7 @@ export default function PaymentsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ring"
               >
                 {STATUS_FILTERS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -367,7 +367,7 @@ export default function PaymentsPage() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => { setDateFrom(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -377,7 +377,7 @@ export default function PaymentsPage() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => { setDateTo(e.target.value); setFilters((f) => ({ ...f, page: 1 })); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -410,7 +410,7 @@ export default function PaymentsPage() {
                 <p className="text-gray-500">No se encontraron pagos</p>
                 <button
                   onClick={() => setShowCreate(true)}
-                  className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="mt-3 text-sm text-accent hover:text-accent-hover font-medium"
                 >
                   Registrar el primer pago
                 </button>

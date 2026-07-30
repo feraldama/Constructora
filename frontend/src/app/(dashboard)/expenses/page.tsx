@@ -187,7 +187,7 @@ export default function ExpensesPage() {
           type="button"
           onClick={openCreate}
           disabled={!projectId}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm shrink-0 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors shadow-sm shrink-0 disabled:opacity-50"
         >
           <Plus size={18} />
           Nuevo gasto
@@ -203,7 +203,7 @@ export default function ExpensesPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as ExpenseType | "")}
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             >
               <option value="">Todos los tipos</option>
               {(Object.keys(EXPENSE_LABELS) as ExpenseType[]).map((t) => (
@@ -222,7 +222,7 @@ export default function ExpensesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Descripción, factura o partida..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:border-ring focus:ring-2 focus:ring-ring outline-none"
             />
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function ExpensesPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
               >
                 <Plus size={16} />
                 Nuevo gasto
@@ -334,7 +334,7 @@ export default function ExpensesPage() {
                           type="button"
                           title="Editar"
                           onClick={() => openEdit(exp)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-accent hover:bg-accent-tint cursor-pointer"
                         >
                           <Pencil size={15} />
                         </button>
@@ -342,7 +342,7 @@ export default function ExpensesPage() {
                           type="button"
                           title="Eliminar"
                           onClick={() => setDeleteTarget(exp)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                          className="touch-hit p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -375,7 +375,7 @@ export default function ExpensesPage() {
           </div>
 
           {/* Cantidad + Precio unitario + Total */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad *</label>
               <input
@@ -485,7 +485,7 @@ export default function ExpensesPage() {
               type="button"
               disabled={!form.description.trim() || form.unitPrice <= 0 || form.quantity <= 0 || isSaving}
               onClick={() => void handleSubmit()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {isSaving ? "Guardando..." : editingExpense ? "Guardar cambios" : "Crear gasto"}
             </button>
