@@ -20,6 +20,7 @@ import {
   useUploadAttachments,
   useDeleteAttachment,
 } from "@/hooks/useAttachments";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { AttachmentEntityType, Attachment } from "@/lib/api/attachments";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ export default function FileUpload({
   const [isDragOver, setIsDragOver] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+  const previewPanelRef = useRef<HTMLDivElement>(null);
 
   // escape-routes (skill §1): el preview debe cerrarse con Escape, igual que Modal
   useEffect(() => {
@@ -84,6 +86,9 @@ export default function FileUpload({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [previewAttachment]);
+
+  // Patrón dialog: foco adentro al abrir, Tab cicla, y vuelve al disparador al cerrar
+  useFocusTrap(!!previewAttachment, previewPanelRef);
 
   const { data: attachments = [], isLoading } = useAttachments(entityType, entityId);
   const uploadMutation = useUploadAttachments();
@@ -329,7 +334,12 @@ export default function FileUpload({
           onClick={() => setPreviewAttachment(null)}
         >
           <div
-            className="relative w-full max-w-4xl h-[85vh] mx-4 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+            ref={previewPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Vista previa: ${previewAttachment.fileName}`}
+            tabIndex={-1}
+            className="relative w-full max-w-4xl h-[85vh] mx-4 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden focus:outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

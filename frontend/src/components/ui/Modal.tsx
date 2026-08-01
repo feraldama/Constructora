@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface ModalProps {
   isOpen: boolean;
@@ -21,6 +22,9 @@ export default function Modal({
   className,
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   // Close on Escape
   useEffect(() => {
@@ -46,6 +50,10 @@ export default function Modal({
     };
   }, [isOpen]);
 
+  // Patrón dialog (WAI-ARIA): foco inicial en el cuerpo, Tab cicla dentro del
+  // panel, y al cerrar el foco vuelve al elemento que abrió el modal.
+  useFocusTrap(isOpen, panelRef, bodyRef);
+
   if (!isOpen) return null;
 
   return (
@@ -61,24 +69,34 @@ export default function Modal({
         }}
       >
         <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
           className={cn(
-            "relative w-full max-w-lg bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150 cursor-default",
+            "relative w-full max-w-lg bg-white rounded-xl shadow-xl animate-in zoom-in-95 duration-150 cursor-default focus:outline-none",
             className
           )}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+              {title}
+            </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Cerrar"
+              className="touch-hit p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X size={20} />
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="px-6 py-4">{children}</div>
+          <div ref={bodyRef} className="px-6 py-4">
+            {children}
+          </div>
         </div>
       </div>
     </div>

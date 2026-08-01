@@ -263,6 +263,39 @@ propio con Cancelar/Eliminar) · loading states con `isPending`/spinner en forms
      breakpoint los empeoraría
    - Celdas de calendar en 375px: verificado con captura, entran las 7 columnas
      sin scroll horizontal; riesgo real solo con muchos eventos por celda
+4. ✅ **Foco global para campos huérfanos** (2026-07-30): 70 inputs/selects/textareas
+   no definían ningún estilo de foco y dependían del outline default del navegador.
+   En vez de editar 70 campos, regla única en `globals.css`:
+   `@layer base { :where(input, select, textarea):focus-visible { outline: 2px solid var(--color-ring) } }`
+   — `:where()` deja la especificidad en cero y `@layer base` pierde contra la capa
+   de utilidades, así todo campo con `focus:*`/`outline-none` propio conserva su
+   diseño. Verificado en DOM real: campo huérfano → `solid 2px #0369A1`; campo con
+   ring propio (Sidebar) → su ring, sin duplicado. **Regla para código nuevo: los
+   formularios "de diseño" (auth, modales importantes) definen su anillo con tokens;
+   el resto puede omitir focus y hereda este default.**
+5. ✅ **Modal "Agregar/Quitar miembro"** (2026-07-30): tratamiento completo de
+   formulario — labels asociados, validación en blur con `aria-invalid` y foco al
+   campo tras submit fallido, borde 3.46:1, errores con tokens destructive
+   (el par `red-600`/`red-50` daba 4.41:1), campos y botones a 44px. Verificado
+   con pruebas de comportamiento (6/6) y captura.
+6. ✅ **`Modal.tsx`: patrón dialog WAI-ARIA completo** (2026-07-31, reportado por
+   el usuario: "no toma el focus"): al abrir, el foco entra al primer campo del
+   cuerpo (fallback: el panel con `tabIndex=-1`); Tab cicla dentro del panel
+   (los `disabled` se excluyen del trap); al cerrar, el foco vuelve al elemento
+   que abrió el modal; `role="dialog"` + `aria-modal` + `aria-labelledby` con el
+   título; botón X con `aria-label="Cerrar"`, `touch-hit` y anillo de foco.
+   Cubre TODOS los modales de la app (es el componente base). Verificado 5/5 en
+   navegador.
+7. ✅ **Trap de foco unificado en TODOS los overlays** (2026-07-31): la lógica se
+   extrajo a `src/hooks/useFocusTrap.ts` (foco inicial con zona preferida, ciclo
+   de Tab excluyendo `disabled`, devolución al disparador). Consumidores:
+   `Modal.tsx` (16 pantallas), el preview de `FileUpload` (ahora con
+   `role="dialog"` + `aria-label` con el nombre del archivo) y el drawer del
+   `Sidebar`. El drawer además lleva **`inert={!isOpen}`**: cerrado queda fuera
+   de pantalla pero seguía en el árbol de accesibilidad con `aria-modal` — con
+   inert sale del árbol y del orden de Tab. Verificado: modal 5/5, drawer 4/4,
+   drawer cerrado no alcanzable en 30 tabs. Regla para overlays nuevos: usar
+   `Modal.tsx`; si no se puede, `useFocusTrap` + `role="dialog"` + Escape.
 
 ## 10b. Auditoría de `(auth)` contra el skill
 

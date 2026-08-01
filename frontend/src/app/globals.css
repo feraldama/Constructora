@@ -75,6 +75,18 @@ body {
   }
 }
 
+/* focus-states (skill §1): anillo de foco con token para todo campo que no
+   define el suyo — 70 inputs/selects/textareas dependían del outline default
+   del navegador (inconsistente entre browsers y ajeno a la paleta).
+   @layer base + :where() dejan la especificidad en cero: cualquier utilidad
+   focus:* / outline-none del propio elemento le gana a esta regla. */
+@layer base {
+  :where(input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 0;
+  }
+}
+
 /* Todos los elementos interactivos deben mostrar cursor pointer */
 button,
 select,

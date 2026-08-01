@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils/cn";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useProject } from "@/hooks/useProject";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -64,6 +65,11 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const drawerRef = useRef<HTMLElement>(null);
+
+  // Patrón dialog: al abrir el drawer el foco entra (botón Cerrar), Tab cicla
+  // adentro, y al cerrar vuelve al hamburger que lo abrió
+  useFocusTrap(isOpen, drawerRef);
 
   // escape-routes (skill §1): el drawer mobile debe cerrarse con Escape
   useEffect(() => {
@@ -239,6 +245,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       />
       {/* Drawer */}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
+        // Cerrado queda fuera de pantalla pero sigue en el DOM: inert lo saca
+        // del árbol de accesibilidad y del orden de tabulación
+        inert={!isOpen}
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 bg-white px-4 py-6 flex flex-col shadow-xl transition-transform duration-300 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"

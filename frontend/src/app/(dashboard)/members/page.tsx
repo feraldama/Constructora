@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Users,
   Plus,
@@ -59,13 +59,26 @@ export default function MembersPage() {
   const [addEmail, setAddEmail] = useState("");
   const [addRole, setAddRole] = useState<ProjectRole>("VIEWER");
   const [addError, setAddError] = useState("");
+  const [addEmailError, setAddEmailError] = useState("");
 
   // Remove confirmation
   const [removeTarget, setRemoveTarget] = useState<ProjectMemberDTO | null>(null);
   const [removeError, setRemoveError] = useState("");
 
+  const addEmailRef = useRef<HTMLInputElement>(null);
+
   const handleAdd = useCallback(async () => {
-    if (!addEmail.trim()) return;
+    const emailErr = !addEmail.trim()
+      ? "Ingresá el email del usuario."
+      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addEmail)
+        ? "El email no es válido."
+        : "";
+    if (emailErr) {
+      setAddEmailError(emailErr);
+      // focus-management (WCAG): el foco vuelve al campo inválido
+      addEmailRef.current?.focus();
+      return;
+    }
     setAddError("");
     try {
       await addMut.mutateAsync({ email: addEmail.trim(), role: addRole });
@@ -227,26 +240,50 @@ export default function MembersPage() {
       <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Agregar miembro">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="member-email" className="block text-sm font-medium text-gray-700 mb-1">
               Email del usuario *
             </label>
             <input
+              ref={addEmailRef}
+              id="member-email"
               type="email"
               value={addEmail}
-              onChange={(e) => setAddEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              onChange={(e) => {
+                setAddEmail(e.target.value);
+                if (addEmailError) setAddEmailError("");
+              }}
+              onBlur={(e) => {
+                const v = e.target.value;
+                setAddEmailError(
+                  v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+                    ? "El email no es válido."
+                    : ""
+                );
+              }}
+              aria-invalid={!!addEmailError}
+              aria-describedby={addEmailError ? "member-email-error" : "member-email-hint"}
+              className={`h-11 w-full rounded-lg border bg-white px-3 text-sm transition-colors duration-200 focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                addEmailError ? "border-destructive-strong" : "border-border-input"
+              }`}
               placeholder="usuario@ejemplo.com"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              El usuario debe estar registrado en BuildControl
-            </p>
+            {addEmailError ? (
+              <p id="member-email-error" role="alert" className="text-sm text-destructive-strong mt-1">
+                {addEmailError}
+              </p>
+            ) : (
+              <p id="member-email-hint" className="text-xs text-gray-500 mt-1">
+                El usuario debe estar registrado en BuildControl
+              </p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+            <label htmlFor="member-role" className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
             <select
+              id="member-role"
               value={addRole}
               onChange={(e) => setAddRole(e.target.value as ProjectRole)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+              className="h-11 w-full rounded-lg border border-border-input bg-white px-3 text-sm focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               <option value="ADMIN">Administrador — acceso total</option>
               <option value="EDITOR">Editor — puede crear y editar</option>
@@ -254,7 +291,7 @@ export default function MembersPage() {
             </select>
           </div>
           {addError && (
-            <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p role="alert" className="text-sm text-destructive-strong bg-destructive-tint border border-destructive/20 rounded-lg px-3 py-2">
               {addError}
             </p>
           )}
@@ -262,7 +299,7 @@ export default function MembersPage() {
             <button
               type="button"
               onClick={() => setAddOpen(false)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="h-11 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancelar
             </button>
@@ -270,7 +307,7 @@ export default function MembersPage() {
               type="button"
               disabled={!addEmail.trim() || addMut.isPending}
               onClick={() => void handleAdd()}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+              className="h-11 rounded-lg bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               {addMut.isPending ? "Agregando..." : "Agregar"}
             </button>
@@ -292,7 +329,7 @@ export default function MembersPage() {
               </strong> ({removeTarget.user.email}) del proyecto?
             </p>
             {removeError && (
-              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p role="alert" className="text-sm text-destructive-strong bg-destructive-tint border border-destructive/20 rounded-lg px-3 py-2">
                 {removeError}
               </p>
             )}
@@ -300,7 +337,7 @@ export default function MembersPage() {
               <button
                 type="button"
                 onClick={() => setRemoveTarget(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="h-11 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Cancelar
               </button>
@@ -308,7 +345,7 @@ export default function MembersPage() {
                 type="button"
                 disabled={removeMut.isPending}
                 onClick={() => void handleRemove()}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="h-11 rounded-lg bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
               >
                 {removeMut.isPending ? "Quitando..." : "Quitar del proyecto"}
               </button>
